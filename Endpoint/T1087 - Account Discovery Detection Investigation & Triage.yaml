@@ -1,0 +1,82 @@
+playbook_name: "T1087 - Account Discovery Detection: Investigation & Triage"
+tactic: "Discovery"
+technique_id: "T1087"
+technique_name: "Account Discovery"
+description: >
+  Detects adversaries enumerating local or domain accounts to gather information for privilege escalation or lateral movement.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Commands and Tools for Account Enumeration"
+    description: >
+      Identify usage of native or third-party tools and commands used for account discovery (e.g., net user, Get-ADUser).
+    checklist:
+      - "Are there command-line invocations related to account enumeration?"
+      - "Are PowerShell cmdlets like Get-LocalUser or Get-ADUser being executed?"
+    data_sources:
+      - "Process execution logs"
+      - "Command-line auditing"
+
+  - step_number: 2
+    title: "Detect Unusual Account Enumeration Activity"
+    description: >
+      Look for anomalous patterns such as account enumeration from non-admin users or during unusual hours.
+    checklist:
+      - "Is account enumeration performed by unexpected users or hosts?"
+      - "Are there repeated enumeration attempts?"
+    data_sources:
+      - "User activity logs"
+      - "Authentication logs"
+
+  - step_number: 3
+    title: "Correlate with Other Reconnaissance or Lateral Movement Indicators"
+    description: >
+      Check if account discovery activities align with other suspicious behaviors like network scanning or credential access.
+    checklist:
+      - "Is account discovery followed by privilege escalation or lateral movement?"
+      - "Are other reconnaissance tools observed on the same hosts?"
+    data_sources:
+      - "Network logs"
+      - "Endpoint detection logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Single account enumeration by authorized users."
+      - "Medium: Multiple enumerations by suspicious users."
+      - "High: Enumeration linked to active intrusion or lateral movement."
+  - confidence_levels:
+      - "High: Confirmed unauthorized account enumeration."
+      - "Medium: Suspicious command activity without full context."
+      - "Low: False positives due to administrative scans."
+
+ioc_types:
+  - "Execution of net user, dsquery, or PowerShell account enumeration commands"
+  - "Access to account directory services logs"
+  - "Unusual or repeated queries for account details"
+
+queries/examples:
+  - name: "Detect net user Command Usage"
+    query: >
+      process.name == "cmd.exe" AND
+      process.command_line CONTAINS "net user"
+
+  - name: "Detect PowerShell Get-ADUser Cmdlet Usage"
+    query: >
+      process.name == "powershell.exe" AND
+      process.command_line MATCHES "(?i)Get-ADUser"
+
+automation_hooks:
+  - "Alert on detection of account enumeration commands."
+  - "Block suspicious enumeration processes if possible."
+  - "Increase monitoring on accounts performing discovery."
+
+analyst_guidance:
+  - "Verify user intent and permissions."
+  - "Correlate with ongoing investigations for potential compromise."
+  - "Recommend restricting enumeration tools to authorized users."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1087/"
+  - "https://docs.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4688"
+
+review_cycle: "Quarterly or after any account enumeration alerts"

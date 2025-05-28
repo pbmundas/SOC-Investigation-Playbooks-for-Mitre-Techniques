@@ -1,0 +1,54 @@
+playbook_name: "T1134.003 - Primary Token Manipulation Detection: Investigation & Triage"
+tactic: "Privilege Escalation"
+technique_id: "T1134.003"
+technique_name: "Make and Impersonate a Primary Token"
+description: >
+  Detect attempts to manipulate or create primary tokens that allow adversaries to execute processes under different user contexts for privilege escalation.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Primary Token Creation APIs"
+    description: >
+      Detect calls to DuplicateTokenEx and CreateProcessAsUser, especially in untrusted contexts.
+    checklist:
+      - "Was DuplicateTokenEx called by a non-admin process?"
+      - "Was CreateProcessAsUser invoked without an interactive session?"
+    data_sources:
+      - "API telemetry"
+      - "Token logs"
+
+  - step_number: 2
+    title: "Verify Token and Process Context"
+    description: >
+      Confirm legitimacy of primary token usage.
+    checklist:
+      - "Does the user context of the token align with the spawning process?"
+      - "Does the spawned process reflect token privileges?"
+    data_sources:
+      - "Process tree analysis"
+      - "Authentication logs"
+
+  - step_number: 3
+    title: "Correlate with Privilege Escalation Indicators"
+    description: >
+      Identify if the token activity led to privilege elevation.
+    checklist:
+      - "Is there evidence of access to privileged resources post-token creation?"
+    data_sources:
+      - "SIEM events"
+      - "File access logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Internal impersonation for service execution."
+      - "Medium: Unexpected token creation in user sessions."
+      - "High: Confirmed token use for unauthorized privilege."
+  - confidence_levels:
+      - "High: Matches known token abuse behavior."
+      - "Medium: Anomalous but unconfirmed usage."
+      - "Low: Token activity not aligned with escalation."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1134/003/"
+
+review_cycle: "Quarterly or after IR token escalation events"

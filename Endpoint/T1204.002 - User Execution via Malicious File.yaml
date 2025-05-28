@@ -1,0 +1,127 @@
+playbook_name: "T1204.002 - User Execution via Malicious File"
+tactic: "Execution"
+technique_id: "T1204.002"
+technique_name: "User Execution: Malicious File"
+description: >
+  This playbook provides guidance for detecting, investigating, and responding to the execution of a malicious file
+  triggered by a user. Common vectors include email attachments, drive-by downloads, or removable media. 
+  Focus is on initial execution behavior and potential follow-up activity.
+
+detection_sources:
+  - EDR/Process Monitoring (e.g., Sysmon Event ID 1, 11)
+  - Email Gateway (e.g., O365 ATP, Proofpoint)
+  - File Integrity Monitoring
+  - Antivirus/Endpoint Protection Alerts
+  - User Behavior Analytics (UEBA)
+
+investigation_steps:
+  - step_number: 1
+    title: "Confirm Execution of Malicious File"
+    description: >
+      Verify whether a suspicious or malicious file was executed by the user.
+    checklist:
+      - "What file was executed (name, path, hash)?"
+      - "What is the parent process (e.g., outlook.exe, chrome.exe)?"
+      - "Is the file signed, packed, or obfuscated?"
+      - "Check VT/Hybrid Analysis report for the file hash"
+    data_sources:
+      - "EDR telemetry"
+      - "VirusTotal or sandbox integrations"
+
+  - step_number: 2
+    title: "Determine File Origin and Delivery Method"
+    description: >
+      Identify how the file was delivered to the system.
+    checklist:
+      - "Was it attached to an email?"
+      - "Was it downloaded from the internet?"
+      - "Was it transferred via removable media?"
+    data_sources:
+      - "Email gateway logs"
+      - "Browser history or download logs"
+      - "USB activity logs"
+
+  - step_number: 3
+    title: "Analyze Child Processes"
+    description: >
+      Review post-execution behavior for signs of malicious activity.
+    checklist:
+      - "Did it launch PowerShell, cmd, or other scripting tools?"
+      - "Any LOLBin usage (e.g., mshta, regsvr32)?"
+      - "Did it initiate network connections?"
+    data_sources:
+      - "Process creation logs"
+      - "Network connection logs (Sysmon ID 3, firewall)"
+      - "EDR process tree view"
+
+  - step_number: 4
+    title: "Check for Persistence or Payload Drop"
+    description: >
+      Investigate whether the file dropped a payload or installed persistence.
+    checklist:
+      - "Any registry modifications?"
+      - "Scheduled tasks or autoruns?"
+      - "Any suspicious files dropped post-execution?"
+    data_sources:
+      - "Autoruns"
+      - "Registry and scheduled task logs"
+      - "Antivirus detections"
+
+  - step_number: 5
+    title: "User Verification and Intent"
+    description: >
+      Understand if the user was tricked or complicit in running the file.
+    checklist:
+      - "Did the file come from a spoofed or unexpected source?"
+      - "Is this common behavior for the user?"
+      - "Any previous incidents linked to this user?"
+    data_sources:
+      - "Email headers and body"
+      - "UEBA and access patterns"
+      - "HR or security awareness training records"
+
+triage_labels:
+  - severity:
+      - "Low: Unknown executable with no follow-up activity"
+      - "Medium: Unsigned executable triggers script or LOLBin"
+      - "High: Executable delivers malware or persistence"
+  - confidence:
+      - "High: File matches known malware hash"
+      - "Medium: File triggers suspicious child processes or connects externally"
+      - "Low: Executable behavior unclear"
+
+ioc_types:
+  - File Hash (MD5, SHA256)
+  - File Path
+  - Process Name
+  - Command Line
+  - Email Subject/Sender
+  - Destination IP/Domain
+
+example_queries:
+  - name: "Windows Suspicious Execution via Outlook"
+    query: >
+      EventID=1 AND ParentImage="*outlook.exe" AND (Image="*cmd.exe" OR Image="*powershell.exe")
+
+  - name: "Linux Suspicious Execution via PDF Reader"
+    query: >
+      parent_process="evince" AND process="/bin/bash" OR process="/usr/bin/python"
+
+automation_hooks:
+  - "Send file hash to VirusTotal or sandbox for enrichment"
+  - "Alert if file is unsigned, uncommon, or from external source"
+  - "Auto-quarantine host if post-execution malware is detected"
+  - "Generate ticket and assign to incident handler"
+
+analyst_guidance:
+  - "Prioritize based on source and behavior of file"
+  - "Review sandbox or AV results for payload"
+  - "Interview user if necessary for social engineering angle"
+  - "Look for lateral movement or credential access as next steps"
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1204/002/"
+  - "https://www.sans.org/blog/investigating-malicious-documents/"
+  - "https://learn.microsoft.com/en-us/microsoft-365/security/office-365-security/zero-hour-auto-purge"
+
+review_cycle: "Bi-monthly or after phishing/malware incidents"

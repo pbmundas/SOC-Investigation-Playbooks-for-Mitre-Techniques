@@ -1,0 +1,84 @@
+playbook_name: "T1071.003 - Mail Protocols Command and Control Detection"
+tactic: "Command and Control"
+technique_id: "T1071.003"
+technique_name: "Mail Protocols"
+description: >
+  Detect adversaries using mail protocols (SMTP, POP3, IMAP) for command and control communication.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Mail Protocol Traffic for Anomalies"
+    description: >
+      Analyze SMTP, POP3, and IMAP traffic for unusual patterns, such as spikes in volume, unusual destinations, or irregular commands.
+    checklist:
+      - "Are there connections to unknown or suspicious mail servers?"
+      - "Is there abnormal volume or frequency of mail traffic?"
+      - "Are there atypical SMTP commands or large attachments?"
+    data_sources:
+      - "Mail server logs"
+      - "Network traffic logs"
+      - "Firewall and proxy logs"
+
+  - step_number: 2
+    title: "Detect Known Malicious Mail Server Indicators"
+    description: >
+      Match mail server IPs and domains against threat intelligence feeds.
+    checklist:
+      - "Are connections made to known malicious mail servers?"
+      - "Are there suspicious domain lookups related to mail traffic?"
+    data_sources:
+      - "Threat intelligence"
+      - "DNS logs"
+
+  - step_number: 3
+    title: "Identify Encoded or Obfuscated Payloads in Mail Traffic"
+    description: >
+      Detect base64 or other encoded data in mail body or attachments indicating C2 payloads.
+    checklist:
+      - "Are emails containing unusual attachments or encoded content?"
+      - "Is there evidence of automated or scripted mail sending?"
+    data_sources:
+      - "Mail content inspection tools"
+      - "Antivirus/Antimalware logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Normal mail traffic."
+      - "Medium: Suspicious mail traffic with anomalies."
+      - "High: Confirmed malicious mail-based C2 activity."
+  - confidence_levels:
+      - "High: Confirmed IOC match or malicious payload."
+      - "Medium: Behavioral anomalies without IOC confirmation."
+      - "Low: Possible false positives due to legitimate mail activity."
+
+ioc_types:
+  - "Malicious mail server IPs/domains"
+  - "Encoded or obfuscated mail payloads"
+  - "Unusual mail protocol commands or volumes"
+
+queries/examples:
+  - name: "Detect SMTP Traffic to Suspicious Mail Servers"
+    query: >
+      smtp.destination_ip IN (malicious_ip_list) OR
+      smtp.rcpt_to_domain IN (malicious_domain_list)
+
+  - name: "Detect Base64 Encoded Email Attachments"
+    query: >
+      mail.attachment_content_type = "application/octet-stream" AND
+      mail.body_content MATCHES "base64"
+
+automation_hooks:
+  - "Alert on suspicious mail protocol usage."
+  - "Block outgoing connections to known malicious mail servers."
+  - "Trigger investigation workflows for suspicious mail traffic."
+
+analyst_guidance:
+  - "Review mail sender and recipient details."
+  - "Correlate with endpoint detections of malware or suspicious processes."
+  - "Check for lateral movement or data exfiltration via mail."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1071/003/"
+  - "https://www.sans.org/white-papers/41917/"
+
+review_cycle: "Quarterly or post mail-related incidents"

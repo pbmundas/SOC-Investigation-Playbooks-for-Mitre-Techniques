@@ -1,0 +1,85 @@
+playbook_name: "T1095 - Non-Application Layer Protocol Command and Control Detection"
+tactic: "Command and Control"
+technique_id: "T1095"
+technique_name: "Non-Application Layer Protocol"
+description: >
+  Detect adversaries using lower-level protocols (e.g., ICMP, TCP, UDP) for command and control communication that bypass typical application layer monitoring.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Network Traffic for Non-Standard Protocol Use"
+    description: >
+      Identify command and control traffic using ICMP, raw TCP/UDP packets, or other non-application protocols.
+    checklist:
+      - "Are there unusual ICMP packet sizes or frequencies?"
+      - "Is there unexpected traffic on uncommon TCP or UDP ports?"
+      - "Is there traffic with abnormal payloads or timing?"
+    data_sources:
+      - "Network flow logs"
+      - "IDS/IPS alerts"
+      - "Packet capture analysis"
+
+  - step_number: 2
+    title: "Detect Known Malicious Indicators in Non-App Layer Traffic"
+    description: >
+      Correlate network traffic with threat intel for known malicious IPs or signatures.
+    checklist:
+      - "Are endpoints communicating with suspicious IPs over non-app protocols?"
+      - "Is there evidence of tunneling or encapsulation?"
+    data_sources:
+      - "Threat intelligence feeds"
+      - "Network monitoring tools"
+
+  - step_number: 3
+    title: "Identify Anomalies in Protocol Behavior"
+    description: >
+      Look for deviations from typical protocol behavior such as irregular ICMP payloads or uncommon TCP flag patterns.
+    checklist:
+      - "Are ICMP packets carrying payload data?"
+      - "Are TCP packets using unusual flags (e.g., NULL, FIN scans)?"
+      - "Is there abnormal session initiation or termination?"
+    data_sources:
+      - "Deep packet inspection"
+      - "IDS/IPS logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Normal protocol use."
+      - "Medium: Suspicious non-app protocol traffic."
+      - "High: Confirmed C2 via non-application layer protocols."
+  - confidence_levels:
+      - "High: IOC match or confirmed protocol misuse."
+      - "Medium: Anomalous patterns without IOC confirmation."
+      - "Low: Potential false positives from legitimate tools."
+
+ioc_types:
+  - "Suspicious IP addresses"
+  - "Unusual ICMP payloads or packet sizes"
+  - "Abnormal TCP/UDP port usage or flags"
+
+queries/examples:
+  - name: "Detect High Frequency of ICMP Echo Requests"
+    query: >
+      icmp.type = 8 AND
+      count_over_time > threshold
+
+  - name: "Detect TCP Packets with NULL Flags"
+    query: >
+      tcp.flags = 0x00 AND
+      packet_count > threshold
+
+automation_hooks:
+  - "Alert on anomalous non-application layer protocol traffic."
+  - "Block suspicious IP addresses."
+  - "Initiate endpoint and network investigation workflows."
+
+analyst_guidance:
+  - "Assess whether non-app layer protocol traffic aligns with known legitimate activity."
+  - "Correlate with endpoint logs for suspicious process activity."
+  - "Investigate for potential covert channels or tunneling."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1095/"
+  - "https://www.fireeye.com/blog/threat-research/2017/08/detecting-c2-traffic.html"
+
+review_cycle: "Monthly or post incident"

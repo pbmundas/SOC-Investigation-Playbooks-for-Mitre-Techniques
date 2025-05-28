@@ -1,0 +1,88 @@
+playbook_name: "T1134.002 - Process Creation with Token Detection: Investigation & Triage"
+tactic: "Privilege Escalation"
+technique_id: "T1134.002"
+technique_name: "Create Process with Token"
+description: >
+  Detect scenarios where adversaries use CreateProcessWithToken or CreateProcessAsUser to spawn new processes under a different user’s context.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor CreateProcessWithToken/AsUser APIs"
+    description: >
+      Detect use of process creation APIs tied to token misuse.
+    checklist:
+      - "Are low-privilege processes spawning high-privilege processes?"
+      - "Are these APIs called without interactive login?"
+    data_sources:
+      - "API telemetry"
+      - "Process creation logs"
+
+  - step_number: 2
+    title: "Check Process Lineage"
+    description: >
+      Validate parent-child process relationships for token usage.
+    checklist:
+      - "Does the parent process have matching privileges to child?"
+      - "Are tokens reused between unrelated processes?"
+    data_sources:
+      - "Process tree analysis"
+      - "Security logs"
+
+  - step_number: 3
+    title: "Correlate with Privilege Abuse Patterns"
+    description: >
+      Identify behavior aligning with lateral movement or privilege escalation.
+    checklist:
+      - "Is the token reused to access remote shares or processes?"
+      - "Is there a sudden privilege escalation in logs?"
+    data_sources:
+      - "SIEM logs"
+      - "Windows Event ID 4688"
+
+  - step_number: 4
+    title: "Validate and Contain"
+    description: >
+      Confirm abuse of token for process creation and mitigate.
+    checklist:
+      - "Is this technique used in conjunction with credential theft?"
+      - "Should the token be revoked or host isolated?"
+    data_sources:
+      - "Incident response tools"
+      - "EDR analysis"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Admin tool usage in controlled context."
+      - "Medium: Unexpected process lineage with token elevation."
+      - "High: Confirmed privilege escalation via token."
+  - confidence_levels:
+      - "High: Matches known attacker technique."
+      - "Medium: Partially aligned with misuse."
+      - "Low: Unconfirmed sequence."
+
+ioc_types:
+  - "CreateProcessWithToken API calls"
+  - "User tokens used cross-session"
+  - "Elevated process ancestry"
+
+queries/examples:
+  - name: "CreateProcessWithToken from Low Privilege"
+    query: >
+      api.call:CreateProcessWithToken AND process.integrity_level:low
+  - name: "Unexpected Elevated Process Tree"
+    query: >
+      process.parent.integrity_level:low AND process.integrity_level:high
+
+automation_hooks:
+  - "Alert on process creation via token elevation."
+  - "Tag token reuse events."
+
+analyst_guidance:
+  - "Trace token origin."
+  - "Verify privilege level changes."
+  - "Engage IR for confirmed escalation."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1134/002/"
+
+review_cycle: "Quarterly or after high severity incidents"

@@ -1,0 +1,90 @@
+playbook_name: "T1218.003 - Regsvr32 Execution Monitoring: Investigation & Triage"
+tactic: "Defense Evasion"
+technique_id: "T1218.003"
+technique_name: "Regsvr32 Execution Monitoring"
+description: >
+  Detect abuse of regsvr32.exe (Microsoft Register Server) to execute malicious scripts or DLLs.
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect Regsvr32 Execution"
+    description: >
+      Monitor for regsvr32.exe executions, especially with scriptlet (.sct) files or unusual DLLs.
+    checklist:
+      - "Are scripts (.sct) or unusual DLLs loaded via regsvr32?"
+      - "Is regsvr32.exe invoked by non-standard users/processes?"
+    data_sources:
+      - "Process creation logs"
+      - "Command line auditing"
+      - "File system monitoring"
+
+  - step_number: 2
+    title: "Analyze Command Line Arguments"
+    description: >
+      Identify suspicious command line parameters, remote script loads, or persistence mechanisms.
+    checklist:
+      - "Is regsvr32 used to execute remote scripts?"
+      - "Is regsvr32 running unsigned or suspicious DLLs?"
+    data_sources:
+      - "Process command line"
+      - "Network telemetry"
+      - "File hashes"
+
+  - step_number: 3
+    title: "Correlate with Threat Intelligence and Other Events"
+    description: >
+      Cross-check against known malicious payloads and associated attacker activity.
+    checklist:
+      - "Are command lines or hashes matching threat intel?"
+      - "Are other signs of compromise present?"
+    data_sources:
+      - "Threat intel feeds"
+      - "SIEM logs"
+
+  - step_number: 4
+    title: "Response"
+    description: >
+      Block or restrict regsvr32 usage for non-admin users, isolate affected systems.
+    checklist:
+      - "Apply application whitelisting."
+      - "Engage IR to contain and remediate."
+    data_sources:
+      - "Endpoint management"
+      - "IR tools"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Legitimate regsvr32 usage."
+      - "Medium: Suspicious or anomalous usage."
+      - "High: Confirmed malicious abuse."
+  - confidence_levels:
+      - "High: Verified malicious regsvr32 execution."
+      - "Medium: Suspicious but incomplete."
+      - "Low: Benign or authorized use."
+
+ioc_types:
+  - "Regsvr32 command lines with .sct or remote scripts"
+  - "Unusual DLL loads"
+  - "Known malicious hashes"
+
+queries/examples:
+  - name: "Regsvr32 executing .sct scripts"
+    query: >
+      process.name:regsvr32.exe AND process.command_line:*.sct
+  - name: "Regsvr32 executing remote script"
+    query: >
+      process.name:regsvr32.exe AND process.command_line:*http*://*
+
+automation_hooks:
+  - "Alert on suspicious regsvr32 command lines."
+  - "Trigger enrichment and analyst review."
+
+analyst_guidance:
+  - "Verify context and legitimacy."
+  - "Investigate associated processes and network."
+  - "Escalate to IR if abuse suspected."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1218/003/"
+
+review_cycle: "Quarterly or post-incident"

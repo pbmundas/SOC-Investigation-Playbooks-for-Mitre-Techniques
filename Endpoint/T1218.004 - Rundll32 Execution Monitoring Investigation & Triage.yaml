@@ -1,0 +1,87 @@
+playbook_name: "T1218.004 - Rundll32 Execution Monitoring: Investigation & Triage"
+tactic: "Defense Evasion"
+technique_id: "T1218.004"
+technique_name: "Rundll32 Execution Monitoring"
+description: >
+  Detect abuse of rundll32.exe to execute malicious DLLs or payloads.
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect Rundll32 Execution"
+    description: >
+      Monitor process creation events for rundll32.exe with suspicious or unusual command line arguments.
+    checklist:
+      - "Is rundll32.exe loading non-standard or unsigned DLLs?"
+      - "Are command lines invoking unusual functions or parameters?"
+      - "Is rundll32.exe started by unexpected users or parent processes?"
+    data_sources:
+      - "Process creation and command line logs"
+      - "File integrity monitoring"
+      - "Endpoint telemetry"
+
+  - step_number: 2
+    title: "Analyze Loaded DLLs and Command Line"
+    description: >
+      Investigate DLLs loaded by rundll32 for suspicious hashes or locations.
+    checklist:
+      - "Do loaded DLLs match known malware signatures?"
+      - "Are DLLs loaded from unusual directories or network shares?"
+    data_sources:
+      - "File monitoring"
+      - "Threat intelligence feeds"
+
+  - step_number: 3
+    title: "Correlate with Other Indicators"
+    description: >
+      Check for related suspicious process chains, network connections, or privilege escalation.
+    checklist:
+      - "Are rundll32 executions linked to lateral movement?"
+      - "Is there concurrent malicious activity?"
+    data_sources:
+      - "SIEM logs"
+      - "Network telemetry"
+
+  - step_number: 4
+    title: "Respond and Contain"
+    description: >
+      Block rundll32.exe if unauthorized, isolate impacted hosts, and begin incident response.
+    checklist:
+      - "Implement application control or whitelisting."
+      - "Engage incident response for forensic analysis."
+    data_sources:
+      - "Endpoint management"
+      - "IR tools"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Legitimate rundll32 use."
+      - "Medium: Suspicious but inconclusive."
+      - "High: Confirmed malicious abuse."
+  - confidence_levels:
+      - "High: Verified malicious rundll32 use."
+      - "Medium: Suspicious indicators present."
+      - "Low: Benign use."
+
+ioc_types:
+  - "Suspicious rundll32 command lines"
+  - "DLLs loaded from unexpected locations"
+  - "Known malicious DLL hashes"
+
+queries/examples:
+  - name: "Detect rundll32 executions"
+    query: >
+      process.name:rundll32.exe
+
+automation_hooks:
+  - "Alert on rundll32.exe executions with unusual DLL parameters."
+  - "Trigger analyst investigation."
+
+analyst_guidance:
+  - "Verify command line context and DLL legitimacy."
+  - "Check related system and network events."
+  - "Escalate to IR if malicious."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1218/004/"
+
+review_cycle: "Quarterly or post-incident"

@@ -1,0 +1,86 @@
+playbook_name: "T1218.006 - WerFault Execution Monitoring: Investigation & Triage"
+tactic: "Defense Evasion"
+technique_id: "T1218.006"
+technique_name: "WerFault Execution Monitoring"
+description: >
+  Detect abuse of WerFault.exe (Windows Error Reporting) for execution of malicious payloads or defense evasion.
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect WerFault Execution"
+    description: >
+      Monitor process creation for WerFault.exe, especially with suspicious command lines or parent processes.
+    checklist:
+      - "Is WerFault.exe running unusually outside error reporting?"
+      - "Are there suspicious parameters or scripts launched?"
+      - "Is WerFault.exe started by unauthorized users or processes?"
+    data_sources:
+      - "Process creation and command line logs"
+      - "Endpoint telemetry"
+
+  - step_number: 2
+    title: "Analyze Command Line and Execution Context"
+    description: >
+      Examine if WerFault.exe is used to launch non-standard applications or payloads.
+    checklist:
+      - "Are command line arguments abnormal or pointing to malware?"
+      - "Is WerFault.exe spawning suspicious child processes?"
+    data_sources:
+      - "Process monitoring"
+      - "File and network monitoring"
+
+  - step_number: 3
+    title: "Correlate with Other Malicious Activities"
+    description: >
+      Identify related malicious behavior such as persistence, lateral movement, or credential dumping.
+    checklist:
+      - "Are there related suspicious processes or network connections?"
+      - "Is there evidence of compromised accounts?"
+    data_sources:
+      - "SIEM"
+      - "Threat intel"
+
+  - step_number: 4
+    title: "Response and Containment"
+    description: >
+      Block or restrict WerFault.exe usage if unauthorized and isolate infected hosts.
+    checklist:
+      - "Implement application controls."
+      - "Engage IR for deeper investigation."
+    data_sources:
+      - "Endpoint security tools"
+      - "Incident response"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Normal WerFault activity."
+      - "Medium: Suspicious usage requiring review."
+      - "High: Confirmed malicious use."
+  - confidence_levels:
+      - "High: Verified malicious execution."
+      - "Medium: Suspicious indicators."
+      - "Low: Benign use."
+
+ioc_types:
+  - "Suspicious WerFault.exe command lines"
+  - "Unusual parent-child processes"
+  - "Known malicious indicators"
+
+queries/examples:
+  - name: "Detect WerFault executions"
+    query: >
+      process.name:WerFault.exe
+
+automation_hooks:
+  - "Alert on WerFault.exe executions with unusual command lines."
+  - "Trigger analyst investigation."
+
+analyst_guidance:
+  - "Verify legitimacy of WerFault.exe runs."
+  - "Investigate related processes and network activity."
+  - "Coordinate IR if malicious."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1218/006/"
+
+review_cycle: "Quarterly or post-incident"

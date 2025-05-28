@@ -1,0 +1,82 @@
+playbook_name: "T1124 - System Time Discovery Detection: Investigation & Triage"
+tactic: "Discovery"
+technique_id: "T1124"
+technique_name: "System Time Discovery"
+description: >
+  Detects adversaries querying system time settings to synchronize actions or evade detection by mimicking legitimate system time behaviors.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor System Time Query Commands and API Calls"
+    description: >
+      Identify commands, scripts, or API calls querying system time, such as `date`, `time`, `Get-Date`, or Windows API calls.
+    checklist:
+      - "Are processes querying system time using command-line or scripting tools?"
+      - "Is there unusual or repeated time querying activity?"
+    data_sources:
+      - "Process creation logs"
+      - "Command-line auditing"
+      - "API monitoring logs"
+
+  - step_number: 2
+    title: "Identify Suspicious or Frequent Time Queries"
+    description: >
+      Look for abnormal patterns of system time discovery, especially if from suspicious or compromised accounts.
+    checklist:
+      - "Is time discovery activity concentrated during off-hours?"
+      - "Are frequent or automated queries observed?"
+    data_sources:
+      - "User activity logs"
+      - "Endpoint monitoring"
+
+  - step_number: 3
+    title: "Correlate Time Discovery with Evasion or Timing Attacks"
+    description: >
+      Determine if system time queries are correlated with attempts to evade detection or synchronize attacks.
+    checklist:
+      - "Is time querying linked to suspicious process execution?"
+      - "Are there related signs of time-based evasion techniques?"
+    data_sources:
+      - "Endpoint detection logs"
+      - "Security event correlation"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Legitimate system time queries by administrators or monitoring tools."
+      - "Medium: Suspicious or automated time queries."
+      - "High: Time discovery linked to evasion or attack staging."
+  - confidence_levels:
+      - "High: Confirmed unauthorized system time queries."
+      - "Medium: Suspicious queries without full context."
+      - "Low: Routine operations."
+
+ioc_types:
+  - "Execution of date/time commands or PowerShell Get-Date"
+  - "Windows API time query calls"
+  - "Repeated time queries in short intervals"
+
+queries/examples:
+  - name: "Detect PowerShell Get-Date Usage"
+    query: >
+      process.name == "powershell.exe" AND
+      process.command_line MATCHES "(?i)Get-Date"
+
+  - name: "Detect Linux Date Command"
+    query: >
+      process.name == "date"
+
+automation_hooks:
+  - "Alert on suspicious system time queries."
+  - "Monitor for automated or scripted time queries."
+  - "Investigate linked suspicious activity for evasion."
+
+analyst_guidance:
+  - "Confirm legitimacy of time query activities."
+  - "Correlate with other reconnaissance or evasion techniques."
+  - "Recommend enhanced logging of time-based commands."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1124/"
+  - "https://docs.microsoft.com/en-us/windows/win32/api/sysinfoapi/nf-sysinfoapi-getsystemtime"
+
+review_cycle: "Quarterly or after detection of suspicious time queries"

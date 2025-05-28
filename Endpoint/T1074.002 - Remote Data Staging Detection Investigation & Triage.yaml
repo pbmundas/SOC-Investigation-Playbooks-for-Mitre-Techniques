@@ -1,0 +1,83 @@
+playbook_name: "T1074.002 - Remote Data Staging Detection: Investigation & Triage"
+tactic: "Collection"
+technique_id: "T1074.002"
+technique_name: "Remote Data Staging"
+description: >
+  Detects adversaries staging data on remote systems such as shared drives or external hosts before exfiltration.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor File Writes to Remote Locations"
+    description: >
+      Detect file creation or modification on remote network shares or external hosts.
+    checklist:
+      - "Are large files or archives being created on remote shares?"
+      - "Is there unusual access by user accounts or hosts to remote shares?"
+    data_sources:
+      - "Network file share logs"
+      - "Endpoint file system monitoring"
+
+  - step_number: 2
+    title: "Detect Bulk Data Upload or Transfer"
+    description: >
+      Identify mass file copy or movement from local to remote locations.
+    checklist:
+      - "Are there large-scale copy operations to remote shares?"
+      - "Are transfers occurring during off-hours or by unusual users?"
+    data_sources:
+      - "File server access logs"
+      - "Network transfer monitoring"
+
+  - step_number: 3
+    title: "Correlate Remote Staging with Exfiltration Activity"
+    description: >
+      Determine if data staged remotely is then moved outside the environment.
+    checklist:
+      - "Is remote data staging followed by external data transfers?"
+      - "Are involved systems or accounts linked to prior compromise?"
+    data_sources:
+      - "Network logs"
+      - "SIEM correlation alerts"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Authorized remote file operations."
+      - "Medium: Unusual remote data staging detected."
+      - "High: Confirmed unauthorized remote data staging."
+  - confidence_levels:
+      - "High: Verified malicious remote staging followed by exfiltration."
+      - "Medium: Suspicious remote file operations without full context."
+      - "Low: Known remote backup or sync activities."
+
+ioc_types:
+  - "Large file creation on remote network shares"
+  - "Bulk file transfer from local to remote hosts"
+  - "Unusual user or host access to remote storage"
+
+queries/examples:
+  - name: "Detect Large File Writes to Remote Shares"
+    query: >
+      file.path STARTS_WITH ("\\\\network_share\\") AND
+      file.size > 100MB AND
+      file.creation_time > now() - 1h
+
+  - name: "Bulk File Copy to Remote Host"
+    query: >
+      process.name IN ("robocopy.exe", "scp", "rsync") AND
+      file.copy_count > 50 WITHIN 30 minutes
+
+automation_hooks:
+  - "Alert on suspicious remote file staging."
+  - "Restrict remote write access on sensitive shares."
+  - "Notify incident response for rapid containment."
+
+analyst_guidance:
+  - "Verify if remote staging activity is part of authorized operations."
+  - "Investigate any associated exfiltration or lateral movement."
+  - "Enforce access control and audit policies on remote shares."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1074/002/"
+  - "https://www.cisecurity.org/controls/data-protection/"
+
+review_cycle: "Monthly or following detection of remote staging anomalies"

@@ -1,0 +1,82 @@
+playbook_name: "T1123 - Audio Capture Detection: Investigation & Triage"
+tactic: "Collection"
+technique_id: "T1123"
+technique_name: "Audio Capture"
+description: >
+  Detects adversaries capturing audio via microphones on compromised systems to gather sensitive information or eavesdrop on conversations.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Microphone Access Events"
+    description: >
+      Identify processes accessing microphone devices or audio input APIs.
+    checklist:
+      - "Are there unusual or unauthorized applications accessing audio capture devices?"
+      - "Is microphone access occurring during odd hours or from unexpected users?"
+    data_sources:
+      - "Endpoint logs (e.g., Windows Audio subsystem, macOS CoreAudio)"
+      - "Process creation and file access logs"
+
+  - step_number: 2
+    title: "Detect Audio Recording or Streaming Activity"
+    description: >
+      Look for signs of audio recording files creation or live streaming transmissions.
+    checklist:
+      - "Are there new audio files (.wav, .mp3, .aac) created by suspicious processes?"
+      - "Is there network traffic consistent with streaming or uploading audio data?"
+    data_sources:
+      - "File system monitoring"
+      - "Network monitoring and DPI logs"
+
+  - step_number: 3
+    title: "Correlate with User and Process Behavior"
+    description: >
+      Assess if audio capture activity is associated with known malicious tools or suspicious user accounts.
+    checklist:
+      - "Is microphone access linked to known adversary tools?"
+      - "Are suspicious processes running with elevated privileges?"
+    data_sources:
+      - "Threat intelligence feeds"
+      - "Process and user activity logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Authorized application access to microphone."
+      - "Medium: Unusual microphone access needing review."
+      - "High: Unauthorized audio capture detected."
+  - confidence_levels:
+      - "High: Verified malicious audio capture activity."
+      - "Medium: Suspicious microphone access without full context."
+      - "Low: Routine microphone usage by known apps."
+
+ioc_types:
+  - "Processes accessing audio capture APIs or devices"
+  - "Creation of audio recording files by non-standard apps"
+  - "Unusual network traffic corresponding to audio data upload"
+
+queries/examples:
+  - name: "Detect Microphone Access by Unusual Processes"
+    query: >
+      process.name NOT IN ("explorer.exe", "Skype.exe", "Teams.exe") AND
+      file.access CONTAINS "mic" OR "audio_input"
+
+  - name: "Detect New Audio File Creation"
+    query: >
+      file.extension IN (".wav", ".mp3", ".aac") AND
+      process.user NOT IN ("AuthorizedUserList")
+
+automation_hooks:
+  - "Alert on suspicious microphone access or audio file creation."
+  - "Block or quarantine unauthorized audio capture processes."
+  - "Notify SOC and escalate for immediate investigation."
+
+analyst_guidance:
+  - "Validate if microphone usage is expected and authorized."
+  - "Check related network traffic for data exfiltration."
+  - "Recommend endpoint audio device controls and user awareness."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1123/"
+  - "https://docs.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4688"
+
+review_cycle: "Monthly or after detection of suspicious audio capture"

@@ -1,0 +1,83 @@
+playbook_name: "T1075 - Pass the Ticket Usage Detection: Investigation & Triage"
+tactic: "Credential Access"
+technique_id: "T1075"
+technique_name: "Pass the Ticket"
+description: >
+  Detects adversaries using stolen Kerberos tickets (TGTs or service tickets) to authenticate as other users without needing their credentials.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Kerberos Ticket Usage"
+    description: >
+      Track Kerberos ticket requests, renewals, and usage patterns to identify anomalous behavior.
+    checklist:
+      - "Are there unusual service ticket requests from endpoints?"
+      - "Are ticket requests originating from uncommon hosts or accounts?"
+    data_sources:
+      - "Kerberos authentication logs"
+      - "Windows Security Event Logs (Event ID 4769, 4771, 4768)"
+  
+  - step_number: 2
+    title: "Identify Reuse of Tickets Across Multiple Hosts"
+    description: >
+      Detect Kerberos tickets used on different machines than where originally issued.
+    checklist:
+      - "Are tickets presented from endpoints that are unusual for the user?"
+      - "Is there evidence of ticket reuse in short timeframes across locations?"
+    data_sources:
+      - "Network authentication logs"
+      - "Endpoint logs"
+
+  - step_number: 3
+    title: "Correlate Ticket Usage with Suspicious Activities"
+    description: >
+      Review activities performed post-ticket use for lateral movement, privilege escalation, or data exfiltration.
+    checklist:
+      - "Are there unusual processes or network connections following ticket authentication?"
+      - "Is there privilege escalation or administrative commands executed?"
+    data_sources:
+      - "Process creation logs"
+      - "Network logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Legitimate ticket usage within normal patterns."
+      - "Medium: Suspicious ticket use with incomplete context."
+      - "High: Confirmed misuse or lateral movement using tickets."
+  - confidence_levels:
+      - "High: Confirmed ticket misuse with correlated malicious activity."
+      - "Medium: Anomalous ticket usage without full evidence."
+      - "Low: Ticket use matching known legitimate activity."
+
+ioc_types:
+  - "Kerberos ticket reuse across multiple hosts"
+  - "Unusual service ticket requests"
+  - "Anomalous Kerberos event IDs (4768, 4769, 4771)"
+
+queries/examples:
+  - name: "Detect Kerberos Ticket Requests"
+    query: >
+      event_id IN (4768, 4769) AND
+      kerberos.service_name NOT IN ("krbtgt", "host") AND
+      source_ip NOT IN user’s usual IPs
+
+  - name: "Detect Ticket Reuse on Different Hosts"
+    query: >
+      kerberos.ticket_id IS NOT NULL AND
+      destination_ip NOT IN known host list for user
+
+automation_hooks:
+  - "Alert on anomalous Kerberos ticket usage."
+  - "Force re-authentication or ticket invalidation."
+  - "Isolate endpoint if lateral movement suspected."
+
+analyst_guidance:
+  - "Verify the legitimacy of Kerberos ticket use."
+  - "Check for lateral movement or privilege escalation signs."
+  - "Recommend resetting compromised accounts if confirmed."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1075/"
+  - "https://docs.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4769"
+
+review_cycle: "Quarterly or after detection of suspicious Kerberos ticket use"

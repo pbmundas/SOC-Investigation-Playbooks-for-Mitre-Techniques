@@ -1,0 +1,84 @@
+playbook_name: "T1071 - Command and Control via Application Layer Protocol Detection"
+tactic: "Command and Control"
+technique_id: "T1071"
+technique_name: "Application Layer Protocol"
+description: >
+  Detect adversaries using application layer protocols to communicate with command and control servers to evade detection.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Network Traffic on Common Application Layer Protocols"
+    description: >
+      Analyze traffic patterns over HTTP, HTTPS, DNS, FTP, and other application layer protocols for anomalies.
+    checklist:
+      - "Are there unusual connections to uncommon domains or IPs?"
+      - "Is there traffic with unusual data sizes or timing patterns?"
+    data_sources:
+      - "Network flow logs"
+      - "Proxy and firewall logs"
+      - "DNS logs"
+
+  - step_number: 2
+    title: "Detect Known Malicious Indicators in Application Layer Traffic"
+    description: >
+      Match traffic against threat intelligence indicators like malicious domains, IPs, or URLs.
+    checklist:
+      - "Are connections made to known C2 infrastructure?"
+      - "Is there communication to newly registered or low-reputation domains?"
+    data_sources:
+      - "Threat intelligence feeds"
+      - "DNS and web proxy logs"
+
+  - step_number: 3
+    title: "Identify Protocol Anomalies or Misuse"
+    description: >
+      Detect deviations from normal protocol behavior, such as abnormal HTTP methods, headers, or encrypted DNS tunneling.
+    checklist:
+      - "Are there HTTP POST requests with unusual payloads?"
+      - "Is DNS traffic unusually high or contains encoded data?"
+    data_sources:
+      - "Deep packet inspection (DPI)"
+      - "Network IDS/IPS alerts"
+      - "Proxy logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Normal application layer traffic."
+      - "Medium: Suspicious traffic with some anomalies."
+      - "High: Confirmed C2 communication over application protocols."
+  - confidence_levels:
+      - "High: Matching known C2 indicators or confirmed unusual protocol use."
+      - "Medium: Suspicious traffic patterns without IOC confirmation."
+      - "Low: Potential false positives due to legitimate traffic."
+
+ioc_types:
+  - "Malicious domain names or IP addresses"
+  - "Unusual HTTP user agents or headers"
+  - "Encoded or tunneled protocol payloads"
+
+queries/examples:
+  - name: "Detect HTTP Traffic to Newly Registered Domains"
+    query: >
+      dns.domain_registration_date < now() - 30d AND
+      http.host NOT IN (whitelist_domains)
+
+  - name: "Detect DNS Traffic with High Query Volume"
+    query: >
+      dns.query_count > threshold AND
+      dns.query_type = "TXT" OR dns.query_type = "CNAME"
+
+automation_hooks:
+  - "Alert on suspicious or anomalous application layer protocol traffic."
+  - "Block connections to known malicious domains or IPs."
+  - "Trigger investigation workflow on confirmed C2 traffic."
+
+analyst_guidance:
+  - "Review process initiating network connections."
+  - "Correlate with endpoint telemetry for malicious activity."
+  - "Monitor for lateral movement or data exfiltration following C2 detection."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1071/"
+  - "https://www.sans.org/white-papers/39304/"
+
+review_cycle: "Monthly or post incident response"

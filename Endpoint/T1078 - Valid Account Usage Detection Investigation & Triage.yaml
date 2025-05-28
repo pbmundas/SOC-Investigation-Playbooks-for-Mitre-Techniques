@@ -1,0 +1,128 @@
+playbook_name: "T1078 - Valid Account Usage Detection: Investigation & Triage"
+tactic: "Persistence / Defense Evasion / Lateral Movement"
+technique_id: "T1078"
+technique_name: "Valid Accounts"
+description: >
+  Guide for SOC analysts to investigate suspicious usage of valid credentials,
+  focusing on anomalous authentication behavior, lateral movement, and credential abuse.
+
+investigation_steps:
+  - step_number: 1
+    title: "Authentication Event Review"
+    description: >
+      Identify the initial alert — suspicious login or access event.
+    checklist:
+      - "Which user account was used?"
+      - "Was the login successful or failed?"
+      - "What authentication method was used (password, token, RDP, VPN)?"
+      - "What is the source IP/location?"
+      - "Is this login consistent with the user’s typical behavior?"
+    data_sources:
+      - "Windows Security Logs (4624/4625/4648)"
+      - "Linux auth logs (/var/log/auth.log)"
+      - "VPN, RDP, SSH logs"
+      - "SIEM Alerts"
+
+  - step_number: 2
+    title: "Anomaly Detection (Time & Location)"
+    description: >
+      Analyze login patterns for signs of compromise or credential sharing.
+    checklist:
+      - "Is this login from a new country/device?"
+      - "Was this a login at unusual hours (off-shift, weekend)?"
+      - "Is the IP geolocation consistent with user’s profile?"
+      - "Has the user account been inactive recently?"
+    data_sources:
+      - "Authentication logs"
+      - "GeoIP threat feeds"
+      - "UEBA baselines"
+      - "Endpoint telemetry"
+
+  - step_number: 3
+    title: "Lateral Movement Check"
+    description: >
+      Determine if the account was used to pivot or access internal systems.
+    checklist:
+      - "Are there signs of SMB, RDP, WinRM, or SSH usage post-authentication?"
+      - "Was PsExec, WMI, or PowerShell used remotely?"
+      - "Any remote service ticket use (Kerberos TGS) from new hosts?"
+    data_sources:
+      - "Windows Event Logs (4688, 4648, 4769)"
+      - "Sysmon Logs"
+      - "Endpoint EDR"
+      - "Firewall/NetFlow Logs"
+
+  - step_number: 4
+    title: "Account Privilege Review"
+    description: >
+      Assess whether the account has elevated access and is being abused.
+    checklist:
+      - "Is the account a domain admin, service, or shared admin account?"
+      - "Were privilege escalation attempts logged (e.g., SID history tampering)?"
+      - "Has the user accessed critical systems or sensitive shares?"
+    data_sources:
+      - "Active Directory logs"
+      - "Access Control Logs"
+      - "Group Membership Logs"
+      - "SIEM Enrichment"
+
+  - step_number: 5
+    title: "Scope of Access"
+    description: >
+      Identify what the attacker may have accessed using the compromised account.
+    checklist:
+      - "What shares or files were accessed?"
+      - "Were any new processes spawned or scheduled?"
+      - "Was any data transferred or exfiltrated?"
+    data_sources:
+      - "File Access Logs (Object Access Auditing)"
+      - "EDR Process Logs"
+      - "Proxy/Firewall Logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Single failed login from uncommon location"
+      - "Medium: Successful login from suspicious IP, no lateral movement"
+      - "High: Successful login, lateral movement, or access to sensitive data"
+  - confidence_levels:
+      - "High: MFA bypass or confirmed credential reuse"
+      - "Medium: Known IP but off-hours access"
+      - "Low: Unusual login but no evidence of misuse"
+
+ioc_types:
+  - "Username"
+  - "Source IP address"
+  - "Logon type"
+  - "Target hostname"
+  - "Authentication method"
+  - "Kerberos TGT/TGS patterns"
+
+queries/examples:
+  - name: "Windows Login from External IP"
+    query: >
+      EventID:4624 AND LogonType:10 AND NOT (IpAddress IN trusted_vpn_ranges)
+  - name: "Remote Process Creation"
+    query: >
+      EventID:4688 AND ParentCommandLine:*psexec* OR *wmic* OR *winrm*
+  - name: "Kerberos Lateral Movement Indicator"
+    query: >
+      EventID:4769 AND ServiceName: cifs/* OR host/*
+
+automation_hooks:
+  - "Trigger UEBA comparison on user behavior"
+  - "Auto-tag known good logins (VPN, SSO)"
+  - "Enrich source IP with threat intel"
+  - "Isolate host if high-risk activity is observed"
+
+analyst_guidance:
+  - "Correlate successful login with endpoint behavior post-authentication"
+  - "Investigate logon types: LogonType 3 (network), 10 (RDP), 2 (console)"
+  - "Prioritize privileged or service accounts"
+  - "Work with IAM team to reset compromised accounts and rotate credentials"
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1078/"
+  - "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/basic-audit-logon-events"
+  - "https://www.elastic.co/guide/en/security/current/authentication-event-analysis.html"
+
+review_cycle: "Monthly or after major authentication-related incidents"

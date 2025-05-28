@@ -1,0 +1,85 @@
+playbook_name: "T1114 - Email Collection Detection: Investigation & Triage"
+tactic: "Collection"
+technique_id: "T1114"
+technique_name: "Email Collection"
+description: >
+  Detects adversaries collecting email data from local or remote sources, which may contain sensitive information or credentials.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Access to Email Clients and Mail Stores"
+    description: >
+      Identify unusual access or read operations on email client data stores (e.g., Outlook PST files, Thunderbird profiles).
+    checklist:
+      - "Are there processes accessing email storage files outside of normal user behavior?"
+      - "Is there a spike in file reads or copies of email data?"
+    data_sources:
+      - "File system monitoring"
+      - "Process creation and file access logs"
+
+  - step_number: 2
+    title: "Detect Use of Email Collection Tools or Scripts"
+    description: >
+      Identify suspicious tools or scripts used to collect emails locally or remotely.
+    checklist:
+      - "Are there known email scraping or harvesting tools executed?"
+      - "Are there PowerShell or script commands targeting email clients or servers?"
+    data_sources:
+      - "Process monitoring"
+      - "Command-line auditing"
+      - "Script execution logs"
+
+  - step_number: 3
+    title: "Correlate Email Collection with Data Exfiltration"
+    description: >
+      Observe if collected emails are transferred outside the organization.
+    checklist:
+      - "Is there outbound network traffic containing email data?"
+      - "Are emails sent to unauthorized external addresses?"
+    data_sources:
+      - "Network traffic monitoring"
+      - "Email gateway logs"
+      - "Data loss prevention (DLP) logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Collection by authorized personnel or automated backups."
+      - "Medium: Suspicious collection activity without confirmed exfiltration."
+      - "High: Malicious email collection linked to data exfiltration."
+  - confidence_levels:
+      - "High: Confirmed collection followed by exfiltration."
+      - "Medium: Detected access to email stores by suspicious processes."
+      - "Low: Normal user activity."
+
+ioc_types:
+  - "Access to Outlook PST/OST files or similar mail stores"
+  - "Execution of email harvesting tools or scripts"
+  - "Unusual outbound transfer of email content"
+
+queries/examples:
+  - name: "Detect Access to Outlook PST Files"
+    query: >
+      file.path ENDSWITH ".pst" AND
+      event.type = "file_access" AND
+      process.name NOT IN ("outlook.exe", "office.exe")
+
+  - name: "Detect PowerShell Email Harvesting Commands"
+    query: >
+      process.name = "powershell.exe" AND
+      process.command_line CONTAINS ("Get-Mailbox", "Export-Mailbox")
+
+automation_hooks:
+  - "Alert on unauthorized access to mail stores."
+  - "Block known email collection tools."
+  - "Notify security operations on detected exfiltration attempts."
+
+analyst_guidance:
+  - "Validate if email collection is part of legitimate business processes."
+  - "Review user context and process ancestry."
+  - "Investigate associated network connections and data transfers."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1114/"
+  - "https://www.sans.org/white-papers/40215/"
+
+review_cycle: "Quarterly or after any email collection incident"

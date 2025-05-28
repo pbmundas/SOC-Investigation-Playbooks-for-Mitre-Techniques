@@ -1,0 +1,83 @@
+playbook_name: "T1135 - Network Share Discovery Detection: Investigation & Triage"
+tactic: "Discovery"
+technique_id: "T1135"
+technique_name: "Network Share Discovery"
+description: >
+  Detects adversaries enumerating network shares to identify accessible file shares and resources for data collection or lateral movement.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Network Share Enumeration Commands"
+    description: >
+      Identify use of commands/tools like `net view`, `net use`, `Get-SmbShare`, or LDAP queries used to discover network shares.
+    checklist:
+      - "Are commands like `net view` or PowerShell cmdlets querying SMB shares executed?"
+      - "Are unusual accounts performing network share enumeration?"
+    data_sources:
+      - "Process creation logs"
+      - "Command-line auditing"
+      - "Network file share logs"
+
+  - step_number: 2
+    title: "Detect Abnormal Network Share Access Patterns"
+    description: >
+      Look for unusual or large-scale network share enumeration, especially from non-admin or non-standard user accounts.
+    checklist:
+      - "Is there enumeration of multiple shares across many hosts?"
+      - "Are network shares accessed outside of normal working hours?"
+    data_sources:
+      - "File access logs"
+      - "User activity monitoring"
+
+  - step_number: 3
+    title: "Correlate Share Discovery with Lateral Movement or Data Access"
+    description: >
+      Determine if share discovery activity is followed by file access or lateral movement.
+    checklist:
+      - "Are shares accessed shortly after discovery?"
+      - "Is there evidence of credential use or suspicious file transfers?"
+    data_sources:
+      - "Network logs"
+      - "Endpoint detection logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Network share enumeration by authorized administrators."
+      - "Medium: Enumeration by non-privileged or suspicious accounts."
+      - "High: Discovery linked to lateral movement or data theft."
+  - confidence_levels:
+      - "High: Confirmed unauthorized network share enumeration."
+      - "Medium: Suspicious enumeration activity."
+      - "Low: Routine IT maintenance activity."
+
+ioc_types:
+  - "Execution of `net view`, `net use` commands"
+  - "PowerShell cmdlets like `Get-SmbShare`"
+  - "LDAP queries for shared folders"
+
+queries/examples:
+  - name: "Detect Net View Command Usage"
+    query: >
+      process.name == "net.exe" AND
+      process.command_line CONTAINS "view"
+
+  - name: "Detect PowerShell Network Share Queries"
+    query: >
+      process.name == "powershell.exe" AND
+      process.command_line MATCHES "(?i)Get-SmbShare|Get-WmiObject.*Win32_Share"
+
+automation_hooks:
+  - "Alert on unauthorized network share enumeration."
+  - "Restrict share enumeration commands to admins."
+  - "Review and limit share permissions."
+
+analyst_guidance:
+  - "Validate the intent and user context of network share queries."
+  - "Investigate subsequent share access or file activity."
+  - "Recommend tightening share access controls."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1135/"
+  - "https://docs.microsoft.com/en-us/powershell/module/smbshare/get-smbshare"
+
+review_cycle: "Quarterly or following detection of network share enumeration"

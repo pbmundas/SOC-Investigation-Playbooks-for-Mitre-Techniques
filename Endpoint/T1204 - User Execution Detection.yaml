@@ -1,0 +1,125 @@
+playbook_name: "T1204 - User Execution Detection"
+tactic: "Execution"
+technique_id: "T1204"
+technique_name: "User Execution"
+description: >
+  This playbook guides SOC analysts through detection and investigation of scenarios where a user executes
+  a malicious file, script, or macro, resulting in adversary code execution. It includes file executions
+  from email attachments, downloads, or removable media.
+
+investigation_steps:
+  - step_number: 1
+    title: "Review the Triggering Event"
+    description: >
+      Determine what file or script was executed and who executed it.
+    checklist:
+      - "What is the filename and extension?"
+      - "Which user executed it?"
+      - "What process was spawned as a result?"
+      - "What was the parent process (e.g., Outlook, browser)?"
+    data_sources:
+      - "EDR process tree"
+      - "File execution logs (Sysmon Event ID 1)"
+      - "Email security logs"
+
+  - step_number: 2
+    title: "Determine the Execution Vector"
+    description: >
+      Understand how the file/script was introduced—via email, download, USB, or network share.
+    checklist:
+      - "Did the file originate from email?"
+      - "Was the source a browser or USB device?"
+      - "Does it have Mark-of-the-Web (MOTW) flag set?"
+    data_sources:
+      - "Windows Defender ATP or EDR"
+      - "Mail gateway logs (e.g., Proofpoint, O365 ATP)"
+      - "USB device logs"
+
+  - step_number: 3
+    title: "Analyze Child Process Activity"
+    description: >
+      Investigate what processes were spawned after execution.
+    checklist:
+      - "Was PowerShell, cmd, or mshta launched?"
+      - "Were LOLBins (e.g., regsvr32, rundll32) used?"
+      - "Any network connections or dropped files?"
+    data_sources:
+      - "Sysmon (Event ID 1, 3, 11)"
+      - "EDR telemetry"
+      - "Process command line and parent/child relationships"
+
+  - step_number: 4
+    title: "Check for Persistence or Malware Delivery"
+    description: >
+      Determine if malware was installed or persistence established.
+    checklist:
+      - "Are there new autoruns or scheduled tasks?"
+      - "Did malware get dropped to disk?"
+      - "Were registry keys modified?"
+    data_sources:
+      - "Autoruns / Windows Registry Logs"
+      - "Scheduled Tasks (Event ID 4698)"
+      - "Antivirus or malware detection alerts"
+
+  - step_number: 5
+    title: "Correlate with User Behavior"
+    description: >
+      Determine if the user behavior was suspicious or unintentional.
+    checklist:
+      - "Was the user tricked (social engineering)?"
+      - "Is this behavior consistent with past actions?"
+      - "Is there evidence of phishing email or impersonation?"
+    data_sources:
+      - "Email headers and body content"
+      - "User and Entity Behavior Analytics (UEBA)"
+      - "User profile baselines"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Non-malicious script executed by user"
+      - "Medium: Suspicious document launched PowerShell"
+      - "High: Executed file spawned network activity or persistent malware"
+  - confidence_levels:
+      - "High: Execution of known malware or LOLBin activity"
+      - "Medium: Execution of unsigned/untrusted file with suspicious behavior"
+      - "Low: New/unfamiliar file type execution"
+
+ioc_types:
+  - "File Hash (MD5/SHA256)"
+  - "Command line arguments"
+  - "Executable name"
+  - "Email subject/sender"
+  - "Registry changes"
+  - "Dropped file names"
+
+queries/examples:
+  - name: "Suspicious Document Execution"
+    query: >
+      EventID=1 AND ParentImage="*winword.exe" AND (Image="*powershell.exe" OR Image="*cmd.exe")
+
+  - name: "Executable from Download Folder"
+    query: >
+      FilePath="C:\\Users\\*\\Downloads\\*.exe" AND NOT VerifiedSigner="Microsoft Windows"
+
+  - name: "Execution with Mark-of-the-Web"
+    query: >
+      File created with MOTW AND executed within 5 minutes by user
+
+automation_hooks:
+  - "Run VirusTotal/Hybrid Analysis scan on executed file hash"
+  - "Trigger EDR full scan on involved host"
+  - "Isolate endpoint if confirmed malicious activity"
+  - "Extract original email from mail gateway for phishing analysis"
+
+analyst_guidance:
+  - "Check file reputation with AV, sandbox, and threat intel"
+  - "Examine command-line arguments for obfuscation or red flags"
+  - "Look for follow-on activity like credential access or lateral movement"
+  - "Advise user on phishing awareness if accidental execution occurred"
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1204/"
+  - "https://docs.microsoft.com/en-us/windows/security/threat-protection/windows-defender-antivirus/troubleshoot-macro-blocking"
+  - "https://www.sans.org/blog/breaking-down-malicious-documents/"
+
+review_cycle: "Quarterly or after macro-based malware outbreaks"

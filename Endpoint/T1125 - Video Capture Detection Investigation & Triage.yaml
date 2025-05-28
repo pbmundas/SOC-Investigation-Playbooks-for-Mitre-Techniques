@@ -1,0 +1,82 @@
+playbook_name: "T1125 - Video Capture Detection: Investigation & Triage"
+tactic: "Collection"
+technique_id: "T1125"
+technique_name: "Video Capture"
+description: >
+  Detects adversaries capturing video from webcams or screen capture to steal sensitive visual information or for surveillance.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Webcam or Video Device Access"
+    description: >
+      Detect processes accessing webcam devices or screen capture APIs.
+    checklist:
+      - "Are there processes accessing video capture hardware unexpectedly?"
+      - "Is there unusual timing or frequency of webcam activation?"
+    data_sources:
+      - "System and device logs (e.g., Windows Device Manager events)"
+      - "Process and file access logs"
+
+  - step_number: 2
+    title: "Detect Video Recording or Streaming"
+    description: >
+      Identify creation of video files or streaming of live video feeds.
+    checklist:
+      - "Are new video files (.mp4, .avi, .mov) created by unknown or suspicious processes?"
+      - "Is there network traffic indicative of live video streaming or upload?"
+    data_sources:
+      - "File system monitoring"
+      - "Network traffic logs and deep packet inspection"
+
+  - step_number: 3
+    title: "Correlate Access with Malicious Behavior"
+    description: >
+      Link video capture activity with suspicious user accounts or known malware.
+    checklist:
+      - "Is webcam access linked to known adversary tools?"
+      - "Are related suspicious processes running concurrently?"
+    data_sources:
+      - "Threat intelligence"
+      - "Process execution and user activity logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Legitimate use of webcam or screen capture."
+      - "Medium: Unusual or unapproved video capture detected."
+      - "High: Unauthorized video capture or streaming confirmed."
+  - confidence_levels:
+      - "High: Verified malicious video capture activity."
+      - "Medium: Suspicious device access without full context."
+      - "Low: Normal video capture by approved applications."
+
+ioc_types:
+  - "Processes accessing video capture devices"
+  - "Creation of suspicious video files"
+  - "Network streaming traffic related to video data"
+
+queries/examples:
+  - name: "Detect Webcam Access by Unknown Processes"
+    query: >
+      process.name NOT IN ("Zoom.exe", "Teams.exe", "Skype.exe") AND
+      file.access CONTAINS "video_capture" OR "webcam"
+
+  - name: "Detect New Video File Creation"
+    query: >
+      file.extension IN (".mp4", ".avi", ".mov") AND
+      process.user NOT IN ("AuthorizedUserList")
+
+automation_hooks:
+  - "Generate alerts on unauthorized video device access."
+  - "Block suspicious processes attempting video capture."
+  - "Notify security team for rapid investigation."
+
+analyst_guidance:
+  - "Confirm if video capture activity is legitimate."
+  - "Investigate network traffic for possible video data exfiltration."
+  - "Enforce endpoint camera usage policies and user education."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1125/"
+  - "https://docs.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4688"
+
+review_cycle: "Monthly or after video capture detection events"

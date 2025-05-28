@@ -1,0 +1,83 @@
+playbook_name: "T1074.001 - Local Data Staging Detection: Investigation & Triage"
+tactic: "Collection"
+technique_id: "T1074.001"
+technique_name: "Local Data Staging"
+description: >
+  Detects adversaries staging collected data locally on compromised endpoints before exfiltration.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Creation of Large Files in Local Temporary Directories"
+    description: >
+      Detect large or archive files created in local temp folders or unusual directories.
+    checklist:
+      - "Are large files created in directories like C:\\Windows\\Temp or user temp folders?"
+      - "Is the file type consistent with data aggregation (e.g., zip, tar)?"
+    data_sources:
+      - "File system monitoring"
+      - "Endpoint detection tools"
+
+  - step_number: 2
+    title: "Identify Bulk File Access and Aggregation"
+    description: >
+      Observe file access patterns indicating multiple files copied or aggregated locally.
+    checklist:
+      - "Are many files read from diverse locations shortly before staging?"
+      - "Are there processes reading large amounts of sensitive data?"
+    data_sources:
+      - "Process monitoring"
+      - "File access logs"
+
+  - step_number: 3
+    title: "Correlate Local Staging with Subsequent Network Activity"
+    description: >
+      Determine if staged data is transferred externally soon after aggregation.
+    checklist:
+      - "Is network traffic detected shortly after data staging?"
+      - "Are destination IPs or domains suspicious?"
+    data_sources:
+      - "Network logs"
+      - "SIEM correlation"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Legitimate local archiving activities."
+      - "Medium: Suspicious file staging in uncommon locations."
+      - "High: Unauthorized local data staging linked to exfiltration."
+  - confidence_levels:
+      - "High: Verified malicious staging followed by exfiltration."
+      - "Medium: Suspicious staging without further context."
+      - "Low: Known user-initiated local file operations."
+
+ioc_types:
+  - "Large archive or data files in local temp directories"
+  - "Bulk file read events preceding local file creation"
+  - "Processes creating large files in local staging areas"
+
+queries/examples:
+  - name: "Local Large Archive Creation"
+    query: >
+      file.extension IN (".zip", ".rar", ".7z") AND
+      file.size > 100MB AND
+      file.path MATCHES ("C:\\\\Windows\\\\Temp|%TEMP%")
+
+  - name: "Bulk File Reads Before Local Staging"
+    query: >
+      process.name IN ("powershell.exe", "cmd.exe") AND
+      file.read_count > 30 WITHIN 15 minutes
+
+automation_hooks:
+  - "Alert on large file creation in local temp directories."
+  - "Monitor processes performing bulk file reads."
+  - "Trigger investigation workflows on detection."
+
+analyst_guidance:
+  - "Verify if local staging activity is authorized."
+  - "Check for subsequent suspicious network connections."
+  - "Investigate user/process behavior for compromise."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1074/001/"
+  - "https://www.sans.org/white-papers/398/"
+
+review_cycle: "Monthly or after detection of suspicious local staging"

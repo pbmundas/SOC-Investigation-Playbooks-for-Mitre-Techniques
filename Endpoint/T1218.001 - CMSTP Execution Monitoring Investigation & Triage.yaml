@@ -1,0 +1,85 @@
+playbook_name: "T1218.001 - CMSTP Execution Monitoring: Investigation & Triage"
+tactic: "Defense Evasion"
+technique_id: "T1218.001"
+technique_name: "CMSTP Execution Monitoring"
+description: >
+  Detect abuse of the CMSTP (Connection Manager Profile Installer) signed binary to execute malicious code.
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect CMSTP Execution"
+    description: >
+      Monitor process creation events for cmstp.exe executions, especially with unusual command line arguments.
+    checklist:
+      - "Are there unexpected or suspicious parameters passed to cmstp.exe?"
+      - "Is cmstp.exe invoked by unusual users or processes?"
+    data_sources:
+      - "Process creation logs"
+      - "Command line logging"
+      - "Endpoint telemetry"
+
+  - step_number: 2
+    title: "Analyze Command Line Arguments"
+    description: >
+      Investigate arguments for execution of scripts, remote payloads, or non-standard CM profiles.
+    checklist:
+      - "Is there evidence of remote file execution via cmstp?"
+      - "Are local scripts or files executed unexpectedly?"
+    data_sources:
+      - "Process command line details"
+      - "File system monitoring"
+
+  - step_number: 3
+    title: "Correlate with Related Suspicious Activity"
+    description: >
+      Check if CMSTP execution coincides with lateral movement, privilege escalation, or malware deployment.
+    checklist:
+      - "Are other suspicious processes active?"
+      - "Are user accounts or systems compromised?"
+    data_sources:
+      - "SIEM correlation"
+      - "Endpoint alerts"
+
+  - step_number: 4
+    title: "Respond and Contain"
+    description: >
+      Block or isolate affected hosts, disable CMSTP execution if unauthorized.
+    checklist:
+      - "Restrict cmstp.exe execution via application control policies."
+      - "Engage incident response team."
+    data_sources:
+      - "Endpoint management"
+      - "Incident response tools"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Legitimate CMSTP use."
+      - "Medium: Suspicious use requiring review."
+      - "High: Confirmed malicious CMSTP abuse."
+  - confidence_levels:
+      - "High: Verified unauthorized execution."
+      - "Medium: Suspicious command lines."
+      - "Low: Normal usage."
+
+ioc_types:
+  - "Suspicious cmstp.exe command line"
+  - "Unusual parent process or user context"
+
+queries/examples:
+  - name: "Detect CMSTP execution"
+    query: >
+      process.name:cmstp.exe
+
+automation_hooks:
+  - "Alert on cmstp.exe execution with suspicious arguments."
+  - "Trigger investigation workflow."
+
+analyst_guidance:
+  - "Confirm if execution was authorized."
+  - "Review related system or network activity."
+  - "Coordinate with IR as needed."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1218/001/"
+
+review_cycle: "Quarterly or post-incident"

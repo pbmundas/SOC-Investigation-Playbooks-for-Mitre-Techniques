@@ -1,0 +1,82 @@
+playbook_name: "T1083 - File and Directory Discovery Detection: Investigation & Triage"
+tactic: "Discovery"
+technique_id: "T1083"
+technique_name: "File and Directory Discovery"
+description: >
+  Detects adversaries enumerating files and directories on systems to locate valuable information, credentials, or further attack vectors.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor File and Directory Enumeration Commands"
+    description: >
+      Identify usage of commands and tools (e.g., dir, ls, Get-ChildItem, cmdlets) for file and directory discovery.
+    checklist:
+      - "Are file/directory enumeration commands executed by suspicious users?"
+      - "Are scripting tools used to recursively list files?"
+    data_sources:
+      - "Process creation logs"
+      - "Command-line auditing"
+
+  - step_number: 2
+    title: "Detect Unusual or Large-Scale File Enumeration Activity"
+    description: >
+      Look for excessive or automated file enumeration outside of normal operations.
+    checklist:
+      - "Are there recursive directory listing commands or scripts?"
+      - "Is file enumeration performed from unusual hosts or accounts?"
+    data_sources:
+      - "User activity logs"
+      - "Endpoint monitoring"
+
+  - step_number: 3
+    title: "Correlate File Discovery with Credential Access or Data Exfiltration"
+    description: >
+      Determine if file and directory discovery precedes attempts to access sensitive files or exfiltrate data.
+    checklist:
+      - "Is file enumeration followed by access to credential files?"
+      - "Are suspicious outbound network connections observed afterward?"
+    data_sources:
+      - "File access logs"
+      - "Network logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: File enumeration by authorized users."
+      - "Medium: Enumeration by unknown or suspicious accounts."
+      - "High: File discovery linked to credential theft or data breach."
+  - confidence_levels:
+      - "High: Confirmed unauthorized file/directory discovery."
+      - "Medium: Suspicious activity requiring further context."
+      - "Low: Routine system maintenance."
+
+ioc_types:
+  - "Execution of dir, ls, Get-ChildItem commands"
+  - "Recursive file listing scripts"
+  - "Access to directories containing sensitive files"
+
+queries/examples:
+  - name: "Detect dir or ls Command Usage"
+    query: >
+      (process.name == "cmd.exe" AND process.command_line CONTAINS "dir") OR
+      (process.name == "bash" AND process.command_line CONTAINS "ls")
+
+  - name: "Detect PowerShell Recursive Directory Listing"
+    query: >
+      process.name == "powershell.exe" AND
+      process.command_line MATCHES "(?i)Get-ChildItem.*-Recurse"
+
+automation_hooks:
+  - "Alert on suspicious file and directory enumeration."
+  - "Limit recursive directory listing commands."
+  - "Monitor for access to sensitive files post-enumeration."
+
+analyst_guidance:
+  - "Validate file discovery intent and user privileges."
+  - "Correlate with other suspicious activities or alerts."
+  - "Recommend file system permission reviews and controls."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1083/"
+  - "https://docs.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4663"
+
+review_cycle: "Quarterly or after suspicious file enumeration detection"

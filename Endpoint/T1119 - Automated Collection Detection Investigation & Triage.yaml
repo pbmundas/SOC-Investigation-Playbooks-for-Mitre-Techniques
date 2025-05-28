@@ -1,0 +1,81 @@
+playbook_name: "T1119 - Automated Collection Detection: Investigation & Triage"
+tactic: "Collection"
+technique_id: "T1119"
+technique_name: "Automated Collection"
+description: >
+  Detects adversaries using automated tools or scripts to gather data, files, or system information to expedite data collection during an intrusion.
+
+investigation_steps:
+  - step_number: 1
+    title: "Identify Execution of Collection Tools"
+    description: >
+      Detect execution of known automated collection tools or suspicious scripts that gather data.
+    checklist:
+      - "Are known data collection utilities executed?"
+      - "Is there evidence of batch scripts or automated tools running?"
+    data_sources:
+      - "Process execution logs"
+      - "Command-line auditing"
+
+  - step_number: 2
+    title: "Detect Mass File Access or Exfiltration"
+    description: >
+      Monitor unusual patterns of file access or bulk copying indicative of automated data gathering.
+    checklist:
+      - "Are many files accessed or copied in a short timeframe?"
+      - "Is there data staged for exfiltration?"
+    data_sources:
+      - "File system audit logs"
+      - "Network monitoring for exfiltration"
+
+  - step_number: 3
+    title: "Correlate with Other Intrusion Indicators"
+    description: >
+      Link automated collection with prior or subsequent adversary actions such as credential theft or lateral movement.
+    checklist:
+      - "Is automated collection preceded by privilege escalation?"
+      - "Are there signs of lateral movement following data collection?"
+    data_sources:
+      - "Authentication logs"
+      - "Process and network logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Normal backup or legitimate data gathering."
+      - "Medium: Suspicious automated data collection."
+      - "High: Confirmed adversary automated data collection."
+  - confidence_levels:
+      - "High: Known adversary tool usage detected."
+      - "Medium: Suspicious file access patterns."
+      - "Low: Routine system maintenance activities."
+
+ioc_types:
+  - "Execution of tools like PowerShell scripts, Mimikatz, or other collection utilities"
+  - "Rapid file access or copying events"
+  - "Data staging for exfiltration"
+
+queries/examples:
+  - name: "Detect Execution of Known Collection Tools"
+    query: >
+      process.name IN ("mimikatz.exe", "powershell.exe") AND
+      command_line CONTAINS ("Invoke-Command", "Get-Content")
+
+  - name: "Detect Mass File Access"
+    query: >
+      file.access_count > 100 WITHIN 5 minutes
+
+automation_hooks:
+  - "Alert on execution of suspicious data collection tools."
+  - "Throttle or block mass file access."
+  - "Notify incident response team."
+
+analyst_guidance:
+  - "Validate if collection activity is authorized."
+  - "Investigate associated suspicious processes and user accounts."
+  - "Implement data access controls and monitoring."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1119/"
+  - "https://www.fireeye.com/blog/threat-research/2018/07/automated-collection-tactics.html"
+
+review_cycle: "Monthly or after detection of suspicious automated collection"

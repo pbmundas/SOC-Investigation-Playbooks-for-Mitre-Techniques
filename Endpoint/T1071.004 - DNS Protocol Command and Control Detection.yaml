@@ -1,0 +1,85 @@
+playbook_name: "T1071.004 - DNS Protocol Command and Control Detection"
+tactic: "Command and Control"
+technique_id: "T1071.004"
+technique_name: "DNS Protocol"
+description: >
+  Detect adversaries using DNS queries and responses for command and control communication.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor DNS Traffic for Anomalies"
+    description: >
+      Analyze DNS queries for unusual domains, query types, and volume spikes.
+    checklist:
+      - "Are there DNS requests to suspicious or newly registered domains?"
+      - "Is there an unusual number of TXT, CNAME, or NULL queries?"
+      - "Are DNS queries unusually large or contain encoded data?"
+    data_sources:
+      - "DNS logs"
+      - "Network traffic logs"
+      - "Firewall logs"
+
+  - step_number: 2
+    title: "Detect Known Malicious Domains and IPs"
+    description: >
+      Match DNS queries against threat intelligence for known malicious domains used in DNS-based C2.
+    checklist:
+      - "Are DNS queries resolving to known malicious IPs?"
+      - "Are queried domains flagged as low reputation or suspicious?"
+    data_sources:
+      - "Threat intelligence feeds"
+      - "DNS logs"
+
+  - step_number: 3
+    title: "Identify DNS Tunneling or Data Encoding"
+    description: >
+      Detect patterns of DNS tunneling such as unusually long domain names or encoded query data.
+    checklist:
+      - "Are domain names unusually long or random?"
+      - "Is there high frequency of TXT record queries?"
+      - "Is encoded data detected in DNS queries?"
+    data_sources:
+      - "DNS traffic analysis tools"
+      - "Network IDS/IPS alerts"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Normal DNS traffic."
+      - "Medium: Suspicious DNS query patterns."
+      - "High: Confirmed DNS-based C2 activity."
+  - confidence_levels:
+      - "High: IOC match or confirmed DNS tunneling."
+      - "Medium: Behavioral anomalies without IOC confirmation."
+      - "Low: Possible false positives due to legitimate DNS use."
+
+ioc_types:
+  - "Malicious or suspicious domain names"
+  - "Unusual DNS query types (TXT, NULL)"
+  - "Encoded or tunneled DNS query data"
+
+queries/examples:
+  - name: "Detect DNS Queries with Long or Random Domains"
+    query: >
+      length(dns.query_name) > 50 OR
+      dns.query_name MATCHES "[a-z0-9]{15,}"
+
+  - name: "Detect High Volume of DNS TXT Queries"
+    query: >
+      dns.query_type = "TXT" AND
+      count_over_time > threshold
+
+automation_hooks:
+  - "Alert on anomalous DNS query patterns."
+  - "Block queries to known malicious domains."
+  - "Trigger endpoint investigation for potential DNS tunneling."
+
+analyst_guidance:
+  - "Review domain registration and reputation."
+  - "Correlate DNS activity with endpoint network connections."
+  - "Check for related lateral movement or exfiltration."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1071/004/"
+  - "https://www.sans.org/white-papers/36827/"
+
+review_cycle: "Monthly or after DNS tunneling detection"

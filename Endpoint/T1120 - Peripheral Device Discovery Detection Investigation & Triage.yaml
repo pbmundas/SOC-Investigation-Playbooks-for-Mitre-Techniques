@@ -1,0 +1,80 @@
+playbook_name: "T1120 - Peripheral Device Discovery Detection: Investigation & Triage"
+tactic: "Discovery"
+technique_id: "T1120"
+technique_name: "Peripheral Device Discovery"
+description: >
+  Detects adversaries attempting to gather information on peripheral devices connected to systems to identify potential vectors for data theft or further compromise.
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect Enumeration of Connected Devices"
+    description: >
+      Monitor execution of commands or utilities that enumerate peripheral devices (e.g., 'lsusb', 'Get-PnpDevice', device manager queries).
+    checklist:
+      - "Are enumeration commands executed by suspicious accounts?"
+      - "Is peripheral discovery occurring outside of normal maintenance windows?"
+    data_sources:
+      - "Process creation logs"
+      - "Command line auditing"
+
+  - step_number: 2
+    title: "Monitor File and Registry Access for Device Information"
+    description: >
+      Identify access to system files or registry keys storing device details.
+    checklist:
+      - "Are device-related files or registry paths accessed unexpectedly?"
+      - "Is access linked to unauthorized processes or users?"
+    data_sources:
+      - "File system monitoring"
+      - "Registry access logs"
+
+  - step_number: 3
+    title: "Correlate Peripheral Discovery with Suspicious Activities"
+    description: >
+      Review for subsequent actions such as data copying to removable media or installation of drivers.
+    checklist:
+      - "Is there increased USB device activity following discovery?"
+      - "Are there new device drivers installed or loaded?"
+    data_sources:
+      - "USB device logs"
+      - "Driver installation logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Authorized device enumeration."
+      - "Medium: Discovery during off-hours or by non-admins."
+      - "High: Discovery preceding data exfiltration or malware deployment."
+  - confidence_levels:
+      - "High: Confirmed enumeration commands/processes."
+      - "Medium: Suspicious file or registry access."
+      - "Low: Normal administrative activity."
+
+ioc_types:
+  - "Execution of peripheral enumeration utilities"
+  - "Access to device registry keys or driver files"
+  - "Unusual USB device mounts or usage"
+
+queries/examples:
+  - name: "Detect Peripheral Enumeration Commands"
+    query: >
+      process.command_line MATCHES "(?i)(lsusb|Get-PnpDevice|Get-WmiObject Win32_USBControllerDevice)"
+
+  - name: "Detect Access to USB Registry Keys"
+    query: >
+      registry.key_path CONTAINS "SYSTEM\\CurrentControlSet\\Enum\\USB"
+
+automation_hooks:
+  - "Alert on unauthorized peripheral device enumeration."
+  - "Restrict access to device info registry keys."
+  - "Monitor USB device activity closely after discovery."
+
+analyst_guidance:
+  - "Validate legitimacy of device discovery activity."
+  - "Investigate USB usage and new driver installations."
+  - "Recommend policies restricting peripheral device use."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1120/"
+  - "https://docs.microsoft.com/en-us/windows/security/threat-protection/auditing/basic-audit-peripheral-device-access"
+
+review_cycle: "Quarterly or after detection of peripheral device discovery"

@@ -1,0 +1,86 @@
+playbook_name: "T1105 - Tool Transfer Detection"
+tactic: "Command and Control"
+technique_id: "T1105"
+technique_name: "Ingress Tool Transfer"
+description: >
+  Detect adversaries transferring tools or files into a compromised environment.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor File Transfer Protocols and Channels"
+    description: >
+      Identify file transfers using FTP, HTTP, SMB, or other protocols into endpoints.
+    checklist:
+      - "Are there unexpected or large file downloads?"
+      - "Is there usage of uncommon or unauthorized transfer protocols?"
+      - "Are files transferred from suspicious or known malicious IPs/domains?"
+    data_sources:
+      - "Proxy logs"
+      - "Firewall logs"
+      - "Endpoint file creation logs"
+
+  - step_number: 2
+    title: "Analyze File Characteristics"
+    description: >
+      Inspect transferred files for known malicious signatures or anomalous attributes.
+    checklist:
+      - "Do transferred files match known malware hashes or signatures?"
+      - "Are file names or extensions suspicious or unusual?"
+      - "Are there new or unexpected executables on the system?"
+    data_sources:
+      - "Antivirus/EDR logs"
+      - "File integrity monitoring"
+
+  - step_number: 3
+    title: "Correlate File Transfer Events with User and Process Activity"
+    description: >
+      Determine the initiating user/process and validate legitimacy.
+    checklist:
+      - "Is file transfer initiated by legitimate users or services?"
+      - "Are there anomalies in process spawning or privilege escalation?"
+    data_sources:
+      - "Endpoint logs"
+      - "Process monitoring"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Known legitimate transfers."
+      - "Medium: Suspicious but unconfirmed transfers."
+      - "High: Confirmed malicious tool transfer."
+  - confidence_levels:
+      - "High: Signature or IOC match."
+      - "Medium: Behavioral anomalies."
+      - "Low: Potential false positive."
+
+ioc_types:
+  - "Suspicious file hashes"
+  - "Malicious IPs/domains"
+  - "Unusual file transfer patterns"
+
+queries/examples:
+  - name: "Detect Large File Downloads from Untrusted Sources"
+    query: >
+      http.response_body_size > threshold AND
+      network.destination_ip NOT IN trusted_sources
+
+  - name: "Detect Creation of New Executables on Endpoint"
+    query: >
+      file.creation_event AND
+      file.extension IN (".exe", ".dll", ".ps1") AND
+      NOT file.known_good
+
+automation_hooks:
+  - "Alert on suspicious tool transfers."
+  - "Quarantine transferred files."
+  - "Initiate endpoint investigation."
+
+analyst_guidance:
+  - "Validate legitimacy of transferred tools."
+  - "Check for lateral movement or further payload delivery."
+  - "Update detection signatures based on findings."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1105/"
+  - "https://www.crowdstrike.com/blog/ingress-tool-transfer/"
+
+review_cycle: "Quarterly or post-incident"

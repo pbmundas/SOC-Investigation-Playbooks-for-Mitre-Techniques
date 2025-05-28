@@ -1,0 +1,83 @@
+playbook_name: "T1074 - Data Staging Detection: Investigation & Triage"
+tactic: "Collection"
+technique_id: "T1074"
+technique_name: "Data Staging"
+description: >
+  Detects adversaries collecting and aggregating data in a central location on a compromised system or network before exfiltration.
+
+investigation_steps:
+  - step_number: 1
+    title: "Identify Unusual Large File Creation or Modification"
+    description: >
+      Look for creation or modification of large files or archives that could indicate data aggregation.
+    checklist:
+      - "Are large files (.zip, .rar, .7z, .tar) or unknown file types being created?"
+      - "Is file creation/modification occurring in non-standard or temporary directories?"
+    data_sources:
+      - "File system monitoring"
+      - "Endpoint detection logs"
+
+  - step_number: 2
+    title: "Detect Bulk File Movement or Copying"
+    description: >
+      Monitor for large scale file copying or movement activities on hosts.
+    checklist:
+      - "Are there signs of bulk copying from multiple directories to a staging location?"
+      - "Are multiple sensitive files accessed in a short time window?"
+    data_sources:
+      - "File access logs"
+      - "Process monitoring logs"
+
+  - step_number: 3
+    title: "Correlate Staging Activities with Other Indicators"
+    description: >
+      Correlate data staging activity with other suspicious behaviors such as data exfiltration attempts or unusual process execution.
+    checklist:
+      - "Is the staging followed by network transfer or exfiltration?"
+      - "Are the staging activities performed by unusual user accounts or processes?"
+    data_sources:
+      - "Network monitoring"
+      - "User and process behavior logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: File aggregation activity in known backup or archive processes."
+      - "Medium: Suspicious large file creation in uncommon locations."
+      - "High: Unapproved bulk data staging activity detected."
+  - confidence_levels:
+      - "High: Verified malicious staging activity linked to exfiltration."
+      - "Medium: Suspicious staging without clear exfiltration."
+      - "Low: Benign staging activity in backup/maintenance contexts."
+
+ioc_types:
+  - "Large archive file creation in temporary directories"
+  - "Bulk file copy or move operations"
+  - "File access patterns indicating data aggregation"
+
+queries/examples:
+  - name: "Detect Large Archive File Creation"
+    query: >
+      file.extension IN (".zip", ".rar", ".7z", ".tar") AND
+      file.size > 100MB AND
+      file.path CONTAINS ("temp", "tmp", "cache")
+
+  - name: "Detect Bulk File Copy Operations"
+    query: >
+      process.name IN ("copy.exe", "robocopy.exe") AND
+      file.access_count > 50 WITHIN 10 minutes
+
+automation_hooks:
+  - "Alert on large archive creation in suspicious locations."
+  - "Monitor and restrict bulk file copy/move operations."
+  - "Notify SOC team for further investigation."
+
+analyst_guidance:
+  - "Confirm if staging is part of authorized backup or maintenance."
+  - "Check for related exfiltration or suspicious network activity."
+  - "Review user/process context for legitimacy."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1074/"
+  - "https://docs.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4663"
+
+review_cycle: "Monthly or after detection of suspicious data staging events"

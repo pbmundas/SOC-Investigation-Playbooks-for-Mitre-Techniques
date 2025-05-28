@@ -1,0 +1,90 @@
+playbook_name: "T1218.002 - Mshta Execution Monitoring: Investigation & Triage"
+tactic: "Defense Evasion"
+technique_id: "T1218.002"
+technique_name: "Mshta Execution Monitoring"
+description: >
+  Detect abuse of mshta.exe (Microsoft HTML Application Host) to execute malicious HTA applications or scripts.
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect Mshta Execution"
+    description: >
+      Monitor process creation events for mshta.exe, especially with suspicious scripts or remote URLs.
+    checklist:
+      - "Are mshta.exe invocations using suspicious HTA files or URLs?"
+      - "Is mshta.exe run by unusual users or processes?"
+    data_sources:
+      - "Process creation logs"
+      - "Command line logging"
+      - "Network logs"
+
+  - step_number: 2
+    title: "Analyze Command Line and Script Behavior"
+    description: >
+      Investigate mshta execution command lines and downloaded HTA content.
+    checklist:
+      - "Are remote HTA files executed?"
+      - "Are local HTA files suspicious or unexpected?"
+    data_sources:
+      - "Process command line logs"
+      - "File monitoring"
+      - "Network traffic"
+
+  - step_number: 3
+    title: "Correlate with Suspicious Activity"
+    description: >
+      Identify concurrent suspicious processes or network connections.
+    checklist:
+      - "Are mshta executions accompanied by persistence or lateral movement?"
+      - "Are user credentials or systems compromised?"
+    data_sources:
+      - "SIEM correlation"
+      - "Endpoint telemetry"
+
+  - step_number: 4
+    title: "Incident Response"
+    description: >
+      Block or isolate affected hosts, restrict mshta execution if possible.
+    checklist:
+      - "Implement application control to block mshta.exe."
+      - "Engage incident response for further investigation."
+    data_sources:
+      - "Endpoint controls"
+      - "IR tools"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Legitimate mshta use."
+      - "Medium: Suspicious or unexpected mshta usage."
+      - "High: Confirmed mshta abuse for malicious activity."
+  - confidence_levels:
+      - "High: Confirmed malicious execution."
+      - "Medium: Suspicious indicators present."
+      - "Low: Benign use."
+
+ioc_types:
+  - "Suspicious mshta.exe command lines"
+  - "Remote HTA file execution"
+  - "Unusual parent-child process relationships"
+
+queries/examples:
+  - name: "Detect mshta executing remote HTA"
+    query: >
+      process.name:mshta.exe AND process.command_line:*http*://*.hta
+  - name: "Mshta executing local HTA"
+    query: >
+      process.name:mshta.exe AND process.command_line:*.hta
+
+automation_hooks:
+  - "Alert on mshta.exe execution with remote or suspicious HTA arguments."
+  - "Trigger analyst review."
+
+analyst_guidance:
+  - "Validate mshta usage legitimacy."
+  - "Investigate related network and file activity."
+  - "Coordinate IR if malicious."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1218/002/"
+
+review_cycle: "Quarterly or post-incident"

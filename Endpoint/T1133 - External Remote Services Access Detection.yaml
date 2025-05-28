@@ -1,0 +1,130 @@
+playbook_name: "T1133 - External Remote Services Access Detection"
+tactic: "Persistence"
+technique_id: "T1133"
+technique_name: "External Remote Services"
+description: >
+  This playbook helps SOC analysts investigate the use of legitimate remote access services 
+  (e.g., RDP, VPN, Citrix, TeamViewer) by unauthorized actors attempting to gain persistent 
+  access to internal systems from external networks.
+
+investigation_steps:
+  - step_number: 1
+    title: "Review Triggered Alert Details"
+    description: >
+      Start by examining the alert or log that triggered detection of external remote access.
+    checklist:
+      - "Which external service was accessed (RDP, VPN, etc.)?"
+      - "What is the source IP/location?"
+      - "Which user account was involved?"
+      - "What time was the access attempt?"
+    data_sources:
+      - "Firewall/VPN logs"
+      - "Windows Security Logs (4624, 4625)"
+      - "Authentication logs"
+      - "EDR connection events"
+
+  - step_number: 2
+    title: "Validate IP Reputation and Location"
+    description: >
+      Assess whether the access originated from known, trusted infrastructure or a risky/geolocated IP.
+    checklist:
+      - "Is the IP part of known infrastructure (VPN gateway, jump host)?"
+      - "Does the IP belong to a known VPN provider or anonymizer?"
+      - "Is this location consistent with normal user behavior?"
+    data_sources:
+      - "Threat intelligence feeds"
+      - "GeoIP databases"
+      - "SIEM enrichment lookup tables"
+
+  - step_number: 3
+    title: "Correlate Authentication with Endpoint Behavior"
+    description: >
+      Investigate endpoint activity that followed the remote access event.
+    checklist:
+      - "Was a user session created after the login?"
+      - "Were tools like PowerShell, cmd, or file transfers observed?"
+      - "Did EDR flag any suspicious processes or behaviors?"
+    data_sources:
+      - "EDR telemetry"
+      - "Sysmon"
+      - "Windows Event Logs (4624, 4688, etc.)"
+      - "RDP logs (RemoteDesktopServices-RdpCoreTS)"
+
+  - step_number: 4
+    title: "Detect Signs of Persistence"
+    description: >
+      Identify whether the attacker configured persistence via user accounts, services, or scheduled tasks.
+    checklist:
+      - "Were new user accounts created?"
+      - "Did attacker configure scheduled tasks or run registry modifications?"
+      - "Are there abnormal services set to auto-run?"
+    data_sources:
+      - "Windows Registry Logs"
+      - "Scheduled Task Events (4698)"
+      - "Service Creation Events (7045)"
+      - "EDR process creation logs"
+
+  - step_number: 5
+    title: "Investigate Remote Access Tool Usage"
+    description: >
+      Look for usage of legitimate tools often used for remote access like AnyDesk, TeamViewer, or RDP over non-standard ports.
+    checklist:
+      - "Is there evidence of remote access tools installed or executed?"
+      - "Was there communication with known C2 domains related to these tools?"
+      - "Are there unusual binaries or processes running under user context?"
+    data_sources:
+      - "Process execution logs (Sysmon, EDR)"
+      - "DNS logs"
+      - "Proxy/web gateway logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Authorized VPN login from new location"
+      - "Medium: RDP login with successful authentication and minor anomalies"
+      - "High: Remote access from untrusted IP, suspicious endpoint behavior, or unknown tool"
+  - confidence_levels:
+      - "High: RDP or VPN usage followed by persistence methods"
+      - "Medium: First-time access from unusual region"
+      - "Low: New VPN access but no follow-up activity"
+
+ioc_types:
+  - "External IP Address"
+  - "User Account"
+  - "Remote Access Tool Hash or Name"
+  - "RDP Sessions"
+  - "Service Names"
+  - "Geo-location"
+
+queries/examples:
+  - name: "Unusual VPN Login from External IP"
+    query: >
+      index=network_logs sourcetype="vpn" user=* 
+      NOT src_ip IN (trusted_vpn_ranges)
+      | stats count by user, src_ip, dest, action
+
+  - name: "RDP Logon Type from External IP"
+    query: >
+      EventID=4624 AND LogonType=10 AND IpAddress NOT IN trusted_internal_ranges
+
+  - name: "TeamViewer or AnyDesk Execution"
+    query: >
+      process_name IN ("TeamViewer.exe", "AnyDesk.exe") OR command_line CONTAINS "TeamViewer"
+
+automation_hooks:
+  - "Tag IP address using threat intel source (Malicious, Anonymous Proxy, VPN)"
+  - "Trigger EDR scan on endpoint after suspicious RDP access"
+  - "Auto-isolate host if remote access and persistence indicators are detected"
+  - "Enrich alert with known asset/user risk profile"
+
+analyst_guidance:
+  - "Correlate remote login with asset type (server vs workstation)"
+  - "Review access pattern for frequency and session duration"
+  - "Verify MFA was enforced (if applicable)"
+  - "Engage IR team if remote tools + persistence overlap is confirmed"
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1133/"
+  - "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4624"
+  - "https://www.cisa.gov/sites/default/files/publications/remotework-cybersecurity.pdf"
+
+review_cycle: "Every 60 days or after remote access incidents"

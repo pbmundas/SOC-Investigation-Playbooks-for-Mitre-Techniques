@@ -1,0 +1,46 @@
+playbook_name: "Native API Invocation Detection"
+tactic: "Execution"
+technique_id: "T1106"
+technique_name: "Native API"
+description: >
+  Detects usage of Windows Native APIs to bypass standard process creation, often used in malware to evade detection.
+
+detection_sources:
+  - Sysmon (Event ID 10, 1)
+  - ETW traces (via EDR)
+  - Windows Defender ATP
+  - DLL Load telemetry
+
+investigation_steps:
+  - step_number: 1
+    title: "Identify API Usage"
+    checklist:
+      - "Look for unusual DLLs or API patterns (e.g., NtCreateThreadEx, NtMapViewOfSection)"
+      - "Check for reflective DLL injection or manual PE loading"
+      - "Correlate with scripts or parent process behavior"
+
+  - step_number: 2
+    title: "Analyze Execution Context"
+    checklist:
+      - "Review the loaded modules (e.g., ntdll.dll)"
+      - "Check for memory injections or memory-mapped execution"
+      - "Run YARA rules on memory for shellcode/artifacts"
+
+  - step_number: 3
+    title: "Contain and Investigate Further"
+    checklist:
+      - "Isolate system"
+      - "Scan for similar API usage patterns on other hosts"
+      - "Gather memory dumps for forensic analysis"
+
+triage_labels:
+  - severity: High
+  - confidence: Medium
+
+ioc_types:
+  - DLL path
+  - API call pattern
+  - Memory sections
+
+references:
+  - https://attack.mitre.org/techniques/T1106/

@@ -1,0 +1,81 @@
+playbook_name: "T1082 - System Information Discovery Detection: Investigation & Triage"
+tactic: "Discovery"
+technique_id: "T1082"
+technique_name: "System Information Discovery"
+description: >
+  Detects adversaries gathering detailed system information such as OS details, hardware configuration, and system environment to aid further exploitation or reconnaissance.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor System Information Gathering Commands"
+    description: >
+      Identify commands and tools used to gather system info (e.g., systeminfo, hostname, uname).
+    checklist:
+      - "Are commands like systeminfo, hostname, uname, or wmic being executed?"
+      - "Are there PowerShell commands querying system properties?"
+    data_sources:
+      - "Process creation logs"
+      - "Command-line auditing"
+
+  - step_number: 2
+    title: "Detect Suspicious or Repeated System Information Queries"
+    description: >
+      Look for system info queries from unusual users or multiple attempts in a short timeframe.
+    checklist:
+      - "Is system info gathering performed outside of normal maintenance windows?"
+      - "Are multiple hosts involved in system info queries?"
+    data_sources:
+      - "User activity logs"
+      - "Endpoint monitoring"
+
+  - step_number: 3
+    title: "Correlate with Other Reconnaissance or Lateral Movement Activities"
+    description: >
+      Determine if system discovery correlates with other suspicious behavior such as lateral movement or exploitation attempts.
+    checklist:
+      - "Is system info gathering followed by privilege escalation or lateral movement?"
+      - "Are there related network scans or credential access?"
+    data_sources:
+      - "Network logs"
+      - "Endpoint detection logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: System info commands executed by authorized admins."
+      - "Medium: Multiple queries from suspicious accounts."
+      - "High: System info discovery linked to active intrusions."
+  - confidence_levels:
+      - "High: Confirmed unauthorized system info queries."
+      - "Medium: Suspicious commands without full context."
+      - "Low: Routine system administration."
+
+ioc_types:
+  - "Execution of systeminfo, hostname, uname, or wmic commands"
+  - "PowerShell system property queries"
+  - "Process creation with system discovery keywords"
+
+queries/examples:
+  - name: "Detect systeminfo Command Usage"
+    query: >
+      process.name == "systeminfo.exe"
+
+  - name: "Detect PowerShell System Queries"
+    query: >
+      process.name == "powershell.exe" AND
+      process.command_line MATCHES "(?i)Get-WmiObject|Get-CimInstance"
+
+automation_hooks:
+  - "Alert on suspicious system discovery commands."
+  - "Limit access to system info gathering tools."
+  - "Investigate hosts generating multiple queries."
+
+analyst_guidance:
+  - "Confirm legitimacy of system info queries."
+  - "Correlate with other suspicious activity for context."
+  - "Recommend endpoint hardening and monitoring."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1082/"
+  - "https://docs.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4688"
+
+review_cycle: "Quarterly or after detection of system discovery activity"

@@ -1,0 +1,69 @@
+playbook_name: "T1136.002 - Domain Group Discovery Detection"
+tactic: "Discovery"
+technique_id: "T1136.002"
+technique_name: "Domain Group Discovery"
+description: >
+  Detects reconnaissance attempts where adversaries enumerate domain groups to identify targets
+  for privilege escalation or lateral movement.
+
+detection_sources:
+  - Active Directory logs
+  - Windows Security Event Logs (EventID 4728, 4729, 4732, 4733)
+  - LDAP query logs
+  - SIEM alerts on group enumeration activity
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect Domain Group Enumeration"
+    description: >
+      Monitor for events and logs showing enumeration of domain groups.
+    checklist:
+      - "Check EventID 4728 (member added to global group) and 4729 (member removed)"
+      - "Monitor EventID 4732, 4733 for local group membership changes"
+      - "Analyze LDAP query logs for group enumeration"
+      - "Identify unusual frequency or accounts performing enumeration"
+    data_sources:
+      - "Active Directory Security logs"
+      - "LDAP logs"
+      - "SIEM correlation"
+
+  - step_number: 2
+    title: "Analyze Accounts Performing Enumeration"
+    description: >
+      Investigate accounts enumerating domain groups.
+    checklist:
+      - "Validate if accounts are privileged or service accounts"
+      - "Check for anomalous login times and locations"
+      - "Review historical behavior and recent changes"
+    data_sources:
+      - "User account activity logs"
+      - "UEBA alerts"
+
+  - step_number: 3
+    title: "Response and Containment"
+    description: >
+      Limit reconnaissance and potential escalation.
+    checklist:
+      - "Restrict suspicious accounts"
+      - "Apply conditional access policies"
+      - "Monitor ongoing activity closely"
+    data_sources:
+      - "Identity management systems"
+      - "Access control logs"
+
+triage_labels:
+  - severity:
+      - "Low: Single event or low frequency"
+      - "Medium: Multiple events from non-admin accounts"
+      - "High: High frequency or from compromised accounts"
+  - confidence:
+      - "High: Clear enumeration activity"
+      - "Medium: Suspicious but inconclusive"
+      - "Low: Normal admin activity"
+
+ioc_types:
+  - User Account
+  - IP Address
+
+reference_links:
+  - https://attack.mitre.org/techniques/T1136/002/

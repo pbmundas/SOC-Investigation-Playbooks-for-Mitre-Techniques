@@ -1,0 +1,83 @@
+playbook_name: "T1114.002 - Remote Email Collection Detection: Investigation & Triage"
+tactic: "Collection"
+technique_id: "T1114.002"
+technique_name: "Remote Email Collection"
+description: >
+  Detects adversaries collecting email data remotely via email protocols or API access to mail servers.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Unusual Remote Access to Mail Servers"
+    description: >
+      Identify anomalous or unauthorized connections to mail servers via protocols like IMAP, POP3, or Exchange Web Services (EWS).
+    checklist:
+      - "Are there failed or suspicious login attempts on mail servers?"
+      - "Is there access from unusual IPs or geolocations?"
+    data_sources:
+      - "Authentication logs"
+      - "Mail server access logs"
+
+  - step_number: 2
+    title: "Detect Use of Email Collection APIs or Commands"
+    description: >
+      Monitor API calls or commands that enumerate or export mailbox content.
+    checklist:
+      - "Are API calls used to export mailbox data?"
+      - "Are PowerShell or other scripts performing mailbox exports remotely?"
+    data_sources:
+      - "API logs"
+      - "PowerShell logging"
+      - "Command execution logs"
+
+  - step_number: 3
+    title: "Correlate Remote Email Access with Data Exfiltration"
+    description: >
+      Detect outbound data transfers or email forwarding consistent with data theft.
+    checklist:
+      - "Is data sent to external addresses?"
+      - "Are there large volume downloads of mailbox content?"
+    data_sources:
+      - "Network traffic monitoring"
+      - "Email gateway logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Authorized remote email access."
+      - "Medium: Suspicious remote mailbox access."
+      - "High: Malicious remote email collection and exfiltration."
+  - confidence_levels:
+      - "High: Confirmed unauthorized mailbox access and data theft."
+      - "Medium: Suspicious remote API usage."
+      - "Low: Routine remote access."
+
+ioc_types:
+  - "Suspicious IMAP/POP3/Exchange logins"
+  - "Mailbox export commands or API usage"
+  - "Outbound data transfers consistent with mailbox data"
+
+queries/examples:
+  - name: "Detect Suspicious IMAP or POP3 Logins"
+    query: >
+      mail.protocol IN ("IMAP", "POP3") AND
+      auth.status = "failed" OR
+      source.ip NOT IN (trusted_networks)
+
+  - name: "Detect Exchange Web Services Mailbox Exports"
+    query: >
+      process.command_line CONTAINS ("Export-Mailbox", "Get-Mailbox")
+
+automation_hooks:
+  - "Alert on unauthorized remote mailbox access."
+  - "Block suspicious mailbox export commands."
+  - "Notify security operations for rapid response."
+
+analyst_guidance:
+  - "Verify user authorization and geolocation of access."
+  - "Review associated network activity for data exfiltration."
+  - "Assess mailbox export volumes and recipients."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1114/002/"
+  - "https://docs.microsoft.com/en-us/exchange/security-and-compliance/exchange-web-services"
+
+review_cycle: "Quarterly or following remote access incidents"

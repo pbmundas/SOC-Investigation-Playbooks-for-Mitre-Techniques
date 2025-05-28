@@ -1,0 +1,89 @@
+playbook_name: "T1134 - Token Manipulation Detection: Investigation & Triage"
+tactic: "Privilege Escalation"
+technique_id: "T1134"
+technique_name: "Token Manipulation"
+description: >
+  Detect and investigate token manipulation activities such as impersonation or token theft used by adversaries to escalate privileges or bypass access controls.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Access Token Operations"
+    description: >
+      Look for suspicious calls to DuplicateToken, OpenProcessToken, or AdjustTokenPrivileges APIs.
+    checklist:
+      - "Are high-privilege tokens accessed or duplicated?"
+      - "Are low-privilege processes using elevated tokens?"
+    data_sources:
+      - "API telemetry"
+      - "Process logs"
+
+  - step_number: 2
+    title: "Correlate Token Use With Anomalous Behavior"
+    description: >
+      Identify if elevated tokens are used by processes with unusual ancestry or behavior.
+    checklist:
+      - "Do token usages correlate with lateral movement or credential dumping?"
+      - "Is there a mismatch between parent and child process privileges?"
+    data_sources:
+      - "EDR"
+      - "SIEM alerts"
+
+  - step_number: 3
+    title: "Analyze for Signs of Privilege Escalation"
+    description: >
+      Determine if manipulated tokens enabled unauthorized access or escalation.
+    checklist:
+      - "Did the token manipulation allow access to protected resources?"
+      - "Was it followed by creation of admin-level sessions?"
+    data_sources:
+      - "Authentication logs"
+      - "Process tree analysis"
+
+  - step_number: 4
+    title: "Confirm and Contain"
+    description: >
+      Validate abuse and apply containment.
+    checklist:
+      - "Is the activity linked to known malware or threat actor?"
+      - "Is containment or host isolation required?"
+    data_sources:
+      - "Threat intelligence"
+      - "IR response data"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Legitimate access by system tools."
+      - "Medium: Unexpected token duplication in user sessions."
+      - "High: Confirmed token misuse by malicious process."
+  - confidence_levels:
+      - "High: Matches known attacker behavior."
+      - "Medium: Suspicious token access patterns."
+      - "Low: Rare token activity but no impact."
+
+ioc_types:
+  - "Access token handle usage"
+  - "Privilege escalation events"
+  - "Token impersonation API calls"
+
+queries/examples:
+  - name: "DuplicateToken API Use"
+    query: >
+      api.call:DuplicateToken AND process.integrity_level:low
+  - name: "Token Privileges Adjusted in Suspicious Context"
+    query: >
+      api.call:AdjustTokenPrivileges AND process.parent.name:cmd.exe
+
+automation_hooks:
+  - "Alert on token manipulation APIs by non-system processes."
+  - "Auto-tag suspicious token escalation sequences."
+  - "Initiate IR workflow for token abuse."
+
+analyst_guidance:
+  - "Compare privileges before and after token manipulation."
+  - "Check token lineage in context of session behavior."
+  - "Validate with threat intel for known abuse techniques."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1134/"
+
+review_cycle: "Quarterly or post-incident review"

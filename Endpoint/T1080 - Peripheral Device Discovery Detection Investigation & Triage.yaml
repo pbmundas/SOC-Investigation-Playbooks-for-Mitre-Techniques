@@ -1,0 +1,81 @@
+playbook_name: "T1080 - Peripheral Device Discovery Detection: Investigation & Triage"
+tactic: "Discovery"
+technique_id: "T1080"
+technique_name: "Peripheral Device Discovery"
+description: >
+  Detects adversaries attempting to identify connected peripheral devices (USB drives, printers, cameras, etc.) on a system to plan data exfiltration or further exploitation.
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect Queries or Commands Enumerating Peripheral Devices"
+    description: >
+      Monitor usage of system utilities or commands that list connected devices (e.g., 'lsusb', 'Get-PnpDevice').
+    checklist:
+      - "Are commands executed to list connected peripherals?"
+      - "Are these commands run by non-administrative or suspicious users?"
+    data_sources:
+      - "Process creation logs"
+      - "Command line auditing"
+
+  - step_number: 2
+    title: "Identify Access to Device Driver or USB Device Information"
+    description: >
+      Look for file or registry queries related to device drivers or USB device configurations.
+    checklist:
+      - "Are there accesses to device driver files or registry keys?"
+      - "Is the access correlated with suspicious user or process activity?"
+    data_sources:
+      - "File system monitoring"
+      - "Registry access logs"
+
+  - step_number: 3
+    title: "Correlate Peripheral Discovery with Other Reconnaissance or Data Exfiltration"
+    description: >
+      Determine if peripheral device discovery is followed by copying data or USB device usage.
+    checklist:
+      - "Is there data transfer to removable media shortly after discovery?"
+      - "Are there indications of lateral movement or suspicious uploads?"
+    data_sources:
+      - "USB device logs"
+      - "File transfer logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Discovery by authorized admins."
+      - "Medium: Peripheral discovery in restricted environments."
+      - "High: Discovery preceding data exfiltration or unauthorized USB use."
+  - confidence_levels:
+      - "High: Confirmed peripheral enumeration commands."
+      - "Medium: Suspicious device driver or registry queries."
+      - "Low: Routine system checks."
+
+ioc_types:
+  - "Execution of device enumeration commands (lsusb, Get-PnpDevice)"
+  - "Access to USB device registry keys or driver files"
+  - "Unusual USB device mount or usage"
+
+queries/examples:
+  - name: "Detect PowerShell Peripheral Device Queries"
+    query: >
+      process.name == "powershell.exe" AND
+      process.command_line MATCHES "(?i)Get-PnpDevice|Get-WmiObject Win32_USBControllerDevice"
+
+  - name: "Detect USB Registry Key Access"
+    query: >
+      registry.key_path CONTAINS "SYSTEM\\CurrentControlSet\\Enum\\USB"
+
+automation_hooks:
+  - "Alert on unauthorized peripheral enumeration commands."
+  - "Restrict access to USB device registry keys."
+  - "Monitor USB device mounts and file transfers."
+
+analyst_guidance:
+  - "Confirm legitimacy of device enumeration activity."
+  - "Investigate USB device usage and data transfers."
+  - "Recommend policies restricting USB device usage."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1080/"
+  - "https://docs.microsoft.com/en-us/windows/security/threat-protection/auditing/basic-audit-peripheral-device-access"
+
+review_cycle: "Quarterly or after peripheral device discovery detection"

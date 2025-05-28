@@ -1,0 +1,83 @@
+playbook_name: "T1071.002 - File Transfer Protocols Command and Control Detection"
+tactic: "Command and Control"
+technique_id: "T1071.002"
+technique_name: "File Transfer Protocols"
+description: >
+  Detect adversaries using FTP, SFTP, or similar file transfer protocols for command and control communication.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor FTP/SFTP Connections for Anomalies"
+    description: >
+      Identify unusual or unauthorized FTP/SFTP sessions to external IPs or domains.
+    checklist:
+      - "Are there FTP connections outside of business hours or to uncommon endpoints?"
+      - "Is there a spike in FTP sessions or data transfer volume?"
+    data_sources:
+      - "FTP/SFTP server logs"
+      - "Network flow logs"
+      - "Firewall logs"
+
+  - step_number: 2
+    title: "Detect Use of Known Malicious FTP Servers or Credentials"
+    description: >
+      Correlate FTP endpoints with threat intelligence for known malicious servers or compromised credentials.
+    checklist:
+      - "Is the FTP server IP or domain flagged as malicious?"
+      - "Are there authentication attempts with unusual usernames?"
+    data_sources:
+      - "Threat intelligence feeds"
+      - "FTP logs"
+
+  - step_number: 3
+    title: "Identify Abnormal File Transfers Over FTP/SFTP"
+    description: >
+      Look for transfers of suspicious files or large volumes of data indicative of C2 or data exfiltration.
+    checklist:
+      - "Are executable or script files transferred?"
+      - "Is data transfer size inconsistent with normal usage?"
+    data_sources:
+      - "File transfer logs"
+      - "Network traffic analysis"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Routine FTP usage."
+      - "Medium: Suspicious FTP activity."
+      - "High: Confirmed malicious FTP-based C2 or data exfiltration."
+  - confidence_levels:
+      - "High: Known malicious server or confirmed malicious file transfer."
+      - "Medium: Anomalous FTP behavior."
+      - "Low: Possible false positives from legitimate file transfers."
+
+ioc_types:
+  - "Malicious FTP server IPs or domains"
+  - "Unusual FTP credentials or usernames"
+  - "Suspicious files transferred via FTP/SFTP"
+
+queries/examples:
+  - name: "Detect FTP Connections to Malicious IPs"
+    query: >
+      ftp.destination_ip IN (malicious_ip_list) OR
+      sftp.destination_ip IN (malicious_ip_list)
+
+  - name: "Detect Large File Transfers via FTP Outside Business Hours"
+    query: >
+      ftp.bytes_transferred > threshold AND
+      ftp.timestamp NOT IN (business_hours)
+
+automation_hooks:
+  - "Alert on suspicious FTP/SFTP activity."
+  - "Block connections to known malicious FTP servers."
+  - "Notify SOC for investigation of suspicious file transfers."
+
+analyst_guidance:
+  - "Verify if FTP activity aligns with business operations."
+  - "Investigate user accounts used in FTP sessions."
+  - "Check endpoint logs for related suspicious activity."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1071/002/"
+  - "https://www.csoonline.com/article/3232411/ftp-analyzing-command-and-control-activity.html"
+
+review_cycle: "Quarterly or after FTP-related incidents"

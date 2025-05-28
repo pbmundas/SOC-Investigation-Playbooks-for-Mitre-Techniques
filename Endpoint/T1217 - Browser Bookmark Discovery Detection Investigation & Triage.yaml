@@ -1,0 +1,80 @@
+playbook_name: "T1217 - Browser Bookmark Discovery Detection: Investigation & Triage"
+tactic: "Discovery"
+technique_id: "T1217"
+technique_name: "Browser Bookmark Discovery"
+description: >
+  Detects adversaries searching browser bookmark files or data to gather information about frequently visited sites, credentials, or targets for further exploitation.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Access to Browser Bookmark Files"
+    description: >
+      Identify file access or reading of common browser bookmark files such as Chrome's `Bookmarks` file or Firefox's `places.sqlite`.
+    checklist:
+      - "Are bookmark files accessed or copied unexpectedly?"
+      - "Is access performed by non-standard or suspicious processes?"
+    data_sources:
+      - "File system monitoring"
+      - "Process activity logs"
+
+  - step_number: 2
+    title: "Detect Processes Reading or Exporting Bookmark Data"
+    description: >
+      Detect tools or scripts that extract or export browser bookmark data.
+    checklist:
+      - "Are known extraction tools or custom scripts running?"
+      - "Are exports of bookmark files sent externally?"
+    data_sources:
+      - "Process execution logs"
+      - "Network monitoring"
+
+  - step_number: 3
+    title: "Correlate Bookmark Discovery with Other Reconnaissance or Credential Access Activities"
+    description: >
+      Investigate if bookmark discovery coincides with credential theft, phishing attempts, or lateral movement.
+    checklist:
+      - "Are there suspicious login attempts on sites found in bookmarks?"
+      - "Is data exfiltration detected after bookmark access?"
+    data_sources:
+      - "Authentication logs"
+      - "Network data loss prevention logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Bookmark access by authorized users or browsers."
+      - "Medium: Access by scripts or non-browser processes."
+      - "High: Access linked to credential theft or reconnaissance."
+  - confidence_levels:
+      - "High: Confirmed unauthorized bookmark access."
+      - "Medium: Suspicious access without full context."
+      - "Low: Normal user activity."
+
+ioc_types:
+  - "Access to Chrome Bookmarks file or Firefox places.sqlite"
+  - "Execution of bookmark extraction tools"
+  - "Unusual processes reading browser data"
+
+queries/examples:
+  - name: "Detect Access to Chrome Bookmarks File"
+    query: >
+      file.path ENDSWITH "Chrome\\User Data\\Default\\Bookmarks"
+
+  - name: "Detect Firefox places.sqlite Access"
+    query: >
+      file.path ENDSWITH "Firefox\\Profiles\\places.sqlite"
+
+automation_hooks:
+  - "Alert on unauthorized access to bookmark files."
+  - "Block suspicious processes accessing browser data."
+  - "Monitor outbound traffic for bookmark data exfiltration."
+
+analyst_guidance:
+  - "Validate if bookmark access is legitimate."
+  - "Check for signs of credential theft or phishing."
+  - "Recommend restricting access to browser profile directories."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1217/"
+  - "https://forensicswiki.org/wiki/Browser_Bookmarks"
+
+review_cycle: "Quarterly or after detection of suspicious bookmark discovery"

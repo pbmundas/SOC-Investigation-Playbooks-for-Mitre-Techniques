@@ -1,0 +1,86 @@
+playbook_name: "T1218.005 - Userinit Execution Monitoring: Investigation & Triage"
+tactic: "Defense Evasion"
+technique_id: "T1218.005"
+technique_name: "Userinit Execution Monitoring"
+description: >
+  Detect malicious or unauthorized executions of userinit.exe, often used to maintain persistence or execute payloads during user logon.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Userinit Execution"
+    description: >
+      Detect process creation of userinit.exe and analyze context, command line, and parent process.
+    checklist:
+      - "Is userinit.exe invoked during legitimate logon?"
+      - "Are command line parameters suspicious or unusual?"
+      - "Is userinit.exe spawned by abnormal parent processes?"
+    data_sources:
+      - "Process creation logs"
+      - "Logon event monitoring"
+
+  - step_number: 2
+    title: "Analyze Execution Context"
+    description: >
+      Confirm that userinit.exe is launched only during proper user login and not from unauthorized sources.
+    checklist:
+      - "Are there unexpected userinit executions outside login?"
+      - "Is persistence via registry or other means detected?"
+    data_sources:
+      - "Registry monitoring"
+      - "File integrity monitoring"
+
+  - step_number: 3
+    title: "Correlate with Persistence and Malicious Activity"
+    description: >
+      Look for concurrent suspicious activity such as modified registry keys, scripts, or lateral movement.
+    checklist:
+      - "Are registry Run keys or policies altered?"
+      - "Is userinit.exe used to load malicious payloads?"
+    data_sources:
+      - "SIEM correlation"
+      - "Threat intelligence"
+
+  - step_number: 4
+    title: "Respond and Contain"
+    description: >
+      Block unauthorized userinit.exe executions and remediate persistence mechanisms.
+    checklist:
+      - "Revert unauthorized registry changes."
+      - "Isolate affected endpoints."
+    data_sources:
+      - "Endpoint management"
+      - "IR tools"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Normal userinit.exe usage."
+      - "Medium: Suspicious or anomalous use."
+      - "High: Confirmed malicious userinit abuse."
+  - confidence_levels:
+      - "High: Verified malicious activity."
+      - "Medium: Suspicious but unconfirmed."
+      - "Low: Legitimate usage."
+
+ioc_types:
+  - "Unusual userinit.exe command lines"
+  - "Registry modifications for persistence"
+  - "Userinit executed outside logon"
+
+queries/examples:
+  - name: "Detect userinit process creation"
+    query: >
+      process.name:userinit.exe
+
+automation_hooks:
+  - "Alert on suspicious userinit.exe executions."
+  - "Trigger analyst review."
+
+analyst_guidance:
+  - "Validate context of userinit.exe execution."
+  - "Investigate registry and persistence mechanisms."
+  - "Coordinate incident response if malicious."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1218/005/"
+
+review_cycle: "Quarterly or post-incident"

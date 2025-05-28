@@ -1,0 +1,87 @@
+playbook_name: "T1134.001 - Token Impersonation Detection: Investigation & Triage"
+tactic: "Privilege Escalation"
+technique_id: "T1134.001"
+technique_name: "Token Impersonation"
+description: >
+  Detect and investigate token impersonation where adversaries use a stolen token to impersonate another user or service.
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect ImpersonateNamedPipeClient and SetThreadToken"
+    description: >
+      Monitor impersonation-related API usage in low-privilege contexts.
+    checklist:
+      - "Are these APIs used outside normal authentication?"
+      - "Are low-privilege users impersonating SYSTEM or admins?"
+    data_sources:
+      - "API telemetry"
+      - "Thread-level monitoring"
+
+  - step_number: 2
+    title: "Check for Lateral Movement Indicators"
+    description: >
+      Analyze if impersonation is followed by access to remote resources.
+    checklist:
+      - "Are admin shares or privileged services accessed?"
+      - "Are impersonated tokens reused across machines?"
+    data_sources:
+      - "Network access logs"
+      - "Windows Event Logs"
+
+  - step_number: 3
+    title: "Validate Token Ownership and Use Context"
+    description: >
+      Investigate if the token is legitimate and whether its usage context is valid.
+    checklist:
+      - "Does the token source align with user session?"
+      - "Are impersonated actions logged in user context?"
+    data_sources:
+      - "Security logs"
+      - "Authentication systems"
+
+  - step_number: 4
+    title: "Confirm and Respond"
+    description: >
+      Corroborate impersonation evidence and respond.
+    checklist:
+      - "Is impersonation part of larger attack pattern?"
+      - "Is isolation or session termination needed?"
+    data_sources:
+      - "SIEM alerts"
+      - "IR case notes"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Internal service impersonation."
+      - "Medium: Suspicious impersonation in isolated context."
+      - "High: Token misuse to gain unauthorized access."
+  - confidence_levels:
+      - "High: Strong correlation with lateral movement."
+      - "Medium: Unusual API usage but unclear intent."
+      - "Low: Rare or benign impersonation."
+
+ioc_types:
+  - "Impersonation API usage"
+  - "Token ownership anomalies"
+  - "Cross-session impersonation"
+
+queries/examples:
+  - name: "ImpersonateNamedPipeClient Usage"
+    query: >
+      api.call:ImpersonateNamedPipeClient AND process.user:!SYSTEM
+  - name: "SetThreadToken from Non-Admin"
+    query: >
+      api.call:SetThreadToken AND process.integrity_level:low
+
+automation_hooks:
+  - "Alert on impersonation API calls by standard users."
+  - "Tag lateral movement with impersonated token."
+
+analyst_guidance:
+  - "Trace impersonated token lineage."
+  - "Match impersonation to file/network access behavior."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1134/001/"
+
+review_cycle: "Quarterly or after red team exercises"

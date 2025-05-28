@@ -1,0 +1,82 @@
+playbook_name: "T1087.001 - Local Account Discovery Detection: Investigation & Triage"
+tactic: "Discovery"
+technique_id: "T1087.001"
+technique_name: "Local Account Discovery"
+description: >
+  Detects adversaries attempting to enumerate local accounts on machines to identify targets for further attack.
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect Commands and Tools Accessing Local Accounts"
+    description: >
+      Monitor for use of commands like `net user`, `wmic useraccount` or PowerShell cmdlets querying local user accounts.
+    checklist:
+      - "Is 'net user' executed on endpoints?"
+      - "Are WMI queries or PowerShell commands targeting local users?"
+    data_sources:
+      - "Process creation logs"
+      - "Command-line auditing"
+
+  - step_number: 2
+    title: "Identify Unusual Local Account Enumeration Activity"
+    description: >
+      Look for local account queries from non-administrative users or unexpected hosts.
+    checklist:
+      - "Is local account enumeration performed by unknown or low-privileged users?"
+      - "Are there multiple enumeration attempts in a short time frame?"
+    data_sources:
+      - "User session logs"
+      - "Endpoint monitoring logs"
+
+  - step_number: 3
+    title: "Correlate with Other Endpoint Reconnaissance or Credential Access"
+    description: >
+      Investigate if local account discovery correlates with privilege escalation or credential dumping activity.
+    checklist:
+      - "Are there subsequent attempts to access credentials or escalate privileges?"
+      - "Is local enumeration followed by suspicious process executions?"
+    data_sources:
+      - "Endpoint detection and response logs"
+      - "Credential access monitoring"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Local enumeration by authorized admin users."
+      - "Medium: Enumeration by suspicious or unknown users."
+      - "High: Enumeration linked to credential theft or lateral movement."
+  - confidence_levels:
+      - "High: Confirmed local account enumeration without authorization."
+      - "Medium: Unusual local account queries pending verification."
+      - "Low: Administrative maintenance activity."
+
+ioc_types:
+  - "Use of net user or wmic commands on endpoints"
+  - "PowerShell scripts enumerating local accounts"
+  - "Process execution with local account query parameters"
+
+queries/examples:
+  - name: "Detect net user Command on Endpoint"
+    query: >
+      process.name == "cmd.exe" AND
+      process.command_line CONTAINS "net user"
+
+  - name: "Detect WMIC UserAccount Query"
+    query: >
+      process.name == "wmic.exe" AND
+      process.command_line CONTAINS "useraccount"
+
+automation_hooks:
+  - "Generate alerts on local account enumeration commands."
+  - "Restrict permissions for executing such commands."
+  - "Isolate suspicious endpoint if malicious activity detected."
+
+analyst_guidance:
+  - "Confirm if enumeration commands are part of maintenance."
+  - "Correlate with other suspicious activity on the endpoint."
+  - "Suggest hardening endpoint security and limiting admin access."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1087/001/"
+  - "https://docs.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4688"
+
+review_cycle: "Quarterly or following suspicious endpoint reconnaissance detection"

@@ -1,0 +1,83 @@
+playbook_name: "T1087.002 - Domain Account Discovery Detection: Investigation & Triage"
+tactic: "Discovery"
+technique_id: "T1087.002"
+technique_name: "Domain Account Discovery"
+description: >
+  Detects adversaries enumerating domain accounts through directory services queries or domain reconnaissance to plan further attacks.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor LDAP and Directory Service Queries"
+    description: >
+      Detect queries against Active Directory for user and group enumeration using LDAP, PowerShell, or domain tools.
+    checklist:
+      - "Are there LDAP queries for user or group listings?"
+      - "Is PowerShell used with modules like ActiveDirectory for enumeration?"
+    data_sources:
+      - "Directory service logs"
+      - "PowerShell logging"
+      - "Network traffic logs"
+
+  - step_number: 2
+    title: "Identify Suspicious Domain Enumeration Behavior"
+    description: >
+      Look for enumeration activity outside normal operational patterns or from unauthorized users.
+    checklist:
+      - "Is enumeration originating from unusual hosts or accounts?"
+      - "Are there large-scale queries or repeated enumeration attempts?"
+    data_sources:
+      - "Authentication logs"
+      - "Network monitoring"
+
+  - step_number: 3
+    title: "Correlate with Other Reconnaissance or Privilege Escalation Attempts"
+    description: >
+      Investigate if domain enumeration correlates with privilege escalation, lateral movement, or data exfiltration.
+    checklist:
+      - "Is there subsequent access to sensitive resources?"
+      - "Are other reconnaissance or exploitation activities observed?"
+    data_sources:
+      - "Endpoint and network logs"
+      - "Security event logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Domain enumeration by authorized IT personnel."
+      - "Medium: Enumeration by unusual accounts or devices."
+      - "High: Enumeration linked to confirmed intrusion."
+  - confidence_levels:
+      - "High: Verified unauthorized domain account enumeration."
+      - "Medium: Suspicious activity pending confirmation."
+      - "Low: Normal administrative scans."
+
+ioc_types:
+  - "LDAP queries for user and group objects"
+  - "PowerShell ActiveDirectory module commands"
+  - "DSQuery or net commands targeting domain accounts"
+
+queries/examples:
+  - name: "Detect LDAP Enumeration Queries"
+    query: >
+      event.type == "ldap_query" AND
+      query.objectClass IN ("user", "group")
+
+  - name: "Detect PowerShell Active Directory Enumeration"
+    query: >
+      process.name == "powershell.exe" AND
+      process.command_line MATCHES "(?i)Get-ADUser|Get-ADGroup"
+
+automation_hooks:
+  - "Alert on suspicious domain enumeration activity."
+  - "Restrict directory query permissions."
+  - "Initiate incident response if linked to intrusions."
+
+analyst_guidance:
+  - "Verify intent and legitimacy of directory queries."
+  - "Investigate related network and endpoint activity."
+  - "Recommend enhanced monitoring and access controls."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1087/002/"
+  - "https://docs.microsoft.com/en-us/windows-server/identity/ad-ds/manage/understand-security-events"
+
+review_cycle: "Quarterly or after detection of domain enumeration activity"

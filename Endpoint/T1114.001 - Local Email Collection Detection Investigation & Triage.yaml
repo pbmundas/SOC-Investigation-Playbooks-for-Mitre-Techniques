@@ -1,0 +1,82 @@
+playbook_name: "T1114.001 - Local Email Collection Detection: Investigation & Triage"
+tactic: "Collection"
+technique_id: "T1114.001"
+technique_name: "Local Email Collection"
+description: >
+  Detects adversaries collecting email data from local email clients or mail stores on compromised hosts.
+
+investigation_steps:
+  - step_number: 1
+    title: "Identify Unusual Access to Local Mail Stores"
+    description: >
+      Detect access or copying of local email store files such as PST, OST, or MBOX files.
+    checklist:
+      - "Are non-standard processes accessing mail stores?"
+      - "Is there an unusual increase in file read or copy operations?"
+    data_sources:
+      - "File access logs"
+      - "Process monitoring"
+
+  - step_number: 2
+    title: "Detect Email Harvesting Scripts or Tools Running Locally"
+    description: >
+      Monitor for scripts or binaries designed to extract email data from local clients.
+    checklist:
+      - "Are email scraping tools executed?"
+      - "Are PowerShell or batch scripts accessing mail client data?"
+    data_sources:
+      - "Process creation logs"
+      - "Command-line audit logs"
+
+  - step_number: 3
+    title: "Correlate Local Email Access with Data Exfiltration Attempts"
+    description: >
+      Look for suspicious data uploads or transfers following local email access.
+    checklist:
+      - "Is email data transferred over network?"
+      - "Are suspicious file uploads or email forwarding observed?"
+    data_sources:
+      - "Network monitoring"
+      - "DLP and proxy logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Authorized backups or user access."
+      - "Medium: Suspicious local email collection activity."
+      - "High: Malicious local email harvesting linked to exfiltration."
+  - confidence_levels:
+      - "High: Confirmed tool execution and data transfer."
+      - "Medium: Suspicious file access patterns."
+      - "Low: Routine user behavior."
+
+ioc_types:
+  - "Unusual process accessing PST/OST/MBOX files"
+  - "Execution of local email harvesting tools"
+  - "Outbound data transfers containing email content"
+
+queries/examples:
+  - name: "Detect Access to Local Mail Stores by Non-Mail Processes"
+    query: >
+      file.path MATCHES ("*.pst|*.ost|*.mbox") AND
+      process.name NOT IN ("outlook.exe", "thunderbird.exe")
+
+  - name: "Detect PowerShell Commands Harvesting Local Emails"
+    query: >
+      process.name = "powershell.exe" AND
+      process.command_line CONTAINS ("Export-Mailbox", "Get-Content *.pst")
+
+automation_hooks:
+  - "Alert on suspicious local mail store access."
+  - "Block known harvesting tools execution."
+  - "Notify incident response for potential data theft."
+
+analyst_guidance:
+  - "Check if access aligns with user roles and schedules."
+  - "Investigate process lineage for suspicious parent processes."
+  - "Look for concurrent network data transfers."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1114/001/"
+  - "https://www.sans.org/white-papers/40215/"
+
+review_cycle: "Monthly or post detection event"

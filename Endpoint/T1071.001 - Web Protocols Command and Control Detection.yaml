@@ -1,0 +1,84 @@
+playbook_name: "T1071.001 - Web Protocols Command and Control Detection"
+tactic: "Command and Control"
+technique_id: "T1071.001"
+technique_name: "Web Protocols"
+description: >
+  Detect adversaries using web protocols (HTTP/HTTPS) to communicate with command and control servers.
+
+investigation_steps:
+  - step_number: 1
+    title: "Analyze HTTP/HTTPS Traffic for Anomalies"
+    description: >
+      Look for unusual user agents, HTTP methods, or abnormal POST request payloads.
+    checklist:
+      - "Are there HTTP requests to suspicious or newly registered domains?"
+      - "Is there abnormal frequency or timing of web requests?"
+    data_sources:
+      - "Proxy logs"
+      - "Network IDS/IPS"
+      - "Web server logs"
+
+  - step_number: 2
+    title: "Detect Use of Known Malicious Web C2 Infrastructure"
+    description: >
+      Match traffic against threat intelligence feeds for known malicious web servers or URLs.
+    checklist:
+      - "Is the traffic directed to known bad domains or URLs?"
+      - "Are SSL certificates self-signed or expired?"
+    data_sources:
+      - "Threat intelligence"
+      - "SSL inspection logs"
+      - "DNS logs"
+
+  - step_number: 3
+    title: "Identify Obfuscated or Encrypted Payloads in Web Traffic"
+    description: >
+      Detect base64 encoding, encrypted data, or other obfuscation techniques within HTTP(S) payloads.
+    checklist:
+      - "Are HTTP POST bodies containing encoded or encrypted data?"
+      - "Is traffic volume consistent with C2 beacons?"
+    data_sources:
+      - "Deep packet inspection"
+      - "Network traffic analytics"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Normal web traffic."
+      - "Medium: Suspicious HTTP/HTTPS anomalies."
+      - "High: Confirmed malicious web-based C2 traffic."
+  - confidence_levels:
+      - "High: Matches known IOC or confirmed obfuscation."
+      - "Medium: Anomalies without direct IOC match."
+      - "Low: Potential false positives from legitimate apps."
+
+ioc_types:
+  - "Suspicious domain names and URLs"
+  - "Unusual user agents"
+  - "Encoded or encrypted HTTP payloads"
+
+queries/examples:
+  - name: "Detect HTTP POST Requests with Base64 Payload"
+    query: >
+      http.method = "POST" AND
+      http.request_body MATCHES "([A-Za-z0-9+/=]{100,})"
+
+  - name: "Detect Traffic to Newly Registered or Low Reputation Domains"
+    query: >
+      dns.domain_registration_date < now() - 30d AND
+      http.host NOT IN (trusted_domains)
+
+automation_hooks:
+  - "Alert on suspicious web C2 activity."
+  - "Block connections to malicious web domains."
+  - "Initiate endpoint investigation on alert."
+
+analyst_guidance:
+  - "Validate user agent legitimacy."
+  - "Correlate with endpoint alerts for persistence or lateral movement."
+  - "Check for associated data exfiltration."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1071/001/"
+  - "https://www.fireeye.com/blog/threat-research/2018/04/detecting-application-layer-command-and-control.html"
+
+review_cycle: "Monthly or following threat intel updates"

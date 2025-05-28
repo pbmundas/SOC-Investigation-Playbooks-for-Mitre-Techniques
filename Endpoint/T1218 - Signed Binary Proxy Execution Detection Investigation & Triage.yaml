@@ -1,0 +1,90 @@
+playbook_name: "T1218 - Signed Binary Proxy Execution Detection: Investigation & Triage"
+tactic: "Defense Evasion"
+technique_id: "T1218"
+technique_name: "Signed Binary Proxy Execution"
+description: >
+  Detect abuse of signed, trusted binaries to proxy execution of malicious code, evading detection by security products.
+
+investigation_steps:
+  - step_number: 1
+    title: "Identify Suspicious Use of Signed Binaries"
+    description: >
+      Monitor for unusual or unauthorized execution of signed system binaries (e.g., rundll32.exe, regsvr32.exe, mshta.exe).
+    checklist:
+      - "Are signed binaries executing unexpected scripts or commands?"
+      - "Are binaries invoked by unusual users or processes?"
+    data_sources:
+      - "Process creation logs"
+      - "Command line arguments"
+      - "Code signing logs"
+
+  - step_number: 2
+    title: "Detect Known Proxy Execution Techniques"
+    description: >
+      Detect command lines or scripts that use signed binaries to execute payloads, e.g., regsvr32 running .sct scripts.
+    checklist:
+      - "Are signed binaries used to execute remote scripts or payloads?"
+      - "Is there evidence of persistence or lateral movement via these binaries?"
+    data_sources:
+      - "Process monitoring"
+      - "Network logs"
+      - "SIEM correlation"
+
+  - step_number: 3
+    title: "Correlate with Threat Intelligence"
+    description: >
+      Cross-reference with known indicators, hashes, or campaigns abusing signed binaries.
+    checklist:
+      - "Are suspicious binaries or hashes listed in threat intel feeds?"
+      - "Is attack pattern consistent with known campaigns?"
+    data_sources:
+      - "Threat intelligence platforms"
+      - "SIEM"
+
+  - step_number: 4
+    title: "Incident Response"
+    description: >
+      Block or isolate affected hosts, remove malicious payloads, and harden execution policies.
+    checklist:
+      - "Quarantine affected hosts."
+      - "Update endpoint policies to restrict misuse."
+    data_sources:
+      - "Endpoint management tools"
+      - "Incident response platforms"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Authorized use of signed binaries."
+      - "Medium: Suspicious or unexpected usage."
+      - "High: Confirmed abuse of signed binaries for malicious activity."
+  - confidence_levels:
+      - "High: Confirmed malicious use."
+      - "Medium: Indicators suspicious but inconclusive."
+      - "Low: Legitimate usage."
+
+ioc_types:
+  - "Process command lines invoking signed binaries with suspicious arguments"
+  - "Hashes of known malicious scripts or payloads"
+  - "Unusual parent-child process relationships involving signed binaries"
+
+queries/examples:
+  - name: "regsvr32 executing remote script"
+    query: >
+      process.command_line:*regsvr32*.*.sct
+  - name: "rundll32 executing suspicious payload"
+    query: >
+      process.command_line:*rundll32* AND NOT process.parent_image:rundll32.exe
+
+automation_hooks:
+  - "Alert on unusual command lines invoking signed binaries."
+  - "Trigger threat intel enrichment and analyst review."
+
+analyst_guidance:
+  - "Verify legitimacy of signed binary executions."
+  - "Check related network or file system activity."
+  - "Engage incident response if abuse suspected."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1218/"
+
+review_cycle: "Quarterly or post-incident"

@@ -1,0 +1,66 @@
+playbook_name: "T1136.001 - Local Group Discovery Detection"
+tactic: "Discovery"
+technique_id: "T1136.001"
+technique_name: "Local Group Discovery"
+description: >
+  Detect reconnaissance activity where attackers enumerate local groups on hosts to gain insight
+  into system permissions and potential escalation paths.
+
+detection_sources:
+  - Windows Security Event Logs (EventID 4731, 4735, 4737)
+  - Endpoint Detection and Response (EDR)
+  - PowerShell and command line logging
+  - SIEM correlation on suspicious group enumeration commands
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect Local Group Enumeration Events"
+    description: >
+      Identify event logs or commands showing local group enumeration.
+    checklist:
+      - "Monitor EventIDs related to local group changes or queries"
+      - "Detect PowerShell commands like Get-LocalGroup or net localgroup"
+      - "Review frequency and source of these queries"
+    data_sources:
+      - "Windows event logs"
+      - "PowerShell logging"
+
+  - step_number: 2
+    title: "Correlate with User and Endpoint Behavior"
+    description: >
+      Investigate the user accounts and endpoints involved.
+    checklist:
+      - "Check if account is administrative or suspicious"
+      - "Review recent logins and access patterns"
+      - "Analyze endpoint for other suspicious activity"
+    data_sources:
+      - "EDR logs"
+      - "UEBA systems"
+
+  - step_number: 3
+    title: "Containment and Response"
+    description: >
+      Take steps to limit reconnaissance and potential escalation.
+    checklist:
+      - "Restrict suspicious accounts"
+      - "Increase endpoint monitoring"
+      - "Apply appropriate privilege changes"
+    data_sources:
+      - "Identity and endpoint management systems"
+
+triage_labels:
+  - severity:
+      - "Low: Single local group query"
+      - "Medium: Multiple queries or unusual patterns"
+      - "High: Suspected lateral movement preparation"
+  - confidence:
+      - "High: Confirmed suspicious commands or events"
+      - "Medium: Anomalous but unconfirmed"
+      - "Low: Normal admin behavior"
+
+ioc_types:
+  - User Account
+  - Hostname
+
+reference_links:
+  - https://attack.mitre.org/techniques/T1136/001/

@@ -1,0 +1,66 @@
+playbook_name: "T1136 - Permission Group Discovery Detection"
+tactic: "Discovery"
+technique_id: "T1136"
+technique_name: "Permission Groups Discovery"
+description: >
+  Helps analysts detect reconnaissance activities where adversaries enumerate permission groups
+  to identify high-value targets or lateral movement opportunities.
+
+detection_sources:
+  - Active Directory logs
+  - Windows Security Event Logs (EventID 4728, 4729, 4732, 4733)
+  - SIEM alerts on LDAP queries or group enumeration
+  - Endpoint logs
+
+investigation_steps:
+  - step_number: 1
+    title: "Identify Group Enumeration Activity"
+    description: >
+      Detect unusual or suspicious queries for permission group membership.
+    checklist:
+      - "Monitor events related to group membership enumeration (e.g., EventID 4728, 4732)"
+      - "Check for high frequency or unusual source accounts"
+      - "Correlate with threat intelligence on known reconnaissance tactics"
+    data_sources:
+      - "Active Directory logs"
+      - "SIEM"
+
+  - step_number: 2
+    title: "Analyze Account Behavior"
+    description: >
+      Investigate accounts performing group discovery.
+    checklist:
+      - "Verify if account is privileged or service account"
+      - "Check login patterns and times"
+      - "Review recent activity for suspicious behavior"
+    data_sources:
+      - "User account logs"
+      - "UEBA systems"
+
+  - step_number: 3
+    title: "Containment"
+    description: >
+      Restrict or monitor suspicious accounts and actions.
+    checklist:
+      - "Limit account privileges if suspicious"
+      - "Apply multi-factor authentication"
+      - "Increase monitoring"
+    data_sources:
+      - "Identity management systems"
+
+triage_labels:
+  - severity:
+      - "Low: Single group enumeration event"
+      - "Medium: Multiple enumerations from non-privileged accounts"
+      - "High: Enumeration from suspected compromised accounts"
+  - confidence:
+      - "High: Verified suspicious activity"
+      - "Medium: Unusual but inconclusive"
+      - "Low: Normal administrative activity"
+
+ioc_types:
+  - User Account
+  - IP Address
+
+reference_links:
+  - https://attack.mitre.org/techniques/T1136/

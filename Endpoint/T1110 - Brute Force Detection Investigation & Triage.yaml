@@ -1,0 +1,84 @@
+playbook_name: "T1110 - Brute Force Detection: Investigation & Triage"
+tactic: "Credential Access"
+technique_id: "T1110"
+technique_name: "Brute Force"
+description: >
+  Detects repeated attempts to gain access to accounts by systematically trying passwords or keys.
+
+investigation_steps:
+  - step_number: 1
+    title: "Identify Repeated Authentication Failures"
+    description: >
+      Detect multiple failed login attempts within a short timeframe targeting the same account or IP.
+    checklist:
+      - "Are there bursts of failed login attempts?"
+      - "Is the source IP or account unusual or blacklisted?"
+    data_sources:
+      - "Authentication logs"
+      - "Firewall logs"
+
+  - step_number: 2
+    title: "Correlate Successful Logins After Failures"
+    description: >
+      Check if a successful login occurs immediately after multiple failures.
+    checklist:
+      - "Was the successful login from the same IP or user?"
+      - "Does the login correlate with unusual activity?"
+    data_sources:
+      - "Authentication logs"
+      - "User activity logs"
+
+  - step_number: 3
+    title: "Identify Tools or Scripts Used for Brute Force"
+    description: >
+      Detect presence or execution of brute force tools or automated scripts on hosts.
+    checklist:
+      - "Are known brute force tool signatures detected?"
+      - "Is there unusual network scanning or connection attempts?"
+    data_sources:
+      - "Endpoint detection logs"
+      - "Network IDS/IPS"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Few failed attempts with no success."
+      - "Medium: Multiple failed attempts, no success yet."
+      - "High: Successful login after multiple failures."
+  - confidence_levels:
+      - "High: Confirmed brute force tool usage."
+      - "Medium: Multiple failed attempts from suspicious sources."
+      - "Low: Isolated failed attempts."
+
+ioc_types:
+  - "Multiple failed authentication attempts"
+  - "Known brute force tool processes"
+  - "Unusual login success patterns"
+
+queries/examples:
+  - name: "Detect Multiple Failed Login Attempts"
+    query: >
+      event.type == "authentication_failure" AND
+      count() BY source.ip WITHIN 5 minutes > 10
+
+  - name: "Successful Login After Failures"
+    query: >
+      event.type == "authentication_success" AND
+      previous_event.type == "authentication_failure" AND
+      source.ip == previous_event.source.ip AND
+      timestamp - previous_event.timestamp < 1 minute
+
+automation_hooks:
+  - "Throttle or block source IP after repeated failures."
+  - "Alert security team on potential brute force attempts."
+  - "Lock accounts after threshold exceeded."
+
+analyst_guidance:
+  - "Review login patterns and affected accounts."
+  - "Check for lateral movement or privilege escalation."
+  - "Recommend enforcing MFA and strong password policies."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1110/"
+  - "https://owasp.org/www-community/attacks/Brute_force_attack"
+
+review_cycle: "Weekly or after brute force detection"

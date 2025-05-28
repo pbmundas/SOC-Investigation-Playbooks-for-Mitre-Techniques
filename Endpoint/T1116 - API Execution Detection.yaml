@@ -1,0 +1,42 @@
+playbook_name: "API Execution Detection"
+tactic: "Execution"
+technique_id: "T1116"
+technique_name: "Execution through API"
+description: >
+  Detects the use of application programming interfaces (APIs) for executing payloads or tasks, often to bypass command-line or script-based detections.
+
+detection_sources:
+  - EDR (API hook monitoring)
+  - Windows ETW traces (native API)
+  - Sysmon Event ID 10 (ProcessAccess)
+  - In-memory scanning logs
+
+investigation_steps:
+  - step_number: 1
+    title: "Identify API Execution Context"
+    checklist:
+      - "Check for common malicious API calls (e.g., CreateRemoteThread, VirtualAllocEx)"
+      - "Review modules loaded by the process (DLLs)"
+      - "Analyze process ancestry to identify execution origin"
+
+  - step_number: 2
+    title: "Correlate With Known Techniques"
+    checklist:
+      - "Was the API call used in process injection or evasion?"
+      - "Check for reflective code loading, PE injection"
+
+  - step_number: 3
+    title: "Contain and Confirm"
+    checklist:
+      - "Capture memory for forensic analysis"
+      - "Review process network connections"
+      - "Mark IOCs and scan for lateral movement"
+
+triage_labels:
+  - severity: High
+  - confidence: Medium–High
+
+ioc_types:
+  - API call patterns
+  - Parent/child process
+  - Loaded DLLs

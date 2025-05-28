@@ -1,0 +1,41 @@
+playbook_name: "Shared Module Loading Detection"
+tactic: "Execution"
+technique_id: "T1129"
+technique_name: "Shared Modules"
+description: >
+  Adversaries may abuse shared modules (DLLs or libraries) to load malicious functionality into legitimate processes.
+
+detection_sources:
+  - Sysmon (Event ID 7 - ImageLoad)
+  - EDR (DLL Injection)
+  - Process command-line logs
+
+investigation_steps:
+  - step_number: 1
+    title: "Review Shared Library Usage"
+    checklist:
+      - "Check if DLL is unsigned or anomalous"
+      - "Look for DLLs loaded from temp/user-writable directories"
+      - "Check if DLL name mimics system components"
+
+  - step_number: 2
+    title: "Analyze Load Context"
+    checklist:
+      - "Was the DLL loaded by a legitimate binary?"
+      - "Check for sideloading patterns or LOLBins"
+
+  - step_number: 3
+    title: "Respond & Contain"
+    checklist:
+      - "Quarantine the file and process"
+      - "Collect memory dump for injected code"
+      - "Check other endpoints for the same DLL"
+
+triage_labels:
+  - severity: High
+  - confidence: High
+
+ioc_types:
+  - DLL path/name
+  - File hash
+  - Parent process
