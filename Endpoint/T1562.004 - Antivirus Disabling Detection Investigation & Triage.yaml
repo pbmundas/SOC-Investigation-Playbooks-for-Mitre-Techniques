@@ -1,0 +1,88 @@
+playbook_name: "T1562.004 - Antivirus Disabling Detection: Investigation & Triage"
+tactic: "Defense Evasion"
+technique_id: "T1562.004"
+technique_name: "Antivirus Disabling"
+description: >
+  Detect attempts to disable or tamper with antivirus or endpoint detection solutions to avoid detection.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Antivirus Service/Process Status Changes"
+    description: >
+      Detect stop, disable, or crash of antivirus-related services or processes.
+    checklist:
+      - "Are antivirus services stopped unexpectedly?"
+      - "Are there process terminations related to security products?"
+    data_sources:
+      - "Service logs"
+      - "Process monitoring"
+
+  - step_number: 2
+    title: "Detect Changes to Antivirus Configuration or Files"
+    description: >
+      Identify unauthorized modifications or deletions of AV configuration files or executables.
+    checklist:
+      - "Are AV signature files deleted or replaced?"
+      - "Are configuration files altered?"
+    data_sources:
+      - "File integrity monitoring"
+      - "System event logs"
+
+  - step_number: 3
+    title: "Correlate with Other Suspicious Activity"
+    description: >
+      Investigate if disabling AV coincides with malware execution or suspicious network traffic.
+    checklist:
+      - "Are malware alerts suppressed after AV disable?"
+      - "Is there lateral movement or privilege escalation?"
+    data_sources:
+      - "SIEM logs"
+      - "Endpoint telemetry"
+
+  - step_number: 4
+    title: "Respond and Remediate"
+    description: >
+      Restore AV functionality and remove malicious artifacts.
+    checklist:
+      - "Restart or reinstall AV services."
+      - "Perform system scans and containment."
+    data_sources:
+      - "Endpoint security tools"
+      - "IR platforms"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Scheduled maintenance or updates."
+      - "Medium: Unexpected AV service interruptions."
+      - "High: Confirmed AV disable linked to attacks."
+  - confidence_levels:
+      - "High: Matches known AV tampering techniques."
+      - "Medium: Unusual service changes needing investigation."
+      - "Low: Benign disruptions."
+
+ioc_types:
+  - "AV service stop"
+  - "File modifications on AV executables"
+  - "Process termination of AV"
+
+queries/examples:
+  - name: "Windows Security Center Service Stop"
+    query: >
+      EventID:7036 AND service.name:WinDefend AND event.message:"stopped"
+  - name: "Process Termination of AV"
+    query: >
+      process.name:taskkill AND command_line:*MsMpEng.exe*
+
+automation_hooks:
+  - "Alert on AV service stops outside maintenance windows."
+  - "Trigger auto-scan on host post AV restart."
+
+analyst_guidance:
+  - "Verify maintenance schedules."
+  - "Check for linked suspicious process execution."
+  - "Engage IR to investigate confirmed disable."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1562/004/"
+
+review_cycle: "Quarterly or after AV tampering incidents"

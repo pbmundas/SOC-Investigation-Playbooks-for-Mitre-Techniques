@@ -1,0 +1,104 @@
+playbook_name: "T1547.004 - Winlogon Helper DLL Detection: Investigation & Triage"
+tactic: "Persistence"
+technique_id: "T1547.004"
+technique_name: "Winlogon Helper DLL"
+description: >
+  Detect adversaries who install malicious DLLs loaded by Winlogon to maintain persistence during user logon.
+
+investigation_steps:
+  - step_number: 1
+    title: "Identify New or Modified Winlogon Helper DLLs"
+    description: >
+      Monitor DLLs registered under Winlogon key locations in the registry.
+    checklist:
+      - "Are there new or modified DLLs in HKLM\\Software\\Microsoft\\Windows NT\\CurrentVersion\\Winlogon\\Notify?"
+      - "Are DLLs signed and trusted?"
+      - "Are file hashes known or suspicious?"
+    data_sources:
+      - "Registry monitoring"
+      - "File integrity monitoring"
+      - "EDR telemetry"
+
+  - step_number: 2
+    title: "Detect DLL Loading by Winlogon Process"
+    description: >
+      Observe Winlogon.exe process loading DLLs and any abnormal child processes or behavior.
+    checklist:
+      - "Are unauthorized DLLs loaded by Winlogon?"
+      - "Is Winlogon spawning suspicious processes?"
+      - "Is there abnormal network activity tied to Winlogon?"
+    data_sources:
+      - "Process and DLL load logs"
+      - "Network monitoring"
+      - "EDR telemetry"
+
+  - step_number: 3
+    title: "Correlate with User Logon Events and Suspicious Activity"
+    description: >
+      Investigate suspicious user logons or system events around DLL modifications.
+    checklist:
+      - "Are there failed or suspicious logon attempts?"
+      - "Are persistence or lateral movement artifacts detected?"
+    data_sources:
+      - "Windows Security Event Logs"
+      - "SIEM correlation"
+
+  - step_number: 4
+    title: "Validate Changes with Patch and Change Management"
+    description: >
+      Confirm whether DLL changes or registrations are authorized.
+    checklist:
+      - "Is there a legitimate patch or update explaining the DLL?"
+      - "Are endpoint protections and AV active?"
+    data_sources:
+      - "Change management logs"
+      - "EDR status"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Authorized or known Winlogon helper DLLs."
+      - "Medium: Suspicious but unverified DLLs."
+      - "High: Confirmed malicious Winlogon helper DLL detected."
+  - confidence_levels:
+      - "High: Matches known malware or suspicious hashes."
+      - "Medium: Unsigned or anomalous DLL but no clear impact."
+      - "Low: Known benign DLL updates."
+
+ioc_types:
+  - "Registry keys for Winlogon Notify DLLs"
+  - "DLL file hashes"
+  - "Process creation and DLL load events"
+  - "User logon events"
+
+queries/examples:
+  - name: "New or Modified Winlogon Notify DLL Registry Entries"
+    query: >
+      registry.path:"HKLM\\Software\\Microsoft\\Windows NT\\CurrentVersion\\Winlogon\\Notify" AND
+      event.action:("registry_value_set" OR "registry_key_created")
+  - name: "Winlogon Loading Unusual DLLs"
+    query: >
+      process.name:"winlogon.exe" AND
+      dll.load.name:NOT("authui.dll" OR "msgina.dll")
+  - name: "Suspicious Winlogon Process Network Activity"
+    query: >
+      process.name:"winlogon.exe" AND
+      network.connection:* AND
+      NOT process.parent.name:"services.exe"
+
+automation_hooks:
+  - "Alert on new Winlogon Notify DLL registry changes"
+  - "Block loading of unauthorized DLLs by Winlogon"
+  - "Quarantine suspicious DLL files"
+
+analyst_guidance:
+  - "Check digital signatures and hashes."
+  - "Review user logon logs and anomalies."
+  - "Correlate with other persistence or lateral movement detections."
+  - "Leverage threat intelligence for known bad DLLs."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1547/004/"
+  - "https://docs.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4697"
+  - "https://www.sans.org/white-papers/39834/"
+
+review_cycle: "Quarterly or after new Winlogon helper DLL threats"

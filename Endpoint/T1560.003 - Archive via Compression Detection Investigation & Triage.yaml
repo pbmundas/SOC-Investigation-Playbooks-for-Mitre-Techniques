@@ -1,0 +1,82 @@
+playbook_name: "T1560.003 - Archive via Compression Detection: Investigation & Triage"
+tactic: "Collection"
+technique_id: "T1560.003"
+technique_name: "Archive via Compression"
+description: >
+  Detects adversaries using compression algorithms (gzip, bzip2, 7zip) to reduce size of collected data before exfiltration.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Execution of Compression Utilities"
+    description: >
+      Identify execution of compression tools like gzip, bzip2, 7zip, and related commands.
+    checklist:
+      - "Are compression utilities run by non-standard users or processes?"
+      - "Is compression activity correlated with access to sensitive data?"
+    data_sources:
+      - "Process creation logs"
+      - "Command line monitoring"
+
+  - step_number: 2
+    title: "Detect Creation of Compressed Files"
+    description: >
+      Look for files created with extensions such as .gz, .bz2, .7z, .xz, .lzma.
+    checklist:
+      - "Are compressed files created in unusual directories or by suspicious processes?"
+      - "Is file creation followed by network transfers?"
+    data_sources:
+      - "File system monitoring"
+      - "Process monitoring"
+
+  - step_number: 3
+    title: "Correlate Compression with Network Exfiltration"
+    description: >
+      Investigate if compressed files are moved or transmitted externally shortly after creation.
+    checklist:
+      - "Is outbound traffic detected shortly after compression?"
+      - "Are destination IPs or domains suspicious or unknown?"
+    data_sources:
+      - "Network logs"
+      - "SIEM correlation"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Compression for routine backups or maintenance."
+      - "Medium: Suspicious compression without confirmed exfiltration."
+      - "High: Compression activity linked to data theft."
+  - confidence_levels:
+      - "High: Verified compression followed by data exfiltration."
+      - "Medium: Suspicious compression behavior."
+      - "Low: Normal compression usage."
+
+ioc_types:
+  - "Execution of gzip, bzip2, 7zip, xz utilities"
+  - "Creation of compressed files (.gz, .bz2, .7z)"
+  - "Outbound network activity after compression"
+
+queries/examples:
+  - name: "Detect Compression Utility Execution"
+    query: >
+      process.name IN ("gzip", "bzip2", "7z", "xz") AND
+      user.name NOT IN ("backup", "admin")
+
+  - name: "Compressed File Creation"
+    query: >
+      file.extension IN (".gz", ".bz2", ".7z", ".xz") AND
+      process.parent.name IN ("gzip", "bzip2", "7z", "xz")
+
+automation_hooks:
+  - "Alert on compression utility execution by unauthorized users."
+  - "Block suspicious compressed file transfers."
+  - "Notify security operations team."
+
+analyst_guidance:
+  - "Verify if compression is part of legitimate workflows."
+  - "Analyze user and process context for anomalies."
+  - "Check network destinations for potential exfiltration."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1560/003/"
+  - "https://www.sans.org/white-papers/398/"
+
+review_cycle: "Monthly or following suspicious compression detection"

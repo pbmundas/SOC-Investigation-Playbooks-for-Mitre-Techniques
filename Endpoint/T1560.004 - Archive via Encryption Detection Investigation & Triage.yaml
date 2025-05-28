@@ -1,0 +1,82 @@
+playbook_name: "T1560.004 - Archive via Encryption Detection: Investigation & Triage"
+tactic: "Collection"
+technique_id: "T1560.004"
+technique_name: "Archive via Encryption"
+description: >
+  Detects adversaries encrypting collected data prior to exfiltration to evade detection and protect data confidentiality.
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect Use of Encryption Utilities or Commands"
+    description: >
+      Identify execution of encryption tools or commands (e.g., openssl, gpg, ccrypt) on collected data.
+    checklist:
+      - "Are encryption utilities executed by unusual users or processes?"
+      - "Is encryption applied immediately after data collection or staging?"
+    data_sources:
+      - "Process creation logs"
+      - "Command line auditing"
+
+  - step_number: 2
+    title: "Monitor Creation of Encrypted Files"
+    description: >
+      Detect creation of files with encrypted formats or extensions (e.g., .gpg, .enc, .aes).
+    checklist:
+      - "Are encrypted files created in sensitive or uncommon directories?"
+      - "Is there a pattern of encrypted file creation after data staging?"
+    data_sources:
+      - "File system monitoring"
+      - "Process monitoring"
+
+  - step_number: 3
+    title: "Correlate Encryption Activity with Data Exfiltration Attempts"
+    description: >
+      Investigate if encrypted files are being moved or transmitted externally after creation.
+    checklist:
+      - "Is outbound network traffic occurring after encrypted file creation?"
+      - "Are destination IPs or domains suspicious or unknown?"
+    data_sources:
+      - "Network logs"
+      - "SIEM correlation"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Encryption used for legitimate backups or compliance."
+      - "Medium: Suspicious encryption activity without confirmed exfiltration."
+      - "High: Encryption linked to unauthorized data exfiltration."
+  - confidence_levels:
+      - "High: Verified encryption followed by data transfer."
+      - "Medium: Suspicious encryption behavior."
+      - "Low: Legitimate encryption usage."
+
+ioc_types:
+  - "Execution of encryption tools like openssl, gpg"
+  - "Creation of encrypted files (.gpg, .enc, .aes)"
+  - "Outbound transfer of encrypted files"
+
+queries/examples:
+  - name: "Detect Encryption Utility Execution"
+    query: >
+      process.name IN ("openssl", "gpg", "ccrypt") AND
+      user.name NOT IN ("backup", "admin")
+
+  - name: "Encrypted File Creation"
+    query: >
+      file.extension IN (".gpg", ".enc", ".aes") AND
+      process.parent.name IN ("openssl", "gpg", "ccrypt")
+
+automation_hooks:
+  - "Alert on encryption utility usage by unauthorized users."
+  - "Block suspicious encrypted file transfers."
+  - "Notify security operations for investigation."
+
+analyst_guidance:
+  - "Confirm if encryption activity is authorized."
+  - "Investigate user and process context."
+  - "Check network traffic destinations and timing."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1560/004/"
+  - "https://www.sans.org/white-papers/398/"
+
+review_cycle: "Monthly or following detection of suspicious encryption activity"

@@ -1,0 +1,101 @@
+playbook_name: "T1553.004 - Trusted Developer Utilities Abuse: Investigation & Triage"
+tactic: "Defense Evasion"
+technique_id: "T1553.004"
+technique_name: "Trusted Developer Utilities Abuse"
+description: >
+  Detect misuse of trusted developer utilities or signed binaries to evade detection and execute malicious actions.
+
+investigation_steps:
+  - step_number: 1
+    title: "Identify Execution of Trusted Developer Utilities in Suspicious Contexts"
+    description: >
+      Detect when developer utilities (e.g., certutil, msbuild) are used unusually or in ways consistent with abuse.
+    checklist:
+      - "Are developer utilities running from unexpected locations or by unusual users?"
+      - "Is the usage pattern consistent with normal developer workflows?"
+    data_sources:
+      - "Process execution logs"
+      - "Command line monitoring"
+      - "User behavior analytics"
+
+  - step_number: 2
+    title: "Monitor for Known Malicious Use Cases"
+    description: >
+      Detect abuse scenarios such as downloading payloads, encoding data, or bypassing execution controls.
+    checklist:
+      - "Is certutil or msbuild used to download or decode suspicious files?"
+      - "Are developer utilities spawning child processes or executing scripts?"
+    data_sources:
+      - "Network logs"
+      - "Process tree analysis"
+      - "EDR telemetry"
+
+  - step_number: 3
+    title: "Correlate with Persistence and Lateral Movement"
+    description: >
+      Link developer utility abuse with persistence mechanisms or lateral movement.
+    checklist:
+      - "Are there scheduled tasks or services created using these utilities?"
+      - "Is lateral movement observed after utility execution?"
+    data_sources:
+      - "Task scheduler logs"
+      - "Service creation events"
+      - "Network traffic analysis"
+
+  - step_number: 4
+    title: "Validate or Respond"
+    description: >
+      Confirm abuse of trusted utilities and remediate.
+    checklist:
+      - "Are impacted systems isolated for investigation?"
+      - "Are policies updated to restrict utility use?"
+    data_sources:
+      - "Incident response"
+      - "Endpoint policy management"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Legitimate developer activity."
+      - "Medium: Suspicious or uncommon usage patterns."
+      - "High: Confirmed malicious use of trusted utilities."
+  - confidence_levels:
+      - "High: Known abuse patterns or IOC matches."
+      - "Medium: Unusual execution contexts."
+      - "Low: Benign but uncommon use."
+
+ioc_types:
+  - "Command line parameters of trusted utilities"
+  - "Hashes of suspicious utility binaries or scripts"
+  - "User accounts invoking developer utilities"
+  - "Network endpoints contacted by utilities"
+
+queries/examples:
+  - name: "Certutil Download and Decode"
+    query: >
+      process.name:"certutil.exe" AND
+      (process.command_line:"-urlcache" OR process.command_line:"-decode")
+  - name: "Msbuild Suspicious Execution"
+    query: >
+      process.name:"msbuild.exe" AND
+      process.command_line:("*exec*" OR "*script*")
+  - name: "Developer Utility Execution by Non-Dev Users"
+    query: >
+      user.role:NOT_IN("developer", "admin") AND
+      process.name:("certutil.exe", "msbuild.exe", "regsvr32.exe")
+
+automation_hooks:
+  - "Alert on suspicious usage of trusted developer utilities."
+  - "Block flagged command line parameters."
+  - "Enforce least privilege and application control policies."
+
+analyst_guidance:
+  - "Validate context of developer utility usage with user and system roles."
+  - "Correlate with other suspicious behaviors such as network connections and file writes."
+  - "Coordinate with development and security teams for whitelist policies."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1553/004/"
+  - "https://docs.microsoft.com/en-us/windows-server/administration/windows-commands/certutil"
+  - "https://www.sans.org/white-papers/40026/"
+
+review_cycle: "Semi-annually or upon detection of new utility abuse tactics"

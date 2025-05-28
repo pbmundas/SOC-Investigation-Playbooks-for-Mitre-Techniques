@@ -1,0 +1,105 @@
+playbook_name: "T1547.005 - Kernel Module Loading Detection: Investigation & Triage"
+tactic: "Persistence"
+technique_id: "T1547.005"
+technique_name: "Kernel Module Loading"
+description: >
+  Detect adversaries who load malicious kernel modules or drivers to maintain persistence and evade defenses at the kernel level.
+
+investigation_steps:
+  - step_number: 1
+    title: "Identify New or Unexpected Kernel Module Loads"
+    description: >
+      Monitor kernel module or driver loading events for unexpected or unauthorized modules.
+    checklist:
+      - "Are there new or unsigned kernel drivers loaded recently?"
+      - "Are modules loaded outside standard system directories?"
+      - "Are kernel modules loaded by unusual processes or at unusual times?"
+    data_sources:
+      - "Windows ETW Kernel Driver Load Events (Event ID 6)"
+      - "Linux audit logs for module insertion (auditd)"
+      - "EDR telemetry"
+      - "File integrity monitoring"
+
+  - step_number: 2
+    title: "Validate Module Signatures and Source"
+    description: >
+      Check digital signatures and verify the origin of kernel modules.
+    checklist:
+      - "Is the kernel module signed by a trusted authority?"
+      - "Is the hash known or flagged by threat intelligence?"
+      - "Is the module associated with legitimate software or patch?"
+    data_sources:
+      - "Certificate validation logs"
+      - "Threat intelligence feeds"
+      - "Patch/change management"
+
+  - step_number: 3
+    title: "Correlate with Suspicious System Behavior"
+    description: >
+      Link kernel module loading with anomalous system or network behavior.
+    checklist:
+      - "Is there a spike in system crashes or instability?"
+      - "Are there privilege escalations or process anomalies?"
+      - "Is network activity unusual following module load?"
+    data_sources:
+      - "System logs"
+      - "Process monitoring"
+      - "Network traffic logs"
+
+  - step_number: 4
+    title: "Confirm Legitimacy or Initiate Containment"
+    description: >
+      Determine if the kernel module load is authorized; if suspicious, initiate response.
+    checklist:
+      - "Was the module installed by authorized IT or security patch?"
+      - "Is immediate containment or removal warranted?"
+    data_sources:
+      - "Change management"
+      - "Incident response platform"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Known, signed kernel modules from legitimate updates."
+      - "Medium: Unsigned or unknown modules but no confirmed malicious impact."
+      - "High: Malicious or suspicious kernel modules detected."
+  - confidence_levels:
+      - "High: Matches known malicious kernel module hash or behavior."
+      - "Medium: Unsigned but no direct malicious activity observed."
+      - "Low: Legitimate but unverified module."
+
+ioc_types:
+  - "Kernel module hashes"
+  - "Driver load events"
+  - "Digital certificate data"
+  - "Process parent-child chains"
+
+queries/examples:
+  - name: "Kernel Module Loads (Windows)"
+    query: >
+      event.id:6 AND
+      event.provider:"Microsoft-Windows-Kernel-Module"
+  - name: "Unsigned Kernel Driver Loads"
+    query: >
+      event.id:6 AND
+      driver.signature_status:NOT("Signed")
+  - name: "Linux Kernel Module Insertions"
+    query: >
+      auditd.syscall:init_module OR auditd.syscall:finit_module
+
+automation_hooks:
+  - "Alert on unsigned or unrecognized kernel module loads."
+  - "Block kernel module loads not matching baseline."
+  - "Quarantine or rollback suspicious kernel modules."
+
+analyst_guidance:
+  - "Validate kernel module signatures."
+  - "Check for associated anomalous system behavior."
+  - "Correlate with threat intelligence and patch data."
+  - "Engage incident response for confirmed malicious modules."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1547/005/"
+  - "https://docs.microsoft.com/en-us/windows/security/threat-protection/auditing/event-6"
+  - "https://linux-audit.com/linux-auditd-guide-to-auditing-kernel-module-loads/"
+
+review_cycle: "Quarterly or after new kernel threat disclosures"

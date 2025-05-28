@@ -1,0 +1,96 @@
+playbook_name: "T1547.006 - Launch Agent Detection: Investigation & Triage"
+tactic: "Persistence"
+technique_id: "T1547.006"
+technique_name: "Launch Agent"
+description: >
+  Detect adversaries who install malicious launch agents to persist on macOS systems.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Launch Agent Locations"
+    description: >
+      Detect new or modified launch agents in standard macOS directories.
+    checklist:
+      - "Are there new or altered files in ~/Library/LaunchAgents or /Library/LaunchAgents?"
+      - "Are launch agents signed and authorized?"
+      - "Is the plist configured to load suspicious binaries or scripts?"
+    data_sources:
+      - "File system monitoring"
+      - "Endpoint detection logs"
+      - "macOS system logs"
+
+  - step_number: 2
+    title: "Detect Launch Agent Executions"
+    description: >
+      Monitor process creation from launch agents.
+    checklist:
+      - "Are launch agent processes starting unexpected binaries?"
+      - "Are child processes of launch agents unusual?"
+      - "Is there network activity associated with launch agent processes?"
+    data_sources:
+      - "Process monitoring"
+      - "Network monitoring"
+
+  - step_number: 3
+    title: "Correlate with System Anomalies"
+    description: >
+      Check for suspicious user activity, escalations, or persistence.
+    checklist:
+      - "Are there unexpected privilege escalations?"
+      - "Are user sessions or login times anomalous?"
+    data_sources:
+      - "User activity logs"
+      - "Security monitoring"
+
+  - step_number: 4
+    title: "Validate Legitimate Use or Respond"
+    description: >
+      Confirm whether launch agents are authorized or malicious.
+    checklist:
+      - "Is the launch agent installed by IT or authorized software?"
+      - "Is removal or quarantine required?"
+    data_sources:
+      - "Asset management"
+      - "Incident response"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Authorized launch agents."
+      - "Medium: Unverified but non-critical launch agents."
+      - "High: Malicious launch agents detected."
+  - confidence_levels:
+      - "High: Known malicious launch agent signature or behavior."
+      - "Medium: Suspicious but unconfirmed."
+      - "Low: Known benign agent."
+
+ioc_types:
+  - "Launch agent plist hashes"
+  - "Process parent-child relationships"
+  - "File creation/modification times"
+
+queries/examples:
+  - name: "New or Modified Launch Agents"
+    query: >
+      file.path:("/Users/*/Library/LaunchAgents/*" OR "/Library/LaunchAgents/*") AND
+      event.action:("file_created" OR "file_modified")
+  - name: "Launch Agent Process Executions"
+    query: >
+      process.parent.name:"launchd" AND
+      process.command_line:("*suspicious_binary*")
+
+automation_hooks:
+  - "Alert on new or modified launch agents."
+  - "Block execution of suspicious launch agent binaries."
+  - "Quarantine malicious launch agents."
+
+analyst_guidance:
+  - "Verify launch agent source and signature."
+  - "Correlate with user activity and other alerts."
+  - "Use threat intel to validate known bad agents."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1547/006/"
+  - "https://developer.apple.com/library/archive/documentation/MacOSX/Conceptual/BPSystemStartup/Chapters/CreatingLaunchdJobs.html"
+  - "https://objective-see.com/blog/blog_0x19.html"
+
+review_cycle: "Biannual or on discovery of new macOS persistence threats"

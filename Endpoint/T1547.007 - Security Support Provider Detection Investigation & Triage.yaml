@@ -1,0 +1,101 @@
+playbook_name: "T1547.007 - Security Support Provider Detection: Investigation & Triage"
+tactic: "Persistence"
+technique_id: "T1547.007"
+technique_name: "Security Support Provider"
+description: >
+  Detect adversaries who install or modify Security Support Providers (SSPs) to persist by hooking into authentication processes.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor SSP DLLs and Registry Entries"
+    description: >
+      Detect new or changed SSP DLLs registered in the registry.
+    checklist:
+      - "Are SSP DLLs added or modified under HKLM\\System\\CurrentControlSet\\Control\\SecurityProviders?"
+      - "Are DLLs signed and trusted?"
+      - "Are file hashes flagged as malicious?"
+    data_sources:
+      - "Registry monitoring"
+      - "File integrity monitoring"
+      - "EDR telemetry"
+
+  - step_number: 2
+    title: "Detect Loading of SSP DLLs"
+    description: >
+      Observe loading of SSP DLLs in authentication processes.
+    checklist:
+      - "Are unauthorized DLLs loaded by lsass.exe or other auth processes?"
+      - "Is there abnormal process behavior associated?"
+    data_sources:
+      - "Process and DLL load monitoring"
+      - "EDR telemetry"
+
+  - step_number: 3
+    title: "Correlate with Authentication Anomalies"
+    description: >
+      Investigate authentication events for anomalies coinciding with SSP changes.
+    checklist:
+      - "Are there unusual logon failures or successes?"
+      - "Are user privilege changes observed?"
+    data_sources:
+      - "Windows Security Event Logs"
+      - "SIEM correlation"
+
+  - step_number: 4
+    title: "Validate Legitimate Changes"
+    description: >
+      Confirm if SSP changes are authorized or related to software updates.
+    checklist:
+      - "Is the DLL from a trusted vendor?"
+      - "Is there patch or update documentation?"
+    data_sources:
+      - "Patch/change management"
+      - "Threat intelligence"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Known and authorized SSP DLLs."
+      - "Medium: Suspicious DLLs but unconfirmed impact."
+      - "High: Confirmed malicious SSP DLL detected."
+  - confidence_levels:
+      - "High: Matches known malicious SSP DLL hashes."
+      - "Medium: Unsigned or unusual DLL but no clear impact."
+      - "Low: Known benign DLL."
+
+ioc_types:
+  - "SSP DLL file hashes"
+  - "Registry SSP keys"
+  - "Process DLL load events"
+  - "Authentication event anomalies"
+
+queries/examples:
+  - name: "Registry Changes to SSP Keys"
+    query: >
+      registry.path:"HKLM\\System\\CurrentControlSet\\Control\\SecurityProviders" AND
+      event.action:("registry_value_set" OR "registry_key_created")
+  - name: "SSP DLL Loads in Authentication Processes"
+    query: >
+      process.name:"lsass.exe" AND
+      dll.load.name:NOT("msv1_0.dll" OR "wdigest.dll" OR "kerberos.dll")
+  - name: "Authentication Event Anomalies"
+    query: >
+      event.id:(4624 OR 4625) AND
+      user.account.anomaly:true
+
+automation_hooks:
+  - "Alert on suspicious SSP registry modifications."
+  - "Block unauthorized SSP DLL loads."
+  - "Quarantine suspicious DLL files."
+
+analyst_guidance:
+  - "Verify digital signatures and file origins."
+  - "Correlate authentication anomalies with SSP changes."
+  - "Consult threat intelligence."
+  - "Engage incident response for confirmed detections."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1547/007/"
+  - "https://docs.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4697"
+  - "https://www.fireeye.com/blog/threat-research/2019/06/malicious-ssp.html"
+
+review_cycle: "Quarterly or upon new SSP attack vector disclosures"

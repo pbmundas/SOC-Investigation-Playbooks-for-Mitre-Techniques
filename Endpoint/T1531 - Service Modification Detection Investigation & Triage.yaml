@@ -1,0 +1,85 @@
+playbook_name: "T1531 - Service Modification Detection: Investigation & Triage"
+tactic: "Defense Evasion"
+technique_id: "T1531"
+technique_name: "Modify Existing Service"
+description: >
+  Detects adversaries modifying existing system services to evade defenses, maintain persistence, or escalate privileges.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Service Configuration Changes"
+    description: >
+      Track changes to service configurations such as startup type, binary path, and service parameters.
+    checklist:
+      - "Are there unauthorized modifications to service binaries or configurations?"
+      - "Are service startup types changed unexpectedly?"
+    data_sources:
+      - "System event logs"
+      - "Service configuration audit logs"
+      - "File integrity monitoring"
+
+  - step_number: 2
+    title: "Detect Unusual Service Executable Changes"
+    description: >
+      Identify modifications or replacements of service executables, especially if pointing to suspicious binaries.
+    checklist:
+      - "Are service binaries replaced with non-standard executables?"
+      - "Is there an increase in service crashes or failures?"
+    data_sources:
+      - "File system monitoring"
+      - "Executable hash comparisons"
+
+  - step_number: 3
+    title: "Correlate Service Changes with Other Malicious Activity"
+    description: >
+      Investigate any suspicious behavior following service modifications, such as privilege escalation or persistence.
+    checklist:
+      - "Is there evidence of newly spawned processes or scheduled tasks?"
+      - "Are there logins or command executions related to modified services?"
+    data_sources:
+      - "Process monitoring logs"
+      - "Audit logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Planned or authorized service changes."
+      - "Medium: Unusual but unconfirmed modifications."
+      - "High: Confirmed malicious service modifications."
+  - confidence_levels:
+      - "High: Verified unauthorized changes with malicious impact."
+      - "Medium: Suspicious service changes without full context."
+      - "Low: Routine service maintenance."
+
+ioc_types:
+  - "Unexpected service startup type changes"
+  - "Service executable replacements"
+  - "Unauthorized service parameter changes"
+
+queries/examples:
+  - name: "Detect Service Startup Type Changes"
+    query: >
+      event_id == 7040 AND
+      service.startup_type CHANGED AND
+      user NOT IN authorized admins
+
+  - name: "Detect Service Executable Path Changes"
+    query: >
+      event_id == 7045 AND
+      service.binary_path CHANGED AND
+      new_path NOT IN known good binaries
+
+automation_hooks:
+  - "Alert on unauthorized service modifications."
+  - "Revert unauthorized changes automatically if possible."
+  - "Notify IT and security teams for incident response."
+
+analyst_guidance:
+  - "Validate if service changes are authorized."
+  - "Check for associated malicious activities."
+  - "Recommend hardening service permissions and auditing."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1531/"
+  - "https://docs.microsoft.com/en-us/windows/security/threat-protection/auditing/event-7040"
+
+review_cycle: "Monthly or after detection of service changes"

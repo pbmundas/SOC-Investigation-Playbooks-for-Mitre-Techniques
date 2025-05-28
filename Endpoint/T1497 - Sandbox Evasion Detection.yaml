@@ -1,0 +1,80 @@
+playbook_name: "T1497 - Sandbox Evasion Detection"
+tactic: "Defense Evasion"
+technique_id: "T1497"
+technique_name: "Virtualization/Sandbox Evasion"
+description: >
+  Detect adversaries attempting to evade detection by identifying and avoiding sandbox or virtualized environments.
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect Anti-Virtualization API Calls"
+    description: >
+      Monitor process behavior for checks against virtualization artifacts.
+    checklist:
+      - "Are APIs like `cpuid`, `GetTickCount`, `SystemManufacturer` used?"
+      - "Is there querying of registry keys like `HKLM\\HARDWARE\\DESCRIPTION\\System`?"
+    data_sources:
+      - "EDR process logs"
+      - "Sysmon (Event ID 1, 10, 13)"
+      - "Security product telemetry"
+
+  - step_number: 2
+    title: "Identify Artifacts of Environmental Checks"
+    description: >
+      Look for indicators that malware is checking for known sandbox artifacts.
+    checklist:
+      - "Are common VM drivers or MAC addresses being scanned?"
+      - "Is system uptime being queried unusually early?"
+    data_sources:
+      - "Process command-line logs"
+      - "Registry access logs"
+      - "File and DLL access traces"
+
+  - step_number: 3
+    title: "Correlate with Delayed or Conditional Execution"
+    description: >
+      Some malware delays execution or behaves differently depending on results.
+    checklist:
+      - "Are there long sleep or idle calls (e.g., >30s)?"
+      - "Is execution gated behind conditional logic?"
+    data_sources:
+      - "Behavioral sandbox output"
+      - "Memory dumps"
+
+triage_labels:
+  - severity_levels:
+      - "Medium: Suspected evasion behavior."
+      - "High: Confirmed use of sandbox detection."
+  - confidence_levels:
+      - "High: Evasion logic confirmed in code."
+      - "Medium: Behavioral indicators present."
+
+ioc_types:
+  - "Access to virtualization-related registry keys"
+  - "Delays before execution"
+  - "Presence of sandbox string checks"
+
+queries/examples:
+  - name: "Query for Sleep Calls >30s"
+    query: >
+      process.name:* AND command_line:("sleep" OR "timeout") AND arguments:(">30")
+
+  - name: "VM Environment Check via Registry"
+    query: >
+      registry.path:"*HARDWARE\\DESCRIPTION\\System*" AND process.name:("powershell.exe" OR "reg.exe")
+
+automation_hooks:
+  - "Tag process as suspicious in EDR"
+  - "Submit sample to deeper sandbox"
+  - "Alert threat hunting team"
+
+analyst_guidance:
+  - "Review full process tree and cross-check with sandbox reports."
+  - "Flag binaries showing conditional evasion for reverse engineering."
+  - "Correlate with other TTPs (e.g., T1055, T1203) for deeper analysis."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1497/"
+  - "https://www.joesandbox.com/knowledgebase/325"
+
+review_cycle: "Quarterly or after malware campaign detection"

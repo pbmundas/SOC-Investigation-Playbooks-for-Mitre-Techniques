@@ -1,0 +1,77 @@
+playbook_name: "T1562 - Defense Control Disabling Detection: Investigation & Triage"
+tactic: "Defense Evasion"
+technique_id: "T1562"
+technique_name: "Impair Defenses"
+description: >
+  Detect and investigate actions that attempt to disable or tamper with security controls such as AV, EDR, firewall, or security policies.
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect Security Tool Interference"
+    description: >
+      Monitor logs and APIs for interactions with known security controls.
+    checklist:
+      - "Was a security service stopped or disabled?"
+      - "Were registry keys related to AV/EDR modified?"
+    data_sources:
+      - "Windows Event Logs"
+      - "Registry Auditing"
+      - "Service monitoring"
+
+  - step_number: 2
+    title: "Analyze Process Behavior"
+    description: >
+      Identify if processes are trying to terminate or suspend security-related services.
+    checklist:
+      - "Are there taskkill or net stop commands?"
+      - "Are non-administrative users altering services?"
+    data_sources:
+      - "Command-line logs"
+      - "Process execution telemetry"
+
+  - step_number: 3
+    title: "Correlate with Known Threat Behavior"
+    description: >
+      Compare activity with known attacker tradecraft.
+    checklist:
+      - "Does it match known malware disabling defenses?"
+      - "Was this activity observed during infection or exploitation phases?"
+    data_sources:
+      - "Threat intelligence feeds"
+      - "EDR alerts"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Routine administrative service change."
+      - "Medium: Unexpected stop of a critical service."
+      - "High: Confirmed disabling of multiple defenses."
+  - confidence_levels:
+      - "High: Matches known malicious patterns."
+      - "Medium: Suspicious but no lateral indicators."
+      - "Low: Single, isolated event."
+
+ioc_types:
+  - "Service stop commands"
+  - "AV/EDR registry modification"
+  - "Terminated defense processes"
+
+queries/examples:
+  - name: "Stop Security Services via Command Line"
+    query: >
+      (command_line:*net* AND command_line:*stop*) AND (command_line:*defender* OR command_line:*firewall*)
+  - name: "Security Tool Process Killed"
+    query: >
+      event.action:terminated AND process.name:(MsMpEng.exe OR EDR.exe)
+
+automation_hooks:
+  - "Alert on defense control tampering."
+  - "Auto-tag known defense evasion patterns."
+
+analyst_guidance:
+  - "Check logs before and after disabling attempt."
+  - "Validate tools used in tampering match known bad tools."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1562/"
+
+review_cycle: "Quarterly or after EDR control evasion attempts"

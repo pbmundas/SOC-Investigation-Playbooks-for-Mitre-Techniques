@@ -1,0 +1,99 @@
+playbook_name: "T1553.003 - Secure Boot Privilege Abuse: Investigation & Triage"
+tactic: "Defense Evasion"
+technique_id: "T1553.003"
+technique_name: "Secure Boot Privilege Abuse"
+description: >
+  Detect attempts to abuse Secure Boot privileges to execute unauthorized or tampered code during system startup.
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect Modification or Disablement of Secure Boot"
+    description: >
+      Identify changes to Secure Boot settings or attempts to disable Secure Boot to allow execution of unsigned code.
+    checklist:
+      - "Are Secure Boot settings altered or disabled?"
+      - "Are there firmware configuration changes or tampering events?"
+    data_sources:
+      - "UEFI firmware logs"
+      - "Windows Event Logs (Secure Boot events)"
+      - "Endpoint security telemetry"
+
+  - step_number: 2
+    title: "Monitor for Unauthorized Bootloader or Boot Manager Changes"
+    description: >
+      Detect suspicious modifications or loading of unauthorized bootloaders that could bypass Secure Boot protections.
+    checklist:
+      - "Are new or unknown bootloaders present on the system?"
+      - "Is there evidence of boot manager tampering?"
+    data_sources:
+      - "Boot Configuration Data (BCD) logs"
+      - "Firmware integrity monitoring"
+      - "EDR and endpoint logs"
+
+  - step_number: 3
+    title: "Correlate with Privilege Escalation and Persistence"
+    description: >
+      Link Secure Boot abuse with attempts to gain privileged access or establish persistence.
+    checklist:
+      - "Are there privilege escalation attempts after Secure Boot modifications?"
+      - "Is malware or rootkit persistence observed post-boot?"
+    data_sources:
+      - "Privilege escalation detection"
+      - "Malware detection logs"
+      - "SIEM correlation rules"
+
+  - step_number: 4
+    title: "Validate or Respond"
+    description: >
+      Confirm Secure Boot abuse and initiate containment and remediation.
+    checklist:
+      - "Is Secure Boot configuration restored or system re-imaged?"
+      - "Are firmware and boot components integrity validated?"
+    data_sources:
+      - "Incident response tools"
+      - "Firmware validation utilities"
+      - "Patch and update management"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Configuration changes without malicious intent."
+      - "Medium: Suspicious Secure Boot changes detected."
+      - "High: Confirmed Secure Boot abuse with malicious payload."
+  - confidence_levels:
+      - "High: Known Secure Boot abuse indicators."
+      - "Medium: Unusual bootloader or firmware modifications."
+      - "Low: Inconclusive or uncorroborated events."
+
+ioc_types:
+  - "Firmware configuration hashes"
+  - "Bootloader filenames and hashes"
+  - "Secure Boot event IDs"
+  - "UEFI variable changes"
+
+queries/examples:
+  - name: "Secure Boot Disablement Events"
+    query: >
+      event.id: (SecureBootDisableEventIDs) AND event.message:"Secure Boot disabled"
+  - name: "Bootloader Modification Detection"
+    query: >
+      file.name: ("bootmgr", "bootx64.efi") AND file.hash:NOT_IN(known_good_hashes)
+  - name: "UEFI Variable Changes"
+    query: >
+      uefi.variable.name:("SecureBoot") AND uefi.variable.status:"changed"
+
+automation_hooks:
+  - "Alert on Secure Boot disablement or tampering."
+  - "Block unauthorized bootloader changes."
+  - "Trigger firmware integrity scans and forensic imaging."
+
+analyst_guidance:
+  - "Review UEFI and Secure Boot logs carefully."
+  - "Validate bootloader integrity against known good baselines."
+  - "Engage firmware security experts and IR team immediately."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1553/003/"
+  - "https://docs.microsoft.com/en-us/windows/security/information-protection/secure-the-windows-boot-process"
+  - "https://uefi.org/specifications"
+
+review_cycle: "Quarterly or after major Secure Boot vulnerability disclosures"

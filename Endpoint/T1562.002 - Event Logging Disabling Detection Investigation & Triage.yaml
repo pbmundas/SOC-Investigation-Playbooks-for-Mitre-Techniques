@@ -1,0 +1,75 @@
+playbook_name: "T1562.002 - Event Logging Disabling Detection: Investigation & Triage"
+tactic: "Defense Evasion"
+technique_id: "T1562.002"
+technique_name: "Disable Windows Event Logging"
+description: >
+  Detect and investigate attempts to disable, clear, or tamper with Windows event logs.
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect Clearing of Event Logs"
+    description: >
+      Monitor for event log clear commands and log file deletion.
+    checklist:
+      - "Was event ID 1102 triggered?"
+      - "Are security log files missing or corrupted?"
+    data_sources:
+      - "Windows Security Logs"
+      - "Filesystem monitoring"
+
+  - step_number: 2
+    title: "Identify Disabling of Log Services"
+    description: >
+      Look for actions that stop or disable the event log service.
+    checklist:
+      - "Was eventlog service stopped?"
+      - "Were log channels disabled via registry?"
+    data_sources:
+      - "Service logs"
+      - "Registry monitoring"
+
+  - step_number: 3
+    title: "Correlate With Attack Timeline"
+    description: >
+      Determine if log tampering aligns with suspicious or malicious activity.
+    checklist:
+      - "Was logging disabled before or after lateral movement?"
+    data_sources:
+      - "SIEM timeline"
+      - "Threat detection events"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Admin testing or cleanup."
+      - "Medium: Unexpected log service action."
+      - "High: Confirmed event log wipe during attack."
+  - confidence_levels:
+      - "High: Known log tampering behavior."
+      - "Medium: Partial alignment to misuse."
+      - "Low: No follow-up events."
+
+ioc_types:
+  - "Event ID 1102 (Log Clear)"
+  - "eventlog service status changes"
+  - "log channel registry edits"
+
+queries/examples:
+  - name: "Event Log Clear Command"
+    query: >
+      event.id:1102
+  - name: "Stop Event Log Service"
+    query: >
+      service.name:eventlog AND service.status:stopped
+
+automation_hooks:
+  - "Alert on log clearing events."
+  - "Initiate forensic image capture on log tampering."
+
+analyst_guidance:
+  - "Correlate with attack progression."
+  - "Escalate if tampering coincides with compromise."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1562/002/"
+
+review_cycle: "Quarterly or immediately post-breach"

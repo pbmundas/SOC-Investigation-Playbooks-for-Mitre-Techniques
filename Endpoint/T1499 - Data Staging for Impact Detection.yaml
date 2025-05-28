@@ -1,0 +1,86 @@
+playbook_name: "T1499 - Data Staging for Impact Detection"
+tactic: "Impact"
+technique_id: "T1499"
+technique_name: "Data Staging for Impact"
+description: >
+  Detect adversaries preparing or staging data on systems in preparation for an impact event such as ransomware or data destruction.
+
+investigation_steps:
+  - step_number: 1
+    title: "Identify Large Scale Data Aggregation"
+    description: >
+      Detect unusual data copying, archiving, or consolidation activities on endpoints or servers.
+    checklist:
+      - "Are there large data movements within local or network storage?"
+      - "Are file archiving or compression utilities invoked frequently?"
+      - "Is there unusual file access or modification timestamps?"
+    data_sources:
+      - "File system logs"
+      - "Endpoint detection logs"
+      - "EDR telemetry"
+
+  - step_number: 2
+    title: "Monitor for Use of Staging or Backup Locations"
+    description: >
+      Look for data being moved to locations often used for staging or backups prior to impact.
+    checklist:
+      - "Are there writes to removable media or alternate storage?"
+      - "Is data copied to hidden or uncommon directories?"
+    data_sources:
+      - "File access logs"
+      - "Removable media logs"
+      - "Network share access logs"
+
+  - step_number: 3
+    title: "Correlate with Known Impact Indicators"
+    description: >
+      Check for indicators such as ransomware process activity or destructive commands following staging.
+    checklist:
+      - "Is there concurrent suspicious process execution?"
+      - "Are encryption or deletion events detected soon after staging?"
+    data_sources:
+      - "EDR alerts"
+      - "Process monitoring"
+      - "Security event logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Legitimate data backup or staging."
+      - "Medium: Suspicious or anomalous staging behavior."
+      - "High: Confirmed malicious data staging for impact."
+  - confidence_levels:
+      - "High: Verified malicious staging correlated with impact."
+      - "Medium: Behavioral anomalies."
+      - "Low: Possible benign activity."
+
+ioc_types:
+  - "Unusual large file copy/move"
+  - "Suspicious archive or compression usage"
+  - "Access to staging or backup locations"
+
+queries/examples:
+  - name: "Detect Large File Copy Operations"
+    query: >
+      file.operation IN (copy, move) AND
+      file.size > threshold
+
+  - name: "Detect Archive Utility Usage"
+    query: >
+      process.name IN (zip, rar, 7z, tar) AND
+      process.start_time > recent_timeframe
+
+automation_hooks:
+  - "Alert on large scale data staging."
+  - "Isolate systems showing suspicious activity."
+  - "Trigger immediate investigation and containment."
+
+analyst_guidance:
+  - "Confirm if data staging aligns with normal backups."
+  - "Investigate involved files and user/process activity."
+  - "Prepare for possible ransomware or destructive impact."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1499/"
+  - "https://www.crowdstrike.com/blog/ransomware-behavioral-analysis/"
+
+review_cycle: "Quarterly or after incidents"

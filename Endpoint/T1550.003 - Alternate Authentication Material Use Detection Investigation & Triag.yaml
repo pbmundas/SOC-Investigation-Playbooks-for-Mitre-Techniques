@@ -1,0 +1,82 @@
+playbook_name: "T1550.003 - Alternate Authentication Material Use Detection: Investigation & Triage"
+tactic: "Credential Access"
+technique_id: "T1550.003"
+technique_name: "Use Alternate Authentication Material"
+description: >
+  Detects adversaries leveraging alternate authentication materials such as smart cards, biometric tokens, or multi-factor authentication artifacts to gain access.
+
+investigation_steps:
+  - step_number: 1
+    title: "Identify Unusual Use of Smart Cards or Biometrics"
+    description: >
+      Monitor logs for unexpected smart card or biometric authentication events.
+    checklist:
+      - "Are smart card logins occurring from unusual locations or times?"
+      - "Is biometric authentication triggered in anomalous patterns?"
+    data_sources:
+      - "Authentication logs"
+      - "Access control logs"
+
+  - step_number: 2
+    title: "Detect Use of Multi-Factor Authentication Tokens"
+    description: >
+      Look for suspicious usage of MFA tokens, including replay or misuse of temporary credentials.
+    checklist:
+      - "Are MFA tokens used multiple times or outside user profiles?"
+      - "Are temporary tokens being reused or misapplied?"
+    data_sources:
+      - "MFA logs"
+      - "Authentication gateways"
+
+  - step_number: 3
+    title: "Correlate Alternate Auth Material Use with Suspicious Access"
+    description: >
+      Confirm if the alternate authentication material usage results in unauthorized access.
+    checklist:
+      - "Is there access to sensitive systems immediately following alternate auth?"
+      - "Does access deviate from normal user patterns?"
+    data_sources:
+      - "Access logs"
+      - "User behavior analytics"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Legitimate use of alternate auth material."
+      - "Medium: Unusual but not confirmed malicious use."
+      - "High: Unauthorized or anomalous use leading to sensitive access."
+  - confidence_levels:
+      - "High: Confirmed misuse or theft of alternate authentication artifacts."
+      - "Medium: Suspicious but unconfirmed patterns."
+      - "Low: Normal but flagged due to anomalies."
+
+ioc_types:
+  - "Unusual smart card or biometric auth events"
+  - "Repeated MFA token use or replay"
+  - "Access from new or untrusted devices using alternate auth"
+
+queries/examples:
+  - name: "Detect Smart Card Authentication from Unusual Location"
+    query: >
+      event.type == "smartcard_auth" AND
+      source.ip NOT IN (trusted_ip_ranges)
+
+  - name: "Detect MFA Token Replay"
+    query: >
+      event.type == "mfa_token_use" AND
+      token.id REPEATS WITHIN short_timeframe
+
+automation_hooks:
+  - "Alert on suspicious alternate auth material usage."
+  - "Revoke or reset compromised authentication tokens."
+  - "Require re-enrollment for affected authentication methods."
+
+analyst_guidance:
+  - "Verify authentication device ownership and status."
+  - "Investigate access logs for related suspicious activity."
+  - "Recommend tighter controls on alternate authentication methods."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1550/003/"
+  - "https://www.cisa.gov/uscert/ncas/alerts/aa20-302a"
+
+review_cycle: "Monthly or following detection of alternate auth misuse"

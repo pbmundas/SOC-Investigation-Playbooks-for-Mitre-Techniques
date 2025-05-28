@@ -1,0 +1,83 @@
+playbook_name: "T1550.004 - SID-History Injection Detection: Investigation & Triage"
+tactic: "Credential Access"
+technique_id: "T1550.004"
+technique_name: "SID-History Injection"
+description: >
+  Detects injection or manipulation of Security Identifier (SID) history attributes to escalate privileges or maintain access.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Changes to SID-History Attributes"
+    description: >
+      Detect modifications to SID-History attributes in Active Directory user or group objects.
+    checklist:
+      - "Are there unexpected changes to SID-History?"
+      - "Is SID-History added to accounts that should not have it?"
+    data_sources:
+      - "Active Directory logs"
+      - "Security event logs"
+
+  - step_number: 2
+    title: "Identify Unauthorized Privilege Escalation via SID-History"
+    description: >
+      Correlate SID-History changes with elevated privileges or group memberships.
+    checklist:
+      - "Did SID-History injection lead to unexpected access?"
+      - "Are there changes in group memberships related to SID-History?"
+    data_sources:
+      - "Access control logs"
+      - "Group membership change logs"
+
+  - step_number: 3
+    title: "Correlate with Other Credential Theft or Persistence Activities"
+    description: >
+      Investigate if SID-History injection is part of a broader persistence or lateral movement tactic.
+    checklist:
+      - "Is SID-History injection preceded or followed by credential dumping?"
+      - "Are there other indicators of persistence?"
+    data_sources:
+      - "Endpoint logs"
+      - "Process execution logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: SID-History changes in test or inactive accounts."
+      - "Medium: Suspicious SID-History injection without clear impact."
+      - "High: Confirmed privilege escalation or persistence via SID-History."
+  - confidence_levels:
+      - "High: Verified unauthorized SID-History injection."
+      - "Medium: Suspicious changes pending further confirmation."
+      - "Low: Legitimate SID-History modifications."
+
+ioc_types:
+  - "Modification of SID-History attributes in AD"
+  - "Unexpected group memberships linked to SID-History"
+  - "Changes to privileged accounts SID-History"
+
+queries/examples:
+  - name: "Detect SID-History Attribute Modification"
+    query: >
+      event.type == "directory_service_modification" AND
+      modified_attribute == "SIDHistory" AND
+      user.name NOT IN (authorized_administrators)
+
+  - name: "Detect Group Membership Changes Post SID-History Injection"
+    query: >
+      event.type == "group_membership_change" AND
+      related_to SIDHistory_injection_event
+
+automation_hooks:
+  - "Alert on SID-History modifications."
+  - "Revert unauthorized changes."
+  - "Perform comprehensive AD security audit."
+
+analyst_guidance:
+  - "Review AD change logs carefully."
+  - "Confirm if SID-History changes align with approved administrative actions."
+  - "Recommend hardened AD security policies and monitoring."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1550/004/"
+  - "https://adsecurity.org/?p=4484"
+
+review_cycle: "Monthly or after detection of SID-History injection"

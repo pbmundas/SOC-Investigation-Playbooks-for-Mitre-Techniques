@@ -1,0 +1,104 @@
+playbook_name: "T1553.001 - Code Signing Privilege Abuse: Investigation & Triage"
+tactic: "Defense Evasion"
+technique_id: "T1553.001"
+technique_name: "Code Signing Privilege Abuse"
+description: >
+  Detect abuse of code signing privileges where adversaries sign malicious code to bypass security controls.
+
+investigation_steps:
+  - step_number: 1
+    title: "Identify Code Signed Binaries with Suspicious Attributes"
+    description: >
+      Detect signed binaries with unusual signer details or invalid trust chains.
+    checklist:
+      - "Are binaries signed by unknown or suspicious entities?"
+      - "Is the signing certificate valid and trusted?"
+      - "Are signing timestamps or attributes inconsistent?"
+    data_sources:
+      - "Code signing logs"
+      - "Certificate validation results"
+      - "File metadata"
+
+  - step_number: 2
+    title: "Monitor for Unauthorized Use of Code Signing Keys"
+    description: >
+      Detect unauthorized signing activities or key compromise.
+    checklist:
+      - "Are code signing keys used outside normal business processes?"
+      - "Are there anomalies in signing activity volume or timing?"
+    data_sources:
+      - "Key management logs"
+      - "Certificate authority logs"
+      - "Audit trails"
+
+  - step_number: 3
+    title: "Correlate with Execution of Signed Malware"
+    description: >
+      Detect execution of malicious binaries signed with legitimate or abused certificates.
+    checklist:
+      - "Are signed binaries exhibiting malicious behavior?"
+      - "Are these binaries triggering other alerts?"
+    data_sources:
+      - "Endpoint detection"
+      - "Malware sandbox analysis"
+      - "SIEM correlation"
+
+  - step_number: 4
+    title: "Validate or Revoke Certificates"
+    description: >
+      Verify legitimacy and take remediation actions if abuse is confirmed.
+    checklist:
+      - "Is certificate revocation or key rotation necessary?"
+      - "Are incident response and PKI teams engaged?"
+    data_sources:
+      - "Certificate revocation lists"
+      - "Incident response platforms"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Authorized signing activity."
+      - "Medium: Suspicious but unconfirmed abuse."
+      - "High: Confirmed abuse of code signing privileges."
+  - confidence_levels:
+      - "High: Known compromised keys or malicious binaries."
+      - "Medium: Unusual signing patterns."
+      - "Low: Unverified anomalies."
+
+ioc_types:
+  - "Signing certificate details"
+  - "Signed binary hashes"
+  - "Key usage logs"
+  - "Execution telemetry of signed files"
+
+queries/examples:
+  - name: "Binaries Signed by Unknown Entities"
+    query: >
+      file.code_signature.issuer:NOT("KnownTrustedCA") AND
+      file.code_signature.status:"Valid"
+  - name: "Unusual Code Signing Activity"
+    query: >
+      event.category:"code_signing" AND
+      event.outcome:"success" AND
+      event.timestamp:>=now-1d AND
+      user.name:NOT_IN(authorized_signers)
+  - name: "Execution of Signed Files Triggering Malware Alerts"
+    query: >
+      process.file_signature_status:"Signed" AND
+      process.behavior:"malicious"
+
+automation_hooks:
+  - "Alert on suspicious code signing activity."
+  - "Block execution of signed binaries failing reputation checks."
+  - "Trigger key revocation and incident escalation."
+
+analyst_guidance:
+  - "Verify signer identity and certificate chain."
+  - "Coordinate with PKI and IR teams for key revocation."
+  - "Update allowlists and blocklists accordingly."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1553/001/"
+  - "https://docs.microsoft.com/en-us/windows/security/threat-protection/code-signing"
+  - "https://www.malware-traffic-analysis.net/"
+
+review_cycle: "Semi-annually or after suspected code signing abuse incidents"

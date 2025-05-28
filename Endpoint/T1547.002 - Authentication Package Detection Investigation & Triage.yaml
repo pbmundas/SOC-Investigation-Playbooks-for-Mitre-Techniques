@@ -1,0 +1,107 @@
+playbook_name: "T1547.002 - Authentication Package Detection: Investigation & Triage"
+tactic: "Persistence"
+technique_id: "T1547.002"
+technique_name: "Authentication Package"
+description: >
+  Detect adversaries who install or modify authentication packages (DLLs) to maintain persistence during the authentication process.
+
+investigation_steps:
+  - step_number: 1
+    title: "Identify Changes to Authentication Packages"
+    description: >
+      Monitor for new or modified DLLs in authentication package locations (e.g., %SystemRoot%\\System32\\).
+    checklist:
+      - "Are there DLLs newly added or modified in authentication package folders?"
+      - "Are any DLLs digitally unsigned or modified recently?"
+      - "Is there a mismatch with known baseline DLLs?"
+    data_sources:
+      - "File integrity monitoring"
+      - "Windows event logs (System and Security)"
+      - "EDR telemetry"
+
+  - step_number: 2
+    title: "Detect Injection or Loading of Malicious Authentication DLLs"
+    description: >
+      Monitor processes for loading unusual or unauthorized authentication packages.
+    checklist:
+      - "Are authentication processes loading non-standard DLLs?"
+      - "Are there suspicious parent-child process chains?"
+      - "Is there any abnormal process behavior associated?"
+    data_sources:
+      - "Process creation and image load logs"
+      - "DLL load tracing"
+      - "EDR telemetry"
+
+  - step_number: 3
+    title: "Correlate with Authentication Failures or Anomalies"
+    description: >
+      Investigate suspicious authentication events around the time of DLL changes.
+    checklist:
+      - "Are there abnormal authentication failures or successes?"
+      - "Are user login patterns or behaviors unusual?"
+      - "Is there evidence of lateral movement or privilege escalation?"
+    data_sources:
+      - "Windows Security Event Logs (4624, 4625, 4648)"
+      - "Authentication system logs"
+      - "SIEM correlation"
+
+  - step_number: 4
+    title: "Validate Legitimacy of Changes"
+    description: >
+      Confirm if DLL changes or loading are authorized.
+    checklist:
+      - "Is the DLL signed by a trusted vendor?"
+      - "Is there a recent patch or update explaining the change?"
+      - "Are endpoint protections and AV active and updated?"
+    data_sources:
+      - "Patch management"
+      - "Threat intelligence"
+      - "EDR status"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Authorized DLL updates or patches."
+      - "Medium: Unverified DLL changes."
+      - "High: Malicious authentication package detected."
+  - confidence_levels:
+      - "High: Matches known malware or suspicious DLL hash."
+      - "Medium: Unsigned or anomalous DLL but no clear impact."
+      - "Low: Known benign updates."
+
+ioc_types:
+  - "DLL file hashes"
+  - "File modification timestamps"
+  - "Process DLL load events"
+  - "Authentication event anomalies"
+
+queries/examples:
+  - name: "New or Modified DLLs in Authentication Package Folder"
+    query: >
+      file.path:"C:\\Windows\\System32\\*.dll" AND
+      event.action:("file_created" OR "file_modified")
+  - name: "Processes Loading Unusual Authentication DLLs"
+    query: >
+      process.name:"lsass.exe" AND
+      dll.load.name:NOT("authpkg.dll" OR "msv1_0.dll" OR "wdigest.dll")
+  - name: "Authentication Failures Near DLL Modifications"
+    query: >
+      event.id:(4625 OR 4648) AND
+      timestamp:[now-1h TO now]
+
+automation_hooks:
+  - "Alert on unsigned or suspicious DLLs in authentication package directories"
+  - "Block unauthorized DLL loads in authentication processes"
+  - "Quarantine suspicious DLL files"
+
+analyst_guidance:
+  - "Verify file signatures and origin."
+  - "Review authentication event anomalies."
+  - "Check for associated process or network anomalies."
+  - "Consult threat intel for known malicious DLLs."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1547/002/"
+  - "https://docs.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4663"
+  - "https://www.fireeye.com/blog/threat-research/2019/06/malicious-authentication-package.html"
+
+review_cycle: "Quarterly or after new authentication package threats"

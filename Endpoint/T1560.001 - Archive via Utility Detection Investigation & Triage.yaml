@@ -1,0 +1,82 @@
+playbook_name: "T1560.001 - Archive via Utility Detection: Investigation & Triage"
+tactic: "Collection"
+technique_id: "T1560.001"
+technique_name: "Archive via Utility"
+description: >
+  Detects adversaries using standard archiving utilities (e.g., zip, tar, rar) to compress collected data for exfiltration.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Execution of Archiving Utilities"
+    description: >
+      Identify execution of common archiving commands or binaries such as zip, tar, rar, 7zip.
+    checklist:
+      - "Are archiving utilities executed unexpectedly or by unusual users?"
+      - "Is execution correlated with access to sensitive files?"
+    data_sources:
+      - "Process creation logs"
+      - "Command-line logging"
+
+  - step_number: 2
+    title: "Detect Creation of Archive Files by Utilities"
+    description: >
+      Detect creation of compressed archive files (.zip, .tar, .rar, etc.) linked to archiving utility execution.
+    checklist:
+      - "Are archive files created in non-standard or sensitive locations?"
+      - "Is archive file creation followed by suspicious file movement or network transfer?"
+    data_sources:
+      - "File system monitoring"
+      - "Process monitoring"
+
+  - step_number: 3
+    title: "Correlate Archive Creation with Data Access and Exfiltration"
+    description: >
+      Investigate if archive creation coincides with data staging or transfer activities.
+    checklist:
+      - "Are archive files moved or uploaded externally shortly after creation?"
+      - "Is the user or process behavior abnormal?"
+    data_sources:
+      - "Network logs"
+      - "User behavior analytics"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Authorized archive utility use for backups or maintenance."
+      - "Medium: Suspicious archive creation without evidence of exfiltration."
+      - "High: Unauthorized archiving linked to data theft."
+  - confidence_levels:
+      - "High: Verified archiving followed by suspicious data movement."
+      - "Medium: Archive creation by unusual users or processes."
+      - "Low: Normal archive utility use."
+
+ioc_types:
+  - "Execution of zip, tar, rar, or 7zip utilities"
+  - "Creation of archive files in sensitive locations"
+  - "Archive files transferred externally"
+
+queries/examples:
+  - name: "Detect Archive Utility Execution"
+    query: >
+      process.name IN ("zip", "tar", "rar", "7z") AND
+      user.name NOT IN ("backup", "admin")
+
+  - name: "Archive File Creation by Utilities"
+    query: >
+      file.extension IN (".zip", ".rar", ".tar", ".7z") AND
+      process.parent.name IN ("zip", "tar", "rar", "7z")
+
+automation_hooks:
+  - "Alert on archive utility execution by unauthorized users."
+  - "Block file movement of archive files if suspicious."
+  - "Notify incident response team for review."
+
+analyst_guidance:
+  - "Confirm if archiving is authorized and legitimate."
+  - "Review related file access and network activity."
+  - "Check user and process context for anomalies."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1560/001/"
+  - "https://www.sans.org/white-papers/398/"
+
+review_cycle: "Monthly or upon suspicious archive utility use detection"

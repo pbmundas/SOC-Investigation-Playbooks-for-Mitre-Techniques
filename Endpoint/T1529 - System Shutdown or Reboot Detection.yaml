@@ -1,0 +1,84 @@
+playbook_name: "T1529 - System Shutdown or Reboot Detection"
+tactic: "Impact"
+technique_id: "T1529"
+technique_name: "System Shutdown/Reboot"
+description: >
+  Detect adversaries shutting down or rebooting systems to interrupt availability or evade detection.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor System Shutdown/Reboot Events"
+    description: >
+      Detect unexpected system shutdown or reboot activity.
+    checklist:
+      - "Are shutdown or reboot commands executed outside maintenance windows?"
+      - "Are shutdown/reboot events correlated with suspicious activity?"
+      - "Are unauthorized users initiating shutdown or reboot?"
+    data_sources:
+      - "System event logs"
+      - "Command execution logs"
+      - "Authentication logs"
+
+  - step_number: 2
+    title: "Identify Potential Indicators of Malicious Shutdown"
+    description: >
+      Look for shutdowns following compromise, or used to disrupt monitoring.
+    checklist:
+      - "Are shutdowns preceded by malware execution or lateral movement?"
+      - "Are logs or monitoring services disabled before shutdown?"
+    data_sources:
+      - "EDR telemetry"
+      - "SIEM correlation rules"
+
+  - step_number: 3
+    title: "Correlate with Impact Activities"
+    description: >
+      Determine if shutdowns are part of larger attack goals like ransomware.
+    checklist:
+      - "Is shutdown followed by ransomware or data destruction?"
+      - "Are multiple systems shut down or rebooted in sequence?"
+    data_sources:
+      - "Incident timelines"
+      - "Network monitoring"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Scheduled or authorized shutdowns."
+      - "Medium: Suspicious shutdown activity."
+      - "High: Confirmed malicious shutdown/reboot."
+  - confidence_levels:
+      - "High: Verified malicious shutdown."
+      - "Medium: Anomalous events."
+      - "Low: False positives."
+
+ioc_types:
+  - "Shutdown or reboot command execution"
+  - "Unauthorized user actions"
+  - "Correlated malware execution"
+
+queries/examples:
+  - name: "Detect Unexpected Shutdown Commands"
+    query: >
+      process.name IN ("shutdown.exe", "reboot.exe") AND
+      timestamp NOT IN (scheduled_windows)
+
+  - name: "Detect Shutdown Event Log Entries"
+    query: >
+      event.id IN (1074, 6006) AND
+      user NOT IN (authorized_users)
+
+automation_hooks:
+  - "Alert on unscheduled shutdowns/reboots."
+  - "Block malicious command execution."
+  - "Engage incident response."
+
+analyst_guidance:
+  - "Confirm if shutdowns are authorized."
+  - "Investigate preceding suspicious activity."
+  - "Prepare recovery and continuity plans."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1529/"
+  - "https://www.sans.org/white-papers/detecting-shutdown-attacks/"
+
+review_cycle: "Quarterly or after incidents"

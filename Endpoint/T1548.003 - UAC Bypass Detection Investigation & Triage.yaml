@@ -1,0 +1,95 @@
+playbook_name: "T1548.003 - UAC Bypass Detection: Investigation & Triage"
+tactic: "Privilege Escalation"
+technique_id: "T1548.003"
+technique_name: "Abuse Elevation Control Mechanism: UAC Bypass"
+description: >
+  Detect attempts to bypass Windows User Account Control (UAC) to execute code with elevated privileges without user consent.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor for Known UAC Bypass Techniques"
+    description: >
+      Detect patterns of known UAC bypass methods (e.g., via fodhelper.exe, eventvwr.exe).
+    checklist:
+      - "Is a known UAC bypass utility or binary invoked?"
+      - "Is UAC bypass attempted via registry manipulation?"
+    data_sources:
+      - "Command-line auditing"
+      - "Registry change logs"
+      - "EDR telemetry"
+
+  - step_number: 2
+    title: "Track Process Tree and Elevation Flow"
+    description: >
+      Identify processes elevated without triggering UAC prompt.
+    checklist:
+      - "Is a child process gaining elevation without parent prompt?"
+      - "Are unexpected elevated processes spawned from user space?"
+    data_sources:
+      - "Parent-child process telemetry"
+      - "Security event logs"
+      - "EDR tools"
+
+  - step_number: 3
+    title: "Registry and File Persistence Indicators"
+    description: >
+      Investigate persistence or configuration changes.
+    checklist:
+      - "Are UAC registry keys modified (e.g., ConsentPromptBehaviorAdmin)?"
+      - "Are auto-elevate COM objects or handlers being abused?"
+    data_sources:
+      - "Registry monitoring"
+      - "File system telemetry"
+      - "Windows Security logs"
+
+  - step_number: 4
+    title: "Remediate and Lockdown"
+    description: >
+      Roll back unauthorized changes and re-enable security controls.
+    checklist:
+      - "Was UAC setting altered or bypassed?"
+      - "Is the host clean of malware or persistence?"
+    data_sources:
+      - "Group Policy logs"
+      - "Malware scans"
+      - "Incident response notes"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Normal UAC elevation events."
+      - "Medium: Suspicious command usage matching bypass."
+      - "High: Confirmed unauthorized elevation via UAC bypass."
+  - confidence_levels:
+      - "High: Known bypass technique used."
+      - "Medium: Suspicious parent-child mismatch."
+      - "Low: Benign admin elevation."
+
+ioc_types:
+  - "Fodhelper or eventvwr parent-child process chains"
+  - "Modified UAC registry keys"
+  - "Elevated process hashes"
+
+queries/examples:
+  - name: "Detect Known UAC Bypass Binaries"
+    query: >
+      process.name:(fodhelper.exe OR eventvwr.exe) AND parent.name:(cmd.exe OR powershell.exe)
+
+  - name: "Check ConsentPromptBehavior Registry Changes"
+    query: >
+      registry.key_path:*ConsentPromptBehaviorAdmin AND registry.value:0
+
+automation_hooks:
+  - "Alert on suspicious UAC bypass indicators."
+  - "Auto-disable modified UAC registry keys."
+  - "Trigger full host scan and user review."
+
+analyst_guidance:
+  - "Review affected system for broader compromise."
+  - "Check persistence, lateral movement attempts."
+  - "Reset UAC-related registry keys to default."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1548/003/"
+  - "https://posts.specterops.io/bypassing-uac-on-windows-10-using-event-viewer-1f25864f04e9"
+
+review_cycle: "Quarterly or post-UAC bypass disclosure"

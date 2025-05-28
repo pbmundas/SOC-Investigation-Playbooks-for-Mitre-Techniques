@@ -1,0 +1,87 @@
+playbook_name: "T1492 - Stored Data Manipulation Detection"
+tactic: "Impact"
+technique_id: "T1492"
+technique_name: "Stored Data Manipulation"
+description: >
+  Detect adversaries manipulating stored data to impact the integrity or availability of information.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Critical Data Integrity"
+    description: >
+      Identify unauthorized changes to critical stored data or databases.
+    checklist:
+      - "Are there unexpected changes in database entries or file content?"
+      - "Are unauthorized accounts or processes modifying stored data?"
+      - "Are logs showing anomalies in data access or modification times?"
+    data_sources:
+      - "Database audit logs"
+      - "File integrity monitoring"
+      - "Application logs"
+
+  - step_number: 2
+    title: "Identify Malicious Data Manipulation Tools or Scripts"
+    description: >
+      Detect usage of unauthorized tools or scripts altering stored data.
+    checklist:
+      - "Are scripting engines (PowerShell, Python) invoked to modify data?"
+      - "Are uncommon or suspicious utilities accessing data stores?"
+    data_sources:
+      - "Process monitoring"
+      - "Command-line logging"
+      - "EDR telemetry"
+
+  - step_number: 3
+    title: "Correlate with Account or System Compromise"
+    description: >
+      Investigate if compromised credentials or systems are involved in data manipulation.
+    checklist:
+      - "Are privileged accounts used unusually for data modification?"
+      - "Is there evidence of lateral movement preceding manipulation?"
+    data_sources:
+      - "Authentication logs"
+      - "EDR alerts"
+      - "Network logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Authorized data changes."
+      - "Medium: Suspicious data modifications."
+      - "High: Confirmed malicious data manipulation."
+  - confidence_levels:
+      - "High: Verified data tampering."
+      - "Medium: Anomalous activity."
+      - "Low: Potential false positives."
+
+ioc_types:
+  - "Unexpected data modifications"
+  - "Suspicious script usage"
+  - "Unauthorized account activity"
+
+queries/examples:
+  - name: "Detect Unauthorized Database Changes"
+    query: >
+      db.audit.action = "update" AND
+      user NOT IN (authorized_users) AND
+      timestamp > recent_timeframe
+
+  - name: "Detect File Integrity Anomalies"
+    query: >
+      file.hash.changed = true AND
+      file.path IN (critical_data_paths)
+
+automation_hooks:
+  - "Trigger alerts on unauthorized data changes."
+  - "Isolate affected systems."
+  - "Engage data owners and incident response."
+
+analyst_guidance:
+  - "Confirm if data changes were authorized."
+  - "Review access logs and system activity."
+  - "Coordinate recovery or rollback."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1492/"
+  - "https://www.sans.org/white-papers/data-integrity/"
+
+review_cycle: "Quarterly or post-incident"

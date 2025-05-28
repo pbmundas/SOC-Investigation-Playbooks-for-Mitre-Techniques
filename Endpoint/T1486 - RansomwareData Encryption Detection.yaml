@@ -1,0 +1,85 @@
+playbook_name: "T1486 - Ransomware/Data Encryption Detection"
+tactic: "Impact"
+technique_id: "T1486"
+technique_name: "Data Encrypted for Impact"
+description: >
+  Detect ransomware activity or other malicious encryption of data to disrupt availability.
+
+investigation_steps:
+  - step_number: 1
+    title: "Identify Mass File Encryption Activity"
+    description: >
+      Look for processes performing bulk file modifications consistent with encryption.
+    checklist:
+      - "Are there processes accessing a large number of files in a short period?"
+      - "Are file extensions being changed or new encrypted files created?"
+      - "Are known ransomware processes or variants detected?"
+    data_sources:
+      - "Endpoint detection and response (EDR)"
+      - "File system audit logs"
+      - "Process monitoring"
+
+  - step_number: 2
+    title: "Monitor for Ransom Notes or Payload Delivery"
+    description: >
+      Detect presence of ransom notes or files indicating ransomware infection.
+    checklist:
+      - "Are ransom note files created on multiple hosts?"
+      - "Are network connections observed to ransomware C2 infrastructure?"
+    data_sources:
+      - "File integrity monitoring"
+      - "Network traffic logs"
+
+  - step_number: 3
+    title: "Correlate with User or Process Behavior"
+    description: >
+      Assess if suspicious user accounts or processes are involved.
+    checklist:
+      - "Is a compromised user account or privileged process executing encryption?"
+      - "Is there lateral movement preceding encryption?"
+    data_sources:
+      - "Authentication logs"
+      - "EDR telemetry"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Legitimate encryption or backup operations."
+      - "Medium: Suspicious encryption activity."
+      - "High: Confirmed ransomware encryption."
+  - confidence_levels:
+      - "High: Verified ransomware events."
+      - "Medium: Behavioral anomalies."
+      - "Low: Possible false positives."
+
+ioc_types:
+  - "Mass file modification"
+  - "Ransom note file creation"
+  - "Ransomware process hashes or signatures"
+
+queries/examples:
+  - name: "Detect Large File Encryption"
+    query: >
+      process.name IN (ransomware_tools) AND
+      file.operation = "modify" AND
+      file.count > threshold
+
+  - name: "Detect Ransom Note Files"
+    query: >
+      file.name CONTAINS ("README", "HELP", "DECRYPT") AND
+      file.created_time > recent_timeframe
+
+automation_hooks:
+  - "Alert and isolate affected endpoints."
+  - "Trigger incident response playbook."
+  - "Block ransomware C2 IPs/domains."
+
+analyst_guidance:
+  - "Confirm if activity is malicious or maintenance."
+  - "Engage backup and recovery teams."
+  - "Perform containment and eradication."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1486/"
+  - "https://www.cisa.gov/ransomware"
+
+review_cycle: "Quarterly or post-incident"

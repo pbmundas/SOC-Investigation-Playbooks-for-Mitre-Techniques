@@ -1,0 +1,83 @@
+playbook_name: "T1550.001 - Pass the Hash Detection: Investigation & Triage"
+tactic: "Credential Access"
+technique_id: "T1550.001"
+technique_name: "Pass the Hash"
+description: >
+  Detects adversaries using stolen password hashes to authenticate without cracking them.
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect Use of NTLM or Other Hashes for Authentication"
+    description: >
+      Monitor authentication logs for NTLM or SMB logins using hashes instead of plaintext passwords.
+    checklist:
+      - "Are there logins using NTLM hashes from unusual sources?"
+      - "Is there lateral movement with hash-based authentication?"
+    data_sources:
+      - "Authentication logs"
+      - "Network SMB traffic logs"
+
+  - step_number: 2
+    title: "Identify Suspicious Lateral Movement Patterns"
+    description: >
+      Look for sequences of authentication events consistent with Pass the Hash techniques.
+    checklist:
+      - "Are multiple systems accessed in a short time frame using hash-based auth?"
+      - "Are elevated privileges obtained via hash authentication?"
+    data_sources:
+      - "Endpoint logs"
+      - "SIEM correlation"
+
+  - step_number: 3
+    title: "Correlate with Credential Theft Activity"
+    description: >
+      Check for prior credential dumping or hash theft on the source host.
+    checklist:
+      - "Was credential dumping observed before hash authentication?"
+      - "Are there known hash dumping tools executed?"
+    data_sources:
+      - "Endpoint detection logs"
+      - "Process execution logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Single isolated hash use without follow-up."
+      - "Medium: Multiple lateral authentications with hashes."
+      - "High: Confirmed lateral movement and privilege escalation via hashes."
+  - confidence_levels:
+      - "High: Verified hash use and confirmed attack tools."
+      - "Medium: Suspicious auth patterns with no full confirmation."
+      - "Low: Possible false positives due to legitimate NTLM usage."
+
+ioc_types:
+  - "Authentication events using NTLM hashes"
+  - "Credential dumping tool executions"
+  - "Unusual lateral movement with elevated privileges"
+
+queries/examples:
+  - name: "Detect NTLM Authentication from Unusual Sources"
+    query: >
+      event.type == "authentication_success" AND
+      auth.method == "NTLM" AND
+      source.ip NOT IN (trusted_ips)
+
+  - name: "Detect Credential Dumping Tools Execution"
+    query: >
+      process.name IN ("mimikatz.exe", "procdump.exe") OR
+      command_line MATCHES ("sekurlsa|lsadump")
+
+automation_hooks:
+  - "Isolate affected endpoints immediately."
+  - "Alert incident response and SOC teams."
+  - "Force credential resets and enforce MFA."
+
+analyst_guidance:
+  - "Review authentication logs for NTLM usage context."
+  - "Conduct endpoint forensics on involved hosts."
+  - "Recommend disabling NTLM where possible."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1550/001/"
+  - "https://docs.microsoft.com/en-us/windows/security/threat-protection/security-policy-settings/network-security-restrict-ntlm-ntlm-authentication"
+
+review_cycle: "Monthly or post incident involving credential theft"

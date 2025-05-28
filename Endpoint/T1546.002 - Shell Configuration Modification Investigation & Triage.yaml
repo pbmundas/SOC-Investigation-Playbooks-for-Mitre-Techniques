@@ -1,0 +1,116 @@
+playbook_name: "T1546.002 - Shell Configuration Modification: Investigation & Triage"
+tactic: "Persistence"
+technique_id: "T1546.002"
+technique_name: "Shell Configuration Modification"
+description: >
+  Playbook to support investigation of suspicious or malicious modifications to shell configuration files 
+  (e.g., .bashrc, .bash_profile, .zshrc, .profile) that adversaries use to maintain persistence by executing 
+  malicious scripts or binaries upon shell startup.
+
+investigation_steps:
+  - step_number: 1
+    title: "Identify Modified Shell Configuration Files"
+    description: >
+      Detect changes to common shell configuration files that can affect user environment initialization.
+    checklist:
+      - "Which shell config files (.bashrc, .bash_profile, .zshrc, .profile, .cshrc, etc.) were modified?"
+      - "When were the changes made? Are the timestamps recent or suspicious?"
+      - "Are the modifications unusual or contain suspicious commands such as remote script downloads, base64 payloads, or obscure binaries?"
+    data_sources:
+      - "File Integrity Monitoring (FIM) logs"
+      - "Version control or backup snapshots of shell config files"
+      - "Host-based Audit Logs"
+      - "Endpoint Detection and Response (EDR) file modification events"
+
+  - step_number: 2
+    title: "Analyze Modified Content for Malicious Payloads"
+    description: >
+      Examine the exact content added or modified in the shell configuration files to identify malicious intent.
+    checklist:
+      - "Are there new aliases, functions, or environment variables referencing unusual binaries or remote resources?"
+      - "Are there encoded commands (base64, hex) or obfuscated scripts?"
+      - "Do the commands attempt to persist malware, download additional payloads, or escalate privileges?"
+    data_sources:
+      - "Shell config file content"
+      - "Threat Intelligence on known malicious payload signatures"
+      - "Static and dynamic malware analysis tools"
+
+  - step_number: 3
+    title: "Correlate with Process and Network Activity"
+    description: >
+      Check for any processes or network activity triggered by the shell config modifications.
+    checklist:
+      - "Are there processes launched immediately after shell startup that match suspicious commands in the config?"
+      - "Is there outbound network communication to suspicious or known malicious IPs or domains?"
+      - "Are there scheduled tasks or cron jobs linked to the shell config modifications?"
+    data_sources:
+      - "Process Execution Logs"
+      - "Network Traffic Logs"
+      - "Cron/Scheduled Task Logs"
+      - "EDR Behavioral Detections"
+
+  - step_number: 4
+    title: "User Context and Behavior Validation"
+    description: >
+      Determine if the modifications align with user role and normal behavior patterns.
+    checklist:
+      - "Was the modification made by the legitimate user or a suspicious/unprivileged account?"
+      - "Is the shell config modification consistent with authorized administrative tasks or developer activity?"
+      - "Is there evidence of lateral movement or privilege escalation attempts related to the shell config change?"
+    data_sources:
+      - "User Login and Session Logs"
+      - "Privilege Escalation Logs"
+      - "SIEM Correlation Data"
+      - "Threat Intelligence Feeds"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Legitimate user customization or software installation."
+      - "Medium: Unusual changes without immediate malicious indicators."
+      - "High: Known malicious code, obfuscated payloads, or linked to active compromise."
+  - confidence_levels:
+      - "High: Config modifications match known attack patterns or IOC matches."
+      - "Medium: Suspicious modifications requiring further analysis."
+      - "Low: Routine administrative or user activity with no additional suspicious evidence."
+
+ioc_types:
+  - "Shell configuration file paths (e.g., ~/.bashrc, ~/.zshrc)"
+  - "Modified lines or commands inside shell config files"
+  - "Hashes of suspicious scripts or binaries referenced"
+  - "User accounts making changes"
+  - "Related network connections or processes triggered"
+
+queries/examples:
+  - name: "Detect Recent Modifications to Shell Config Files"
+    query: >
+      file.path:(~/.bashrc OR ~/.bash_profile OR ~/.zshrc OR ~/.profile) AND
+      file.event_type:"modify" AND
+      file.modification_time:>=now-1d
+  - name: "Suspicious Commands in Shell Config"
+    query: >
+      file.content:("curl" OR "wget" OR "base64" OR "eval" OR "nc" OR "netcat" OR "bash -i") AND
+      file.path:(~/.bashrc OR ~/.bash_profile OR ~/.zshrc OR ~/.profile)
+  - name: "Process Execution After Shell Startup"
+    query: >
+      process.parent.name:(bash OR zsh OR sh) AND process.start_time:>=file.modification_time
+
+automation_hooks:
+  - "Auto-extract and hash suspicious shell config modifications"
+  - "Trigger sandbox execution of referenced scripts or commands"
+  - "Alert on shell config changes by non-privileged or unusual users"
+  - "Automatically isolate endpoint if known malicious payload detected"
+
+analyst_guidance:
+  - "Review shell config changes carefully for obfuscated or encoded commands."
+  - "Correlate file changes with user activity and process execution timelines."
+  - "Validate whether the modification matches IT policy or legitimate user behavior."
+  - "Use threat intelligence to identify known malicious payloads or domains."
+  - "Document findings and escalate if confirmed malicious."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1546/002/"
+  - "https://www.sans.org/blog/shell-profile-persistence/"
+  - "https://www.cyberark.com/resources/threat-research-blog/persistence-through-shell-profile-modifications/"
+  - "https://www.elastic.co/blog/detecting-linux-persistence-techniques"
+  
+review_cycle: "Semi-annually or when new shell-based persistence techniques are discovered"

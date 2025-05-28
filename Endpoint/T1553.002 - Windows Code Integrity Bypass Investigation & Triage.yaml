@@ -1,0 +1,99 @@
+playbook_name: "T1553.002 - Windows Code Integrity Bypass: Investigation & Triage"
+tactic: "Defense Evasion"
+technique_id: "T1553.002"
+technique_name: "Windows Code Integrity Bypass"
+description: >
+  Detect attempts to bypass Windows Code Integrity (WCI) features to execute unsigned or tampered code.
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect Execution of Unsigned or Tampered Drivers/Binaries"
+    description: >
+      Identify binaries and drivers loaded without valid signatures or bypassing integrity checks.
+    checklist:
+      - "Are drivers or system binaries loaded without valid signatures?"
+      - "Are code integrity audit logs showing bypass attempts?"
+    data_sources:
+      - "Windows Code Integrity logs"
+      - "Driver load monitoring"
+      - "EDR telemetry"
+
+  - step_number: 2
+    title: "Monitor for Use of Known Bypass Techniques"
+    description: >
+      Detect known methods such as kernel module patching or patch guard bypass.
+    checklist:
+      - "Are suspicious kernel modules loaded?"
+      - "Is there evidence of patch guard or kernel code modifications?"
+    data_sources:
+      - "Kernel event logs"
+      - "Memory integrity monitoring"
+      - "Threat intelligence"
+
+  - step_number: 3
+    title: "Correlate with Malicious Behavior and Persistence"
+    description: >
+      Link integrity bypass with malicious activity or persistence.
+    checklist:
+      - "Are processes or services exhibiting suspicious behavior after bypass?"
+      - "Are there alerts for rootkits or advanced malware?"
+    data_sources:
+      - "Endpoint detection"
+      - "SIEM and threat intel"
+
+  - step_number: 4
+    title: "Validate or Respond"
+    description: >
+      Confirm bypass attempts and initiate remediation.
+    checklist:
+      - "Is remediation or system quarantine needed?"
+      - "Is patching or system integrity restoration required?"
+    data_sources:
+      - "Incident response"
+      - "Patch management"
+
+triage_labels:
+  - severity_levels:
+      - "Low: False positives or benign anomalies."
+      - "Medium: Suspicious bypass attempts detected."
+      - "High: Confirmed Windows code integrity bypass."
+  - confidence_levels:
+      - "High: Known bypass signatures detected."
+      - "Medium: Unusual driver or code loading."
+      - "Low: Unconfirmed events."
+
+ioc_types:
+  - "Unsigned driver hashes"
+  - "Kernel module names"
+  - "Windows Code Integrity audit event IDs"
+  - "Memory patch indicators"
+
+queries/examples:
+  - name: "Unsigned Driver Loads"
+    query: >
+      driver.signature_status:"Unsigned" OR driver.signature_status:"Invalid"
+  - name: "Windows Code Integrity Bypass Audit Events"
+    query: >
+      event.id: (CodeIntegrityAuditEventIDs) AND
+      event.message:"bypass"
+  - name: "Suspicious Kernel Module Loading"
+    query: >
+      kernel.module.name:NOT_IN(known_good_modules) AND
+      event.action:"module_loaded"
+
+automation_hooks:
+  - "Alert on unsigned or tampered driver loads."
+  - "Block known malicious kernel modules."
+  - "Trigger system quarantine or forensic collection."
+
+analyst_guidance:
+  - "Review Windows Code Integrity event logs."
+  - "Correlate with kernel and process behavior."
+  - "Engage patch management and IR teams promptly."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1553/002/"
+  - "https://docs.microsoft.com/en-us/windows/security/threat-protection/device-guard/code-integrity-policy"
+  - "https://www.sans.org/white-papers/39900/"
+
+review_cycle: "Quarterly or post new bypass technique disclosures"

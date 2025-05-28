@@ -1,0 +1,83 @@
+playbook_name: "T1560 - Archive Collected Data Detection: Investigation & Triage"
+tactic: "Collection"
+technique_id: "T1560"
+technique_name: "Archive Collected Data"
+description: >
+  Detects adversaries compressing or archiving collected data to reduce size and evade detection during exfiltration.
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect Creation of Archive Files"
+    description: >
+      Identify creation of compressed archive files such as .zip, .rar, .7z, or .tar.
+    checklist:
+      - "Are new archive files created in unusual locations or by suspicious processes?"
+      - "Is archive creation activity correlated with data access or staging?"
+    data_sources:
+      - "File system monitoring"
+      - "Process creation logs"
+
+  - step_number: 2
+    title: "Monitor Compression Tools Usage"
+    description: >
+      Detect execution of known compression or archiving utilities.
+    checklist:
+      - "Are tools like zip, 7zip, rar, or tar being executed unexpectedly?"
+      - "Are these executions by non-standard users or at unusual times?"
+    data_sources:
+      - "Process execution logs"
+      - "Endpoint detection logs"
+
+  - step_number: 3
+    title: "Correlate Archive Creation with Exfiltration Attempts"
+    description: >
+      Check if archive files are transferred out of the environment soon after creation.
+    checklist:
+      - "Is network transfer or upload activity detected immediately after archiving?"
+      - "Are destinations suspicious or unknown?"
+    data_sources:
+      - "Network traffic logs"
+      - "SIEM alerts"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Archive creation as part of normal backup or maintenance."
+      - "Medium: Suspicious archive creation without clear exfiltration."
+      - "High: Unauthorized archiving linked to data exfiltration."
+  - confidence_levels:
+      - "High: Verified malicious archiving followed by data transfer."
+      - "Medium: Suspicious archiving activity."
+      - "Low: Normal archive creation."
+
+ioc_types:
+  - "Creation of archive files in unusual locations"
+  - "Execution of compression tools by unusual users"
+  - "Archive files transferred to external hosts"
+
+queries/examples:
+  - name: "Detect Archive File Creation"
+    query: >
+      file.extension IN (".zip", ".rar", ".7z", ".tar") AND
+      file.creation_time > now() - 1h AND
+      file.path NOT IN ("/backup/", "/logs/")
+
+  - name: "Compression Tool Execution"
+    query: >
+      process.name IN ("zip.exe", "7z.exe", "rar.exe", "tar") AND
+      user.name NOT IN ("backup", "admin")
+
+automation_hooks:
+  - "Alert on archive creation in suspicious contexts."
+  - "Restrict use of compression tools by unauthorized users."
+  - "Notify incident response on suspicious archiving activity."
+
+analyst_guidance:
+  - "Validate if archiving is authorized."
+  - "Investigate related file access and network activity."
+  - "Check for signs of exfiltration following archiving."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1560/"
+  - "https://www.sans.org/white-papers/398/"
+
+review_cycle: "Monthly or after detection of suspicious archive creation"

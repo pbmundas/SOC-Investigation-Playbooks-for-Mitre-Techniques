@@ -1,0 +1,93 @@
+playbook_name: "T1548.002 - Setuid/Setgid Abuse Detection: Investigation & Triage"
+tactic: "Privilege Escalation"
+technique_id: "T1548.002"
+technique_name: "Abuse Elevation Control Mechanism: Setuid/Setgid"
+description: >
+  Detect unauthorized privilege escalation through misuse of Setuid or Setgid binaries on Unix-like systems.
+
+investigation_steps:
+  - step_number: 1
+    title: "Scan for Setuid/Setgid Binaries"
+    description: >
+      Identify unusual or unauthorized binaries with Setuid/Setgid bits.
+    checklist:
+      - "Are there non-standard Setuid/Setgid binaries in user directories?"
+      - "Are any sensitive scripts or interpreters marked Setuid?"
+    data_sources:
+      - "Filesystem scanning (e.g., `find` command)"
+      - "File integrity monitoring"
+      - "EDR telemetry"
+
+  - step_number: 2
+    title: "Detect Execution of Setuid/Setgid Binaries"
+    description: >
+      Monitor runtime execution of Setuid/Setgid files.
+    checklist:
+      - "Is the execution context elevated?"
+      - "Was the binary used to spawn a shell or execute privileged operations?"
+    data_sources:
+      - "Process monitoring"
+      - "Auditd / audit.log"
+      - "Linux EDR logs"
+
+  - step_number: 3
+    title: "Trace Origin and Changes"
+    description: >
+      Investigate creation/modification and origin of binaries.
+    checklist:
+      - "Who created or modified the file?"
+      - "Was chmod or chown used to set Setuid/Setgid?"
+    data_sources:
+      - "Audit logs"
+      - "File integrity monitoring"
+
+  - step_number: 4
+    title: "Remediate and Harden"
+    description: >
+      Remove or restrict abuse potential.
+    checklist:
+      - "Remove unnecessary Setuid/Setgid permissions."
+      - "Implement AppArmor/SELinux policies."
+    data_sources:
+      - "System hardening tools"
+      - "IAM and file ACLs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Known system Setuid binary."
+      - "Medium: Non-system Setuid/Setgid file."
+      - "High: Malicious Setuid file executing shell or backdoor."
+  - confidence_levels:
+      - "High: Confirmed Setuid binary abuse."
+      - "Medium: Unusual file permissions."
+      - "Low: Benign usage or FP."
+
+ioc_types:
+  - "Setuid file hashes"
+  - "Unusual Setuid file paths"
+  - "Processes launched from Setuid binaries"
+
+queries/examples:
+  - name: "Find Setuid/Setgid Files"
+    query: >
+      find / -perm /6000 -type f -exec ls -l {} \;
+
+  - name: "Audit Setuid Binary Execution"
+    query: >
+      audit.type=EXECVE AND (perm="setuid" OR perm="setgid")
+
+automation_hooks:
+  - "Alert on creation of new Setuid binaries."
+  - "Auto-quarantine suspicious files with Setuid bits."
+  - "Trigger forensic collection on Setuid binary execution."
+
+analyst_guidance:
+  - "Investigate if the Setuid permission was set intentionally."
+  - "Assess access paths and lateral movement potential."
+  - "Coordinate with Unix/Linux admin teams."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1548/002/"
+  - "https://linux.die.net/man/2/setuid"
+
+review_cycle: "Monthly or after detection of privilege escalation event"

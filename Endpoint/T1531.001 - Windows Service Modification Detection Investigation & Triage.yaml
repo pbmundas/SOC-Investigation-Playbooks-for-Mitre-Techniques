@@ -1,0 +1,87 @@
+playbook_name: "T1531.001 - Windows Service Modification Detection: Investigation & Triage"
+tactic: "Defense Evasion"
+technique_id: "T1531.001"
+technique_name: "Windows Service Modification"
+description: >
+  Detects adversaries modifying Windows services to evade defenses, maintain persistence, or escalate privileges by altering service configurations, binaries, or parameters.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Windows Service Configuration Changes"
+    description: >
+      Track changes to Windows service startup types, binary paths, and parameters using system event logs.
+    checklist:
+      - "Are there service startup type changes logged (Event ID 7040)?"
+      - "Are service binary paths modified unexpectedly (Event ID 7045)?"
+      - "Are there changes made by non-administrative or unusual accounts?"
+    data_sources:
+      - "Windows Event Logs (System)"
+      - "File integrity monitoring on service binaries"
+
+  - step_number: 2
+    title: "Detect Unauthorized Service Executable Changes"
+    description: >
+      Identify replaced or altered service executables, particularly if pointing to suspicious or new binaries.
+    checklist:
+      - "Are service executables replaced or altered outside of patching cycles?"
+      - "Is the new executable location unknown or unapproved?"
+    data_sources:
+      - "File monitoring and hash comparisons"
+      - "Windows Sysmon logs (Event ID 11, 12)"
+
+  - step_number: 3
+    title: "Correlate Service Modifications with Malicious Behavior"
+    description: >
+      Investigate other signs of compromise such as suspicious process creation or privilege escalations following service changes.
+    checklist:
+      - "Are there unexpected processes spawned by modified services?"
+      - "Is there evidence of persistence mechanisms related to modified services?"
+    data_sources:
+      - "Process creation logs"
+      - "Scheduled task logs"
+      - "Security event logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Authorized service changes during maintenance."
+      - "Medium: Suspicious modifications requiring further validation."
+      - "High: Unauthorized service modifications linked to compromise."
+  - confidence_levels:
+      - "High: Verified unauthorized service modifications with malicious activity."
+      - "Medium: Unexplained service changes without confirmed impact."
+      - "Low: Legitimate service modification events."
+
+ioc_types:
+  - "Windows Event ID 7040 - Service startup type changed"
+  - "Windows Event ID 7045 - Service installed or modified"
+  - "Changes to service executable files or paths"
+  - "Service modification by non-standard user accounts"
+
+queries/examples:
+  - name: "Detect Service Startup Type Changes"
+    query: >
+      event_id:7040 AND
+      service.startup_type CHANGED AND
+      NOT user IN ("Administrators", "SYSTEM")
+
+  - name: "Detect Service Executable Path Modifications"
+    query: >
+      event_id:7045 AND
+      NOT service.binary_path IN known_good_paths
+
+automation_hooks:
+  - "Generate alerts for unexpected service modifications."
+  - "Automatically quarantine or restore legitimate service binaries."
+  - "Notify security operations center (SOC) and system administrators."
+
+analyst_guidance:
+  - "Confirm if service changes correspond to authorized updates."
+  - "Investigate any related suspicious process or login activity."
+  - "Recommend implementation of service hardening and monitoring policies."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1531/"
+  - "https://docs.microsoft.com/en-us/windows/security/threat-protection/auditing/event-7040"
+  - "https://docs.microsoft.com/en-us/windows/security/threat-protection/auditing/event-7045"
+
+review_cycle: "Monthly or after detection of unusual service modifications"

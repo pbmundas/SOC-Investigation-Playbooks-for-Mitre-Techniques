@@ -1,0 +1,60 @@
+playbook_name: "T1498 - Network Denial of Service Detection (Legacy)"
+tactic: "Impact"
+technique_id: "T1498"
+technique_name: "Network Denial of Service"
+description: >
+  Legacy detection playbook for DoS attacks at the network level. Use updated T1609/T1610 where applicable.
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect Common DoS Patterns"
+    description: >
+      Look for ICMP floods, SYN floods, or application-level abuses.
+    checklist:
+      - "Are there multiple connection attempts with no completions?"
+      - "Are ICMP echo requests spiking?"
+    data_sources:
+      - "Firewall logs"
+      - "NetFlow/packet capture"
+      - "IDS alerts"
+
+  - step_number: 2
+    title: "Analyze Affected Targets"
+    description: >
+      Check whether servers or endpoints are overloaded or offline.
+    checklist:
+      - "Are endpoints unreachable?"
+      - "Are there abnormal CPU/memory spikes?"
+    data_sources:
+      - "System monitoring tools"
+      - "Ping and connectivity tests"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Small-scale, no impact."
+      - "High: Multiple services disrupted."
+  - confidence_levels:
+      - "High: Validated attack patterns."
+      - "Medium: Traffic anomaly."
+
+ioc_types:
+  - "DoS traffic indicators"
+  - "Repeated source IPs"
+  - "Resource exhaustion logs"
+
+queries/examples:
+  - name: "DoS via ICMP Flood"
+    query: >
+      protocol="ICMP" AND packet_count > threshold AND
+      destination_ip IN (critical_assets)
+
+automation_hooks:
+  - "Notify SOC/NOC teams"
+  - "Initiate DDoS protection service (cloud or edge)"
+  - "Block/sinkhole offending IPs"
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1498/"
+  - "https://us-cert.cisa.gov/ncas/tips/ST04-015"
+
+review_cycle: "Legacy review annually"

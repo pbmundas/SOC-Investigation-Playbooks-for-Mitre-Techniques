@@ -1,0 +1,112 @@
+playbook_name: "T1546 - Launch Agent Execution: Investigation & Triage"
+tactic: "Persistence"
+technique_id: "T1546"
+technique_name: "Event Triggered Execution"
+description: >
+  Investigation playbook to detect and triage abuse of macOS Launch Agents,
+  often leveraged for persistence by placing malicious plist files in user space.
+
+investigation_steps:
+  - step_number: 1
+    title: "Launch Agent File Detection"
+    description: >
+      Identify creation or modification of Launch Agent plist files in user-accessible directories.
+    checklist:
+      - "Was a .plist file created in ~/Library/LaunchAgents/?"
+      - "Does the label or file name look suspicious or random?"
+      - "Is the file owned by a non-system user?"
+    data_sources:
+      - "File Creation Logs"
+      - "macOS Unified Logs"
+      - "EDR or FIM (File Integrity Monitoring)"
+      - "SIEM Alerts"
+
+  - step_number: 2
+    title: "Plist Content Inspection"
+    description: >
+      Examine contents of the Launch Agent plist for suspicious configurations.
+    checklist:
+      - "What binary or script does it execute (Program/ProgramArguments)?"
+      - "Does it auto-start on login (RunAtLoad=true)?"
+      - "Are there indicators of malicious intent (e.g., base64, curl, python)?"
+    data_sources:
+      - "Parsed Plist Files"
+      - "Manual Inspection or Scripted Analysis"
+      - "PlistBuddy Output"
+      - "Process Execution Logs"
+
+  - step_number: 3
+    title: "Linked Binary Behavior"
+    description: >
+      Trace the binary or script configured in the Launch Agent for suspicious behavior.
+    checklist:
+      - "Is the binary unsigned or located in user-writable directories?"
+      - "Does it spawn network activity or child shells?"
+      - "Does it match any known threat actor TTPs?"
+    data_sources:
+      - "EDR Process Tree"
+      - "Network Connection Logs"
+      - "Threat Intelligence Correlation"
+      - "Binary Metadata"
+
+  - step_number: 4
+    title: "User and Scope Review"
+    description: >
+      Assess which users are affected and whether this is a targeted or widespread persistence method.
+    checklist:
+      - "Which user accounts have the suspicious Launch Agent installed?"
+      - "Are other devices showing similar patterns?"
+      - "Was the file delivered via phishing or dropper?"
+    data_sources:
+      - "User Login Records"
+      - "Endpoint Inventory"
+      - "Campaign/Threat Actor Analysis"
+      - "Email Logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Legitimate developer or tool-specific Launch Agent."
+      - "Medium: Unsigned or unknown binary with no observable behavior yet."
+      - "High: Malicious payload or known threat binary configured to run persistently."
+  - confidence_levels:
+      - "High: Executable matches malware hash or known TTP."
+      - "Medium: Suspicious location and user context but no execution yet."
+      - "Low: Rare agent but used by legitimate applications."
+
+ioc_types:
+  - "Plist file path and name"
+  - "Program/ProgramArguments command"
+  - "Linked binary path and hash"
+  - "User account"
+  - "Outbound domains or IPs"
+
+queries/examples:
+  - name: "Suspicious Launch Agent File"
+    query: >
+      file.path:/Users/*/Library/LaunchAgents/*.plist AND NOT file.signature.trusted:true
+  - name: "Launch Agent with Shell Execution"
+    query: >
+      plist.ProgramArguments:(*bash* OR *sh* OR *python* OR *curl* OR *osascript*)
+  - name: "Launch Agent Executing from User Directory"
+    query: >
+      process.executable:/Users/*/Downloads/* AND initiated_by:launchd
+
+automation_hooks:
+  - "Auto-enrich plist Program path with VT/hash lookup"
+  - "Trigger binary sandbox detonation for unknown launch agent executables"
+  - "Isolate host if known malware Launch Agent is confirmed"
+  - "Alert other endpoints with matching plist or binary hash"
+
+analyst_guidance:
+  - "Treat Launch Agents created outside of standard apps or tools as high risk."
+  - "Correlate with phishing, suspicious user activity, or malware delivery attempts."
+  - "Use ‘launchctl list’ and file system scanning to discover hidden or obfuscated agents."
+  - "Always analyze the linked executable behavior before dismissing."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1546/"
+  - "https://objective-see.org/blog/blog_0x26.html"
+  - "https://posts.specterops.io/macos-persistence-with-launch-agents-d19a0c3c4e46"
+  - "https://developer.apple.com/library/archive/documentation/MacOSX/Conceptual/BPSystemStartup/Chapters/CreatingLaunchdJobs.html"
+
+review_cycle: "Quarterly, or post macOS security updates and new malware discoveries"

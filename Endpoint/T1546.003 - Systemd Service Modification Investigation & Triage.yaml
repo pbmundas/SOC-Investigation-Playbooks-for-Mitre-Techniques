@@ -1,0 +1,112 @@
+playbook_name: "T1546.003 - Systemd Service Modification: Investigation & Triage"
+tactic: "Persistence"
+technique_id: "T1546.003"
+technique_name: "Systemd Service Modification"
+description: >
+  Playbook to investigate suspicious or malicious modifications to systemd service files on Linux systems,
+  which adversaries use to maintain persistence or execute code during system startup.
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect Modified or New Systemd Service Files"
+    description: >
+      Identify recent changes or new files in systemd service directories.
+    checklist:
+      - "Which service files were added or modified (/etc/systemd/system/, /lib/systemd/system/)?"
+      - "When were these files modified or created?"
+      - "Are these services enabled to start on boot?"
+    data_sources:
+      - "File Integrity Monitoring (FIM)"
+      - "Linux audit logs"
+      - "Systemd status and configuration"
+      - "EDR file monitoring"
+
+  - step_number: 2
+    title: "Analyze Service File Content"
+    description: >
+      Review the contents of the service files for malicious or suspicious commands.
+    checklist:
+      - "Do service files execute suspicious binaries or scripts?"
+      - "Are there references to network connections, reverse shells, or encoded commands?"
+      - "Is there evidence of attempts to escalate privileges?"
+    data_sources:
+      - "Service file contents"
+      - "Threat intelligence"
+      - "Static/dynamic malware analysis"
+
+  - step_number: 3
+    title: "Correlate with System and Network Activity"
+    description: >
+      Link service modifications with process executions and network events.
+    checklist:
+      - "Did any suspicious processes start from the modified service?"
+      - "Are there unusual network connections following service start?"
+      - "Any related user or privilege escalation events?"
+    data_sources:
+      - "Process execution logs"
+      - "Network traffic logs"
+      - "User and privilege escalation logs"
+
+  - step_number: 4
+    title: "Validate User and Execution Context"
+    description: >
+      Check if changes were made by authorized users and conform with normal system behavior.
+    checklist:
+      - "Who modified the service files?"
+      - "Is the modification consistent with admin activity?"
+      - "Are there signs of lateral movement or suspicious logins?"
+    data_sources:
+      - "User login/session logs"
+      - "Audit logs"
+      - "Threat intelligence feeds"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Legitimate admin/system updates."
+      - "Medium: Unusual modification but no malicious activity detected."
+      - "High: Malicious or unauthorized service modifications detected."
+  - confidence_levels:
+      - "High: Known malicious indicators or matches threat intel."
+      - "Medium: Suspicious but requires more analysis."
+      - "Low: Routine system maintenance."
+
+ioc_types:
+  - "Modified systemd service file paths"
+  - "Service binary or script hashes"
+  - "User accounts modifying services"
+  - "Network connections triggered by service"
+  - "Process trees linked to service start"
+
+queries/examples:
+  - name: "Detect Modified Systemd Service Files"
+    query: >
+      file.path:(/etc/systemd/system/*.service OR /lib/systemd/system/*.service) AND
+      file.event_type:"modify" AND
+      file.modification_time:>=now-1d
+  - name: "Detect New Systemd Service Enabled"
+    query: >
+      systemd.status:"enabled" AND
+      file.creation_time:>=now-7d AND
+      file.path:(/etc/systemd/system/*.service OR /lib/systemd/system/*.service)
+  - name: "Suspicious Systemd Service Process Launch"
+    query: >
+      process.parent.name:"systemd" AND
+      process.name:(bash OR sh OR python OR perl OR suspicious_binary)
+
+automation_hooks:
+  - "Auto-hash and sandbox any new/modified service binaries or scripts"
+  - "Alert on service changes by non-admin users"
+  - "Trigger endpoint isolation on confirmed malicious service modifications"
+
+analyst_guidance:
+  - "Check systemd services for unusual commands or network activity."
+  - "Correlate file changes with user and process logs."
+  - "Use threat intelligence to identify known bad payloads."
+  - "Document findings and escalate if confirmed malicious."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1546/003/"
+  - "https://www.freedesktop.org/software/systemd/man/systemd.service.html"
+  - "https://www.elastic.co/blog/detecting-linux-persistence-techniques"
+
+review_cycle: "Semi-annually or when new systemd persistence techniques emerge"

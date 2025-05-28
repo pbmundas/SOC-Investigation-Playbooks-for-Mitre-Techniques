@@ -1,0 +1,100 @@
+playbook_name: "T1548 - Elevation Control Abuse: Investigation & Triage"
+tactic: "Privilege Escalation"
+technique_id: "T1548"
+technique_name: "Elevation Control Abuse"
+description: >
+  Detect abuse of elevation control mechanisms such as bypassing User Account Control (UAC) to escalate privileges.
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect UAC Bypass Attempts"
+    description: >
+      Identify attempts to bypass or suppress UAC prompts to gain elevated privileges without user consent.
+    checklist:
+      - "Are there processes launched with elevated privileges without UAC prompts?"
+      - "Is there evidence of known UAC bypass techniques in process execution?"
+    data_sources:
+      - "Windows Security Event Logs"
+      - "Process creation and parent-child relationships"
+      - "EDR telemetry"
+
+  - step_number: 2
+    title: "Monitor Use of Trusted Binaries for Elevation"
+    description: >
+      Detect use of signed system binaries (e.g., fodhelper.exe, eventvwr.exe) known to facilitate privilege escalation.
+    checklist:
+      - "Are these binaries executed unusually or with suspicious parameters?"
+      - "Are elevated processes spawned from these binaries?"
+    data_sources:
+      - "Process monitoring"
+      - "Command line auditing"
+      - "Threat intelligence feeds"
+
+  - step_number: 3
+    title: "Correlate with Privilege Escalation and Lateral Movement"
+    description: >
+      Link elevation abuse with attempts at persistence, lateral movement, or execution of payloads.
+    checklist:
+      - "Are elevated privileges followed by creation of new services or scheduled tasks?"
+      - "Is lateral movement activity detected after elevation?"
+    data_sources:
+      - "Service creation logs"
+      - "Scheduled task logs"
+      - "Network connection logs"
+
+  - step_number: 4
+    title: "Validate or Respond"
+    description: >
+      Confirm elevation abuse and respond accordingly.
+    checklist:
+      - "Is the affected account or system quarantined?"
+      - "Are UAC and security policies reviewed and enforced?"
+    data_sources:
+      - "Incident response records"
+      - "Endpoint configuration management"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Suspicious but unconfirmed elevation events."
+      - "Medium: Potential UAC bypass attempts detected."
+      - "High: Confirmed elevation control abuse."
+  - confidence_levels:
+      - "High: Known bypass signatures or tools detected."
+      - "Medium: Anomalous elevation requests."
+      - "Low: False positives or benign elevation."
+
+ioc_types:
+  - "Process names of known bypass binaries"
+  - "Suspicious command line arguments"
+  - "Parent-child process relationship anomalies"
+  - "Event IDs related to privilege elevation"
+
+queries/examples:
+  - name: "UAC Bypass Execution via fodhelper.exe"
+    query: >
+      process.name:"fodhelper.exe" AND process.parent.name:"explorer.exe"
+  - name: "Suspicious Event Viewer (eventvwr.exe) Execution"
+    query: >
+      process.name:"eventvwr.exe" AND process.command_line:"*reg*"
+  - name: "Processes Launched with Elevated Privileges Without UAC"
+    query: >
+      event.id: (ProcessCreationEventIDs) AND
+      process.integrity_level:"high" AND
+      NOT event.related.uac_prompt
+
+automation_hooks:
+  - "Alert on execution of known elevation abuse binaries."
+  - "Block suspicious elevation attempts via application control."
+  - "Trigger user session lockdown and forensic capture."
+
+analyst_guidance:
+  - "Review process trees and command lines carefully."
+  - "Validate elevation events against normal user behavior."
+  - "Coordinate with endpoint security and policy enforcement teams."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1548/"
+  - "https://docs.microsoft.com/en-us/windows/security/identity-protection/user-account-control/how-user-account-control-works"
+  - "https://www.fireeye.com/blog/threat-research/2018/01/uac-bypass-techniques.html"
+
+review_cycle: "Quarterly or after discovery of new UAC bypass methods"

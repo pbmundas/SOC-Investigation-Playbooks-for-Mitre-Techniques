@@ -1,0 +1,112 @@
+playbook_name: "T1543.003 - Windows Service Creation/Modification: Investigation & Triage"
+tactic: "Persistence"
+technique_id: "T1543.003"
+technique_name: "Windows Service Creation"
+description: >
+  Investigation playbook to detect and triage suspicious creation or modification of Windows services
+  which may indicate persistence or privilege escalation activity.
+
+investigation_steps:
+  - step_number: 1
+    title: "Alert Context Review"
+    description: >
+      Review alert related to service creation or modification and verify if it's potentially malicious.
+    checklist:
+      - "Who initiated the service creation/modification (user/process)?"
+      - "What is the service name, binary path, and start type?"
+      - "Is this a legitimate or expected service in the environment?"
+      - "Was it created outside standard software deployment cycles?"
+    data_sources:
+      - "Windows Security Event Logs (7045, 4697)"
+      - "Sysmon Event ID 6"
+      - "EDR Telemetry"
+      - "SIEM Alerts"
+
+  - step_number: 2
+    title: "Service Binary Inspection"
+    description: >
+      Inspect the executable or script configured to run as part of the service.
+    checklist:
+      - "Is the binary signed by a trusted vendor?"
+      - "Is the path uncommon (e.g., Temp, AppData)?"
+      - "Does the binary hash match known malware?"
+    data_sources:
+      - "Binary Metadata and Hash"
+      - "File Reputation Platforms"
+      - "Endpoint File Inventory"
+      - "PE Analysis Tools"
+
+  - step_number: 3
+    title: "Service Behavior and Persistence Evaluation"
+    description: >
+      Analyze how the service behaves post-creation and whether it establishes persistence.
+    checklist:
+      - "Does it start automatically (Start=Auto)?"
+      - "Does it execute network connections or spawn suspicious processes?"
+      - "Has it been seen persisting across reboots?"
+    data_sources:
+      - "Service Configuration Data"
+      - "Process Creation Events"
+      - "Network Connection Logs"
+      - "Persistence Artifacts"
+
+  - step_number: 4
+    title: "Cross-System Impact Analysis"
+    description: >
+      Assess whether the same service name or hash appears across other endpoints.
+    checklist:
+      - "Was the same service installed via script or GPO on multiple machines?"
+      - "Does it appear as part of a broader campaign?"
+      - "Does the initiating user have administrative privileges?"
+    data_sources:
+      - "EDR Campaign View"
+      - "SIEM Aggregated Events"
+      - "Active Directory Event Logs"
+      - "File Propagation Logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Known software or agent installation."
+      - "Medium: Unsigned service binary with no malicious behavior."
+      - "High: Malicious binary or C2 behavior detected post-service execution."
+  - confidence_levels:
+      - "High: Malicious hash, suspicious parent, and persistence confirmed."
+      - "Medium: Suspicious service name or binary in abnormal path."
+      - "Low: Rare but potentially benign custom service."
+
+ioc_types:
+  - "Service name and path"
+  - "Binary hash"
+  - "Parent process"
+  - "User account initiating creation"
+  - "Persistence registry keys"
+
+queries/examples:
+  - name: "New Service Creation"
+    query: >
+      event.code:7045 AND NOT (service.path.keyword:*Program Files* OR *System32*) AND service.start_type:Auto
+  - name: "Service Binary in Suspicious Location"
+    query: >
+      service.path:(*\\Temp\\* OR *\\AppData\\* OR *\\Users\\Public\\*) AND NOT signature.trusted:true
+  - name: "Service Leading to Network Activity"
+    query: >
+      process.name:(svchost.exe OR rundll32.exe) AND network.direction:outbound AND initiated_by:service
+
+automation_hooks:
+  - "Auto-enrich service binary hash with VT/Reputation feed"
+  - "Trigger full EDR timeline if service path is suspicious"
+  - "Auto-isolate host if known malware service is confirmed"
+  - "Alert on lateral spread of service creation"
+
+analyst_guidance:
+  - "Always verify if the service binary is signed, known, and in a trusted path."
+  - "Flag unknown services with random names or hosted in user-writable directories."
+  - "Correlate with any privilege escalation or persistence behavior."
+  - "Use service control logs to trace further manipulation attempts."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1543/003/"
+  - "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-7045"
+  - "https://www.sentinelone.com/labs/windows-persistence-methods-service-creation/"
+
+review_cycle: "Monthly, or after deployment of new endpoint services"

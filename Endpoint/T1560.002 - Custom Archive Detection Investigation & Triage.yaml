@@ -1,0 +1,83 @@
+playbook_name: "T1560.002 - Custom Archive Detection: Investigation & Triage"
+tactic: "Collection"
+technique_id: "T1560.002"
+technique_name: "Custom Archive"
+description: >
+  Detects adversaries using custom or less common archive/compression methods or tools for data collection and exfiltration.
+
+investigation_steps:
+  - step_number: 1
+    title: "Identify Execution of Unknown or Custom Archiving Tools"
+    description: >
+      Detect processes or scripts invoking non-standard or custom archiving/compression utilities.
+    checklist:
+      - "Are unknown or unsigned binaries performing archive-related activities?"
+      - "Are there scripts compressing or bundling files unusually?"
+    data_sources:
+      - "Process execution logs"
+      - "File system activity monitoring"
+
+  - step_number: 2
+    title: "Detect Creation of Non-Standard Archive Files"
+    description: >
+      Look for creation of archive files with uncommon extensions or temporary files used in custom archiving.
+    checklist:
+      - "Are archive-like files created with uncommon extensions?"
+      - "Is file content indicative of compression or bundling?"
+    data_sources:
+      - "File metadata analysis"
+      - "Content inspection"
+
+  - step_number: 3
+    title: "Correlate Custom Archive Activity with Suspicious Behavior"
+    description: >
+      Investigate if custom archive creation aligns with unusual data access or network exfiltration attempts.
+    checklist:
+      - "Is custom archive creation followed by outbound network connections?"
+      - "Are involved processes or users anomalous?"
+    data_sources:
+      - "Network traffic logs"
+      - "User activity monitoring"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Custom archive tools used by authorized users."
+      - "Medium: Unusual custom archive activity."
+      - "High: Malicious custom archive creation linked to exfiltration."
+  - confidence_levels:
+      - "High: Verified custom archive followed by data exfiltration."
+      - "Medium: Detection of suspicious custom archive creation."
+      - "Low: Normal use of less common archiving utilities."
+
+ioc_types:
+  - "Execution of unknown or custom compression binaries"
+  - "Creation of archive files with uncommon extensions"
+  - "Outbound transfer of custom archive files"
+
+queries/examples:
+  - name: "Detect Unknown Archive Utility Execution"
+    query: >
+      process.name NOT IN ("zip", "tar", "rar", "7z", "gzip") AND
+      process.command_line MATCHES ("archive|compress|bundle")
+
+  - name: "Non-Standard Archive File Creation"
+    query: >
+      file.extension NOT IN (".zip", ".rar", ".7z", ".tar", ".gz") AND
+      file.size > 100MB AND
+      file.creation_time > now() - 1h
+
+automation_hooks:
+  - "Alert on unknown archive tool execution."
+  - "Isolate suspicious processes or endpoints."
+  - "Notify security team for investigation."
+
+analyst_guidance:
+  - "Validate if custom archiving is authorized."
+  - "Investigate process origin and user context."
+  - "Monitor for follow-on exfiltration activity."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1560/002/"
+  - "https://www.sans.org/white-papers/398/"
+
+review_cycle: "Monthly or after detection of suspicious custom archive activity"

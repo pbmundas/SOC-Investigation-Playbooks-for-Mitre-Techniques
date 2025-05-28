@@ -1,0 +1,103 @@
+playbook_name: "T1543 - System Process Creation or Modification: Investigation & Triage"
+tactic: "Persistence"
+technique_id: "T1543"
+technique_name: "System Process Creation or Modification"
+description: >
+  Detect adversaries creating or modifying system processes to establish persistence or execute malicious code.
+
+investigation_steps:
+  - step_number: 1
+    title: "Identify New or Modified System Processes"
+    description: >
+      Detect creation or modification of system-level processes and services.
+    checklist:
+      - "Are there new processes running with SYSTEM or high privileges?"
+      - "Are existing system processes modified or replaced?"
+      - "Are suspicious binaries launched as system processes?"
+    data_sources:
+      - "Process creation logs"
+      - "File integrity monitoring"
+      - "EDR telemetry"
+
+  - step_number: 2
+    title: "Analyze Parent-Child Process Relationships"
+    description: >
+      Investigate anomalous parentage of system processes.
+    checklist:
+      - "Are system processes spawned by unexpected parents?"
+      - "Is there evidence of process hollowing or injection?"
+    data_sources:
+      - "Process trees"
+      - "Memory forensics"
+      - "EDR hooks"
+
+  - step_number: 3
+    title: "Correlate with Persistence Mechanisms"
+    description: >
+      Link process changes to known persistence techniques.
+    checklist:
+      - "Are there new services or scheduled tasks associated?"
+      - "Is there registry or file system persistence aligned with process changes?"
+    data_sources:
+      - "Service and task logs"
+      - "Registry monitoring"
+      - "SIEM correlation"
+
+  - step_number: 4
+    title: "Validate or Initiate Response"
+    description: >
+      Confirm legitimacy or respond to suspicious process modifications.
+    checklist:
+      - "Is process creation/modification authorized (patch, update)?"
+      - "Is immediate containment needed?"
+    data_sources:
+      - "Change management"
+      - "Incident response"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Authorized system updates."
+      - "Medium: Suspicious modifications without confirmed impact."
+      - "High: Confirmed malicious system process creation/modification."
+  - confidence_levels:
+      - "High: IOC or known malicious hashes."
+      - "Medium: Anomalous behavior without confirmation."
+      - "Low: Known benign process changes."
+
+ioc_types:
+  - "Process hashes and names"
+  - "Parent process anomalies"
+  - "Modified system binaries"
+  - "Service and scheduled task changes"
+
+queries/examples:
+  - name: "System Process Creation with Elevated Privileges"
+    query: >
+      process.parent.name:"services.exe" AND
+      process.token.integrity_level:("System" OR "High")
+  - name: "Modified System Executable Detection"
+    query: >
+      file.path:"C:\\Windows\\System32\\*" AND
+      file.hash:NOT_IN(known_good_hashes) AND
+      event.action:"file_modified"
+  - name: "Anomalous Parent-Child Process Chains"
+    query: >
+      process.parent.name:NOT("services.exe" OR "svchost.exe") AND
+      process.name:"svchost.exe"
+
+automation_hooks:
+  - "Alert on new or modified system processes with elevated privileges."
+  - "Block execution of suspicious system binaries."
+  - "Trigger forensic analysis on anomalous process trees."
+
+analyst_guidance:
+  - "Validate process changes against patch/update schedules."
+  - "Review process trees for hijack or injection."
+  - "Coordinate with patch management and IR teams."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1543/"
+  - "https://docs.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4697"
+  - "https://www.sans.org/white-papers/39662/"
+
+review_cycle: "Quarterly or after detection of new system process attacks"

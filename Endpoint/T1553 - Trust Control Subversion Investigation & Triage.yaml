@@ -1,0 +1,101 @@
+playbook_name: "T1553 - Trust Control Subversion: Investigation & Triage"
+tactic: "Defense Evasion"
+technique_id: "T1553"
+technique_name: "Trust Control Subversion"
+description: >
+  Detect attempts by adversaries to subvert trust controls such as digital certificates, cryptographic trust, or trusted relationships to evade defenses.
+
+investigation_steps:
+  - step_number: 1
+    title: "Identify Anomalous Certificate Usage"
+    description: >
+      Detect use of certificates for signing binaries, scripts, or communications that deviate from baseline or known good.
+    checklist:
+      - "Are new or unknown certificates used to sign executables or scripts?"
+      - "Are certificates recently issued or with unusual attributes?"
+      - "Is there any indication of stolen or forged certificates?"
+    data_sources:
+      - "Code signing logs"
+      - "Certificate transparency logs"
+      - "File hash and signature metadata"
+
+  - step_number: 2
+    title: "Detect Tampering with Trust Stores or Policies"
+    description: >
+      Monitor for modifications to trust stores, root certificate stores, or cryptographic policy settings.
+    checklist:
+      - "Are root or intermediate certificate stores modified?"
+      - "Are Group Policy or local security policies changed to relax trust requirements?"
+    data_sources:
+      - "Registry and file monitoring"
+      - "Group Policy change logs"
+      - "SIEM alerts"
+
+  - step_number: 3
+    title: "Correlate with Malicious or Unsigned Executables"
+    description: >
+      Look for execution of binaries that lack proper signatures or have invalid trust chains.
+    checklist:
+      - "Are executables running with invalid or missing signatures?"
+      - "Are signed binaries behaving anomalously?"
+    data_sources:
+      - "Endpoint protection logs"
+      - "Code integrity monitoring"
+      - "Process execution telemetry"
+
+  - step_number: 4
+    title: "Validate or Contain"
+    description: >
+      Confirm if trust control subversion is malicious and initiate containment or remediation.
+    checklist:
+      - "Is there evidence of legitimate certificate renewal or policy changes?"
+      - "Are remediation actions like certificate revocation or policy rollback required?"
+    data_sources:
+      - "Certificate management systems"
+      - "Incident response platform"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Authorized certificate changes."
+      - "Medium: Suspicious certificate or trust store modifications."
+      - "High: Confirmed trust subversion with malicious intent."
+  - confidence_levels:
+      - "High: Known stolen certificates or forged signatures."
+      - "Medium: Unusual certificate or policy changes."
+      - "Low: Unverified or benign anomalies."
+
+ioc_types:
+  - "Certificate thumbprints and serial numbers"
+  - "Modified trust store registry keys"
+  - "Unsigned or improperly signed binaries"
+  - "Altered Group Policy Objects"
+
+queries/examples:
+  - name: "New or Untrusted Code Signing Certificate Usage"
+    query: >
+      file.code_signature.trusted:false AND
+      file.hash:NOT_IN(known_good_hashes)
+  - name: "Modification of Root Certificate Store Keys"
+    query: >
+      registry.path:"HKLM\\SOFTWARE\\Microsoft\\SystemCertificates\\Root\\Certificates" AND
+      event.action:"registry_modified"
+  - name: "Execution of Unsigned Binaries"
+    query: >
+      process.file_signature_status:"Unsigned" OR process.file_signature_status:"Invalid"
+
+automation_hooks:
+  - "Alert on untrusted or new code signing certificates."
+  - "Block execution of unsigned or improperly signed binaries."
+  - "Trigger certificate revocation or policy restoration processes."
+
+analyst_guidance:
+  - "Verify certificate legitimacy with PKI or certificate authorities."
+  - "Review recent changes to Group Policy or trust stores."
+  - "Coordinate with system administrators and PKI teams."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1553/"
+  - "https://docs.microsoft.com/en-us/windows/security/threat-protection/code-integrity"
+  - "https://www.sans.org/white-papers/39864/"
+
+review_cycle: "Annually or after PKI infrastructure changes"

@@ -1,0 +1,109 @@
+playbook_name: "T1546.004 - Windows Service Execution: Investigation & Triage"
+tactic: "Persistence"
+technique_id: "T1546.004"
+technique_name: "Windows Service Execution"
+description: >
+  Playbook to investigate suspicious or malicious creation, modification, or execution of Windows services,
+  used by adversaries to achieve persistence or execute code on system startup.
+
+investigation_steps:
+  - step_number: 1
+    title: "Identify New or Modified Windows Services"
+    description: >
+      Detect creation or modification of Windows services in the system.
+    checklist:
+      - "Which services were created or modified recently?"
+      - "What executable paths or binaries are associated with these services?"
+      - "Are these services set to auto-start?"
+    data_sources:
+      - "Windows Event Logs (Service Control Manager)"
+      - "Registry change logs (HKLM\\System\\CurrentControlSet\\Services)"
+      - "File integrity monitoring"
+      - "EDR process and service monitoring"
+
+  - step_number: 2
+    title: "Analyze Service Binary and Parameters"
+    description: >
+      Review the service executable and its parameters for suspicious activity.
+    checklist:
+      - "Is the executable signed and from a trusted publisher?"
+      - "Does it execute scripts, command lines, or payloads with suspicious behavior?"
+      - "Are there known malicious hashes or behavior patterns?"
+    data_sources:
+      - "File metadata and signature info"
+      - "Static/dynamic malware analysis"
+      - "Threat intelligence"
+
+  - step_number: 3
+    title: "Correlate Service Activity with Process and Network Logs"
+    description: >
+      Investigate any processes and network activity triggered by the service.
+    checklist:
+      - "Are there unexpected or unauthorized process launches by the service?"
+      - "Is there unusual outbound network traffic post service start?"
+      - "Any privilege escalation or lateral movement detected?"
+    data_sources:
+      - "Process execution logs"
+      - "Network traffic logs"
+      - "User session and privilege logs"
+
+  - step_number: 4
+    title: "User Context and Legitimacy Check"
+    description: >
+      Verify if the service modifications align with authorized admin actions.
+    checklist:
+      - "Which user created or modified the service?"
+      - "Is this consistent with normal admin behavior?"
+      - "Is the service part of known software or suspicious?"
+    data_sources:
+      - "User login and audit logs"
+      - "Threat intelligence"
+      - "SIEM correlation"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Authorized service installation or update."
+      - "Medium: Suspicious service changes with no malicious follow-up."
+      - "High: Confirmed malicious or unauthorized service activity."
+  - confidence_levels:
+      - "High: IOC matches or known attack patterns."
+      - "Medium: Suspicious activity needing further investigation."
+      - "Low: Legitimate administrative actions."
+
+ioc_types:
+  - "Windows service names"
+  - "Service executable paths"
+  - "User accounts modifying services"
+  - "Associated process hashes and command lines"
+  - "Network connections post service start"
+
+queries/examples:
+  - name: "Detect New or Modified Windows Services"
+    query: >
+      event.id:7045 OR event.id:7040 AND
+      event.timestamp:>=now-1d
+  - name: "Services Executing Unsigned or Suspicious Binaries"
+    query: >
+      service.binary.signed:false OR
+      service.binary.path:(*\\Temp\\* OR *\\AppData\\*)
+  - name: "Process Creation by Windows Service"
+    query: >
+      process.parent.session_name:"Services" AND process.command_line:*
+
+automation_hooks:
+  - "Auto-hash and sandbox suspicious service executables"
+  - "Alert on service creation/modification by non-admin users"
+  - "Trigger endpoint isolation for confirmed malicious services"
+
+analyst_guidance:
+  - "Review service creation/modification events closely."
+  - "Analyze executable signatures and behavior."
+  - "Correlate service activity with network and process logs."
+  - "Leverage threat intel for known malware or attacker tools."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1546/004/"
+  - "https://docs.microsoft.com/en-us/windows/security/threat-protection/auditing/event-7045"
+  - "https://www.elastic.co/blog/detecting-persistence-in-windows-services"
+
+review_cycle: "Semi-annually or when new Windows service persistence threats arise"

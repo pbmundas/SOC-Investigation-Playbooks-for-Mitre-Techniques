@@ -1,0 +1,108 @@
+playbook_name: "T1559 - Inter-Process Communication (IPC): Investigation & Triage"
+tactic: "Persistence"
+technique_id: "T1559"
+technique_name: "Inter-Process Communication (IPC)"
+description: >
+  Playbook to investigate suspicious use or abuse of IPC mechanisms (e.g., named pipes, shared memory, sockets) 
+  that adversaries use to maintain persistence, communicate between malware components, or evade detection.
+
+investigation_steps:
+  - step_number: 1
+    title: "Identify IPC Channel Creation or Modification"
+    description: >
+      Detect creation, modification, or usage of IPC channels such as named pipes, Unix domain sockets, or shared memory.
+    checklist:
+      - "What IPC channels were created or used recently?"
+      - "Are the IPC endpoints unusual or named after known malicious patterns?"
+      - "Are any processes communicating over IPC linked to suspicious binaries?"
+    data_sources:
+      - "OS Audit logs"
+      - "EDR IPC monitoring"
+      - "Network and socket monitoring"
+      - "Process execution logs"
+
+  - step_number: 2
+    title: "Analyze IPC Communication Content and Behavior"
+    description: >
+      Examine the nature of data transmitted over IPC and the behavior of communicating processes.
+    checklist:
+      - "Is the IPC used to transmit encoded or encrypted data?"
+      - "Are there signs of command-and-control or data exfiltration via IPC?"
+      - "Is IPC activity timed with other suspicious process activity?"
+    data_sources:
+      - "Memory analysis tools"
+      - "Network/IPC traffic capture"
+      - "Behavioral analytics"
+      - "Threat intelligence"
+
+  - step_number: 3
+    title: "Correlate IPC Use with Persistence or Execution Chains"
+    description: >
+      Link IPC channels with persistence mechanisms or multi-stage payload execution.
+    checklist:
+      - "Does IPC facilitate launch or control of secondary payloads?"
+      - "Is there a known malware or attacker tool leveraging IPC in the environment?"
+      - "Are other attack vectors or persistence techniques active alongside IPC use?"
+    data_sources:
+      - "Process parent-child trees"
+      - "Malware sandbox reports"
+      - "Threat intelligence"
+
+  - step_number: 4
+    title: "User and Contextual Validation"
+    description: >
+      Validate the legitimacy of IPC usage against user roles and expected system behavior.
+    checklist:
+      - "Are the communicating processes from expected system or user accounts?"
+      - "Is the IPC usage consistent with authorized software?"
+      - "Is there anomalous behavior surrounding IPC activity?"
+    data_sources:
+      - "User session logs"
+      - "Application whitelisting data"
+      - "SIEM alerts and correlation"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Legitimate software IPC usage."
+      - "Medium: Unusual IPC channel names or timing."
+      - "High: Confirmed malicious IPC communication or control channel."
+  - confidence_levels:
+      - "High: Known bad IOC or malware IPC patterns."
+      - "Medium: Suspicious IPC requiring deeper investigation."
+      - "Low: Expected IPC activity."
+
+ioc_types:
+  - "Named pipe names and paths"
+  - "Unix domain socket paths"
+  - "Shared memory segment identifiers"
+  - "Process IDs using IPC channels"
+  - "IPC communication payload hashes"
+
+queries/examples:
+  - name: "Detect Named Pipe Creation"
+    query: >
+      event.type:"pipe_create" AND event.timestamp:>=now-1d
+  - name: "Suspicious IPC Channel Names"
+    query: >
+      ipc.channel_name:("*evil*" OR "*malware*" OR "*backdoor*")
+  - name: "Process Communication via IPC"
+    query: >
+      process.name:* AND ipc.channel_usage:true AND process.command_line:*
+
+automation_hooks:
+  - "Alert on creation of IPC channels with suspicious names"
+  - "Capture and analyze IPC payloads for malware patterns"
+  - "Trigger sandbox analysis for processes communicating over suspicious IPC"
+
+analyst_guidance:
+  - "Review IPC usage in context of known application behavior."
+  - "Analyze suspicious IPC channel names and associated processes."
+  - "Correlate IPC events with other detection telemetry."
+  - "Document findings and escalate as needed."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1559/"
+  - "https://docs.microsoft.com/en-us/windows/win32/ipc/interprocess-communications"
+  - "https://www.elastic.co/blog/hunting-for-malicious-ipc-activity"
+
+review_cycle: "Annually or when new IPC abuse techniques are identified"

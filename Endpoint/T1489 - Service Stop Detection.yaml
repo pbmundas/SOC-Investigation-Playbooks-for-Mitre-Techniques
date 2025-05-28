@@ -1,0 +1,81 @@
+playbook_name: "T1489 - Service Stop Detection"
+tactic: "Impact"
+technique_id: "T1489"
+technique_name: "Service Stop"
+description: >
+  Detect adversaries stopping services to render systems or software inoperable during attacks (e.g., to disable security tools or ensure ransomware impact).
+
+investigation_steps:
+  - step_number: 1
+    title: "Identify Service Stop Events"
+    description: >
+      Monitor for suspicious stoppage of critical system or security services.
+    checklist:
+      - "Are security services (e.g., AV, EDR, firewall) stopped?"
+      - "Are backup or logging services disabled?"
+    data_sources:
+      - "Windows Event Logs (System - Event ID 7036/7040)"
+      - "Sysmon (Event ID 4)"
+      - "Service Control Manager logs"
+
+  - step_number: 2
+    title: "Correlate with Process and User Context"
+    description: >
+      Investigate what initiated the service stop and who executed it.
+    checklist:
+      - "Was the stop issued by an unexpected user or process?"
+      - "Was it followed by ransomware or credential access behaviors?"
+    data_sources:
+      - "EDR logs"
+      - "Command-line audit logs"
+      - "Security alerts timeline"
+
+  - step_number: 3
+    title: "Check for Automation or Scripting"
+    description: >
+      Determine if service stoppage was part of a script or scheduled task.
+    checklist:
+      - "Do you see use of `sc.exe`, `net stop`, or PowerShell `Stop-Service`?"
+      - "Are stoppages repeated or batch-based?"
+    data_sources:
+      - "Command-line auditing (4688)"
+      - "Script block logging"
+      - "Task Scheduler logs"
+
+triage_labels:
+  - severity_levels:
+      - "High: Critical security service stopped."
+      - "Medium: Known service unexpectedly disabled."
+  - confidence_levels:
+      - "High: Stoppage linked to malicious process/user."
+      - "Medium: Suspicious behavior, not confirmed."
+
+ioc_types:
+  - "Use of net stop/sc.exe targeting security tools"
+  - "Service stop followed by encryption or credential access"
+  - "Non-admin users stopping services"
+
+queries/examples:
+  - name: "Suspicious Service Stop via sc.exe"
+    query: >
+      process.name:("sc.exe") AND command_line:("stop") AND service_name:("*av*", "*defender*", "*backup*")
+
+  - name: "Windows Event ID 7036 for Service Stoppage"
+    query: >
+      event.code:7036 AND message:"service entered the stopped state" AND service_name:("Windows Defender", "VSS", "Sysmon")
+
+automation_hooks:
+  - "Isolate host via EDR"
+  - "Trigger incident response workflow"
+  - "Notify security operations and backup teams"
+
+analyst_guidance:
+  - "Check for ransomware indicators if security services were stopped."
+  - "Correlate with log deletion or encryption activity (T1070, T1486)."
+  - "Investigate host timeline for prior privilege escalation."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1489/"
+  - "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-7036"
+
+review_cycle: "Monthly or post-ransomware analysis"

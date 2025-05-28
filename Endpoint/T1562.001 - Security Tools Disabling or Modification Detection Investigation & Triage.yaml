@@ -1,0 +1,74 @@
+playbook_name: "T1562.001 - Security Tools Disabling or Modification Detection: Investigation & Triage"
+tactic: "Defense Evasion"
+technique_id: "T1562.001"
+technique_name: "Disable or Modify Tools"
+description: >
+  Detect attempts to disable or reconfigure security tools such as antivirus or endpoint protection software.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor AV/EDR Registry & Policy Modifications"
+    description: >
+      Look for registry changes to security software keys.
+    checklist:
+      - "Are Defender policies set to ignore threats?"
+      - "Was real-time monitoring disabled?"
+    data_sources:
+      - "Registry auditing"
+      - "Defender logs"
+
+  - step_number: 2
+    title: "Detect Tampering with Agent Services"
+    description: >
+      Identify if security agent services were disabled or set to manual.
+    checklist:
+      - "Did service configuration change?"
+      - "Was the agent uninstalled or stopped?"
+    data_sources:
+      - "Service control manager logs"
+      - "Process creation logs"
+
+  - step_number: 3
+    title: "Correlate With Threat Signatures"
+    description: >
+      Match changes to known attacker procedures.
+    checklist:
+      - "Is the modification consistent with known malware?"
+    data_sources:
+      - "Threat detection platforms"
+      - "Memory analysis"
+
+triage_labels:
+  - severity_levels:
+      - "Low: User misconfiguration."
+      - "Medium: Unexpected policy changes."
+      - "High: Confirmed tool disablement by threat."
+  - confidence_levels:
+      - "High: Matches adversary TTPs."
+      - "Medium: Behavioral suspicion."
+      - "Low: No follow-up anomalies."
+
+ioc_types:
+  - "Registry keys for Defender, AV/EDR"
+  - "Service status changes"
+
+queries/examples:
+  - name: "Disable Defender via PowerShell"
+    query: >
+      powershell.command:(*Set-MpPreference* AND (*DisableRealtimeMonitoring* OR *DisableIOAVProtection*))
+  - name: "Service Config Changes"
+    query: >
+      event.id:7040 AND service.name:(AV* OR EDR*)
+
+automation_hooks:
+  - "Tag all EDR tampering attempts."
+  - "Alert on policy key modification."
+
+analyst_guidance:
+  - "Correlate tampering with malware behavior."
+  - "Isolate host if EDR was disabled successfully."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1562/001/"
+
+review_cycle: "Post-IR and biannual audit"

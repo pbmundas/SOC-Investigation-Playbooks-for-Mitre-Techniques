@@ -1,0 +1,83 @@
+playbook_name: "T1550.002 - Pass the Ticket Detection: Investigation & Triage"
+tactic: "Credential Access"
+technique_id: "T1550.002"
+technique_name: "Pass the Ticket"
+description: >
+  Detects adversaries using stolen Kerberos tickets (TGTs or service tickets) to authenticate without credentials.
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect Anomalous Kerberos Ticket Usage"
+    description: >
+      Monitor for tickets used outside of normal user behavior such as unusual source IPs, times, or ticket lifetimes.
+    checklist:
+      - "Are Kerberos tickets used from unusual hosts or IPs?"
+      - "Are ticket lifetimes or renewal patterns abnormal?"
+    data_sources:
+      - "Kerberos authentication logs"
+      - "Security event logs"
+
+  - step_number: 2
+    title: "Identify Use of Tickets with Elevated Privileges"
+    description: >
+      Look for tickets granting high privilege access inconsistent with normal user roles.
+    checklist:
+      - "Are tickets for privileged accounts used in unexpected contexts?"
+      - "Is there use of tickets for admin or service accounts?"
+    data_sources:
+      - "Authentication logs"
+      - "Access control logs"
+
+  - step_number: 3
+    title: "Correlate with Ticket Theft or Dumping Activities"
+    description: >
+      Check for prior credential theft events such as ticket dumping tools (e.g., Mimikatz).
+    checklist:
+      - "Was ticket theft observed on source systems?"
+      - "Are there tools or commands executed related to ticket extraction?"
+    data_sources:
+      - "Endpoint detection logs"
+      - "Process execution logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Single anomalous ticket usage without follow-up."
+      - "Medium: Multiple suspicious ticket uses."
+      - "High: Confirmed lateral movement or privilege escalation using tickets."
+  - confidence_levels:
+      - "High: Confirmed use of stolen tickets."
+      - "Medium: Anomalous ticket usage patterns."
+      - "Low: Potential false positives due to legitimate activity."
+
+ioc_types:
+  - "Kerberos ticket usage from unusual IP addresses"
+  - "Tickets granting elevated privileges used unexpectedly"
+  - "Execution of ticket dumping tools"
+
+queries/examples:
+  - name: "Detect Kerberos Ticket Usage from Untrusted IP"
+    query: >
+      event.type == "kerberos_auth" AND
+      source.ip NOT IN (trusted_ip_ranges) AND
+      ticket.lifetime > normal_threshold
+
+  - name: "Detect Execution of Ticket Dumping Tools"
+    query: >
+      process.name IN ("mimikatz.exe") AND
+      command_line MATCHES ("sekurlsa::tickets")
+
+automation_hooks:
+  - "Alert on anomalous ticket usage."
+  - "Isolate endpoints where ticket theft detected."
+  - "Force password and ticket resets."
+
+analyst_guidance:
+  - "Review ticket usage logs and correlate with user activity."
+  - "Investigate source systems for signs of compromise."
+  - "Recommend disabling cached tickets and enforcing strong ticket policies."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1550/002/"
+  - "https://docs.microsoft.com/en-us/windows/security/identity-protection/kerberos/kerberos-authentication-overview"
+
+review_cycle: "Monthly or after ticket theft detections"

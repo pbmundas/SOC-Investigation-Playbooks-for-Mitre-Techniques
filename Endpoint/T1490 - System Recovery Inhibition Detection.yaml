@@ -1,0 +1,83 @@
+playbook_name: "T1490 - System Recovery Inhibition Detection"
+tactic: "Impact"
+technique_id: "T1490"
+technique_name: "Inhibit System Recovery"
+description: >
+  Detect attempts to disable or delete system recovery features to prevent recovery after impact.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor for System Recovery Feature Modifications"
+    description: >
+      Detect disabling or deletion of system restore points, backups, or shadow copies.
+    checklist:
+      - "Are system restore points deleted or disabled?"
+      - "Are backup services or snapshots stopped?"
+      - "Are shadow copies deleted or altered?"
+    data_sources:
+      - "System event logs"
+      - "Backup system logs"
+      - "EDR telemetry"
+
+  - step_number: 2
+    title: "Detect Use of Administrative Tools for Recovery Inhibition"
+    description: >
+      Identify use of native OS tools (vssadmin, wbadmin) or scripts to inhibit recovery.
+    checklist:
+      - "Are commands like `vssadmin delete shadows` executed?"
+      - "Is backup software disabled or uninstalled?"
+    data_sources:
+      - "Process command-line logs"
+      - "PowerShell logs"
+      - "Audit logs"
+
+  - step_number: 3
+    title: "Correlate with Other Impact Activities"
+    description: >
+      Check for concurrent ransomware or destructive activities.
+    checklist:
+      - "Is system recovery inhibition followed by data encryption or deletion?"
+      - "Are system files or logs tampered with?"
+    data_sources:
+      - "File integrity monitoring"
+      - "EDR alerts"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Scheduled maintenance or legitimate backup activity."
+      - "Medium: Suspicious recovery feature changes."
+      - "High: Confirmed recovery inhibition attack."
+  - confidence_levels:
+      - "High: Verified malicious system recovery inhibition."
+      - "Medium: Suspicious behavior."
+      - "Low: Possible false positives."
+
+ioc_types:
+  - "Commands disabling recovery"
+  - "Deleted restore points or backups"
+  - "Stopped backup services"
+
+queries/examples:
+  - name: "Detect Shadow Copy Deletion"
+    query: >
+      process.command_line CONTAINS "vssadmin delete shadows"
+
+  - name: "Detect Backup Service Stop"
+    query: >
+      event.id IN (backup_service_stop_events)
+
+automation_hooks:
+  - "Alert on recovery feature tampering."
+  - "Prevent further destructive activity."
+  - "Notify IT backup teams."
+
+analyst_guidance:
+  - "Validate if activity is authorized."
+  - "Coordinate with incident response."
+  - "Restore from backups if needed."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1490/"
+  - "https://www.crowdstrike.com/blog/ransomware-recovery-inhibition/"
+
+review_cycle: "Quarterly or after incidents"

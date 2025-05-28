@@ -1,0 +1,105 @@
+playbook_name: "T1547 - Boot or Logon Autostart Execution Detection: Investigation & Triage"
+tactic: "Persistence"
+technique_id: "T1547"
+technique_name: "Boot or Logon Autostart Execution"
+description: >
+  Investigate techniques adversaries use to execute code during system boot or user logon by modifying autostart mechanisms.
+
+investigation_steps:
+  - step_number: 1
+    title: "Identify New or Modified Autostart Entries"
+    description: >
+      Detect changes in boot or logon autostart locations such as services, scheduled tasks, and bootloaders.
+    checklist:
+      - "Are there new or modified services or drivers?"
+      - "Are scheduled tasks added or changed?"
+      - "Are there suspicious entries in startup folders or bootloaders?"
+    data_sources:
+      - "Windows Event Logs (Service Control Manager)"
+      - "Scheduled Task logs"
+      - "File system monitoring"
+      - "Registry monitoring"
+
+  - step_number: 2
+    title: "Analyze Executable Files in Autostart Entries"
+    description: >
+      Examine executables and scripts configured to run automatically.
+    checklist:
+      - "Are executables signed and trusted?"
+      - "Do file hashes match known malicious artifacts?"
+      - "Are there unusual file paths or names?"
+    data_sources:
+      - "File integrity monitoring"
+      - "EDR telemetry"
+      - "Threat intelligence"
+
+  - step_number: 3
+    title: "Review System and User Boot/Logon Activity"
+    description: >
+      Correlate autostart execution with system and user boot or login events.
+    checklist:
+      - "Are there abnormal boot times or failures?"
+      - "Are unexpected processes spawned at logon?"
+      - "Is there evidence of persistence or lateral movement?"
+    data_sources:
+      - "System logs"
+      - "Process creation logs"
+      - "Network logs"
+
+  - step_number: 4
+    title: "Validate Changes with Baseline and User Context"
+    description: >
+      Confirm legitimacy of autostart modifications.
+    checklist:
+      - "Is the change approved by IT or user?"
+      - "Are endpoint protections active?"
+      - "Are patches applied to address vulnerabilities?"
+    data_sources:
+      - "Change management logs"
+      - "Patch management"
+      - "EDR alerts"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Authorized autostart changes."
+      - "Medium: Suspicious but unconfirmed autostart modifications."
+      - "High: Malicious autostart entry confirmed."
+  - confidence_levels:
+      - "High: Matched known malware or attacker TTPs."
+      - "Medium: Anomalous but unverified autostart entries."
+      - "Low: Legitimate but unusual changes."
+
+ioc_types:
+  - "Registry run keys and services"
+  - "Scheduled task definitions"
+  - "Executable file hashes"
+  - "Process creation and parent-child relationships"
+
+queries/examples:
+  - name: "New or Modified Windows Services"
+    query: >
+      event.provider:"Service Control Manager" AND event.action:"service_created" OR event.action:"service_modified"
+  - name: "Suspicious Scheduled Tasks"
+    query: >
+      scheduled_task.name:* AND scheduled_task.action.path:("*\\Temp\\*" OR "*\\Users\\*")
+  - name: "Autostart Executable in Startup Folder"
+    query: >
+      file.path:"C:\\Users\\*\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\*"
+
+automation_hooks:
+  - "Alert on creation/modification of autostart entries"
+  - "Block unsigned or suspicious executables in autostart"
+  - "Quarantine or rollback unauthorized changes"
+
+analyst_guidance:
+  - "Verify with change management and user reports."
+  - "Check file signatures and hashes."
+  - "Investigate parent processes and command lines."
+  - "Correlate with other suspicious activity."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1547/"
+  - "https://www.fireeye.com/blog/threat-research/2018/03/persistent-bootlogon-tactics.html"
+  - "https://docs.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4697"
+
+review_cycle: "Quarterly or after significant autostart threat activity"

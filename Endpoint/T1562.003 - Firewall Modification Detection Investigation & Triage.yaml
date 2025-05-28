@@ -1,0 +1,90 @@
+playbook_name: "T1562.003 - Firewall Modification Detection: Investigation & Triage"
+tactic: "Defense Evasion"
+technique_id: "T1562.003"
+technique_name: "Firewall Modification"
+description: >
+  Detect attempts to modify firewall rules to allow unauthorized network traffic or block security monitoring.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Firewall Rule Changes"
+    description: >
+      Detect changes to firewall configurations, including addition, deletion, or modification of rules.
+    checklist:
+      - "Are firewall rules added or removed unexpectedly?"
+      - "Are changes made by unusual users or processes?"
+    data_sources:
+      - "Firewall logs"
+      - "System event logs"
+      - "Configuration management logs"
+
+  - step_number: 2
+    title: "Correlate with Suspicious Network Activity"
+    description: >
+      Check if firewall changes correlate with suspicious inbound or outbound connections.
+    checklist:
+      - "Is there new or unauthorized traffic allowed post change?"
+      - "Are blocked alerts or network anomalies detected?"
+    data_sources:
+      - "Network flow logs"
+      - "Intrusion detection system (IDS) alerts"
+
+  - step_number: 3
+    title: "Validate Legitimate Change Requests"
+    description: >
+      Confirm whether firewall changes were authorized as part of maintenance.
+    checklist:
+      - "Was the change approved by network/security team?"
+      - "Is there a documented maintenance window?"
+    data_sources:
+      - "Change management system"
+      - "Helpdesk tickets"
+
+  - step_number: 4
+    title: "Contain and Respond"
+    description: >
+      If unauthorized, block changes and initiate incident response.
+    checklist:
+      - "Isolate affected hosts if required."
+      - "Revert firewall to known good state."
+    data_sources:
+      - "Incident response tools"
+      - "Firewall management consoles"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Authorized maintenance changes."
+      - "Medium: Unexpected changes without clear cause."
+      - "High: Unauthorized changes linked to attacker activity."
+  - confidence_levels:
+      - "High: Matches known attacker behavior."
+      - "Medium: Unexplained changes needing review."
+      - "Low: Benign or scheduled changes."
+
+ioc_types:
+  - "Firewall rule changes"
+  - "Configuration file modifications"
+  - "Suspicious process modifying firewall"
+
+queries/examples:
+  - name: "Windows Firewall Rule Change Event"
+    query: >
+      EventID:4946 OR EventID:4947 OR EventID:4948
+  - name: "Linux Firewall Rule Change via iptables"
+    query: >
+      process.name:iptables AND (command_line:*-A* OR command_line:*-D*)
+
+automation_hooks:
+  - "Alert on firewall rule modifications outside business hours."
+  - "Auto-tag related network anomalies."
+  - "Trigger IR workflow for unauthorized changes."
+
+analyst_guidance:
+  - "Review user/process initiating firewall changes."
+  - "Check timing and correlation with other suspicious activity."
+  - "Confirm with network/security teams."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1562/003/"
+
+review_cycle: "Quarterly or post-incident"

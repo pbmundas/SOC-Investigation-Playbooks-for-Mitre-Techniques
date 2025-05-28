@@ -1,0 +1,112 @@
+playbook_name: "T1543 - Create or Modify System Process: Investigation & Triage"
+tactic: "Persistence"
+technique_id: "T1543"
+technique_name: "Create or Modify System Process"
+description: >
+  Investigation-centric playbook to identify and respond to adversary techniques that create or modify 
+  system-level processes to achieve persistence, elevate privileges, or evade defenses.
+
+investigation_steps:
+  - step_number: 1
+    title: "Alert and Process Context Review"
+    description: >
+      Validate alert and examine how the process was created or modified. Determine user context and source.
+    checklist:
+      - "Was a system process created/modified via scripts or untrusted binaries?"
+      - "What is the associated parent process?"
+      - "Is the target process in a sensitive path (e.g., system32, bin)?"
+      - "Was the process launched with elevated privileges?"
+    data_sources:
+      - "Sysmon Process Creation Logs"
+      - "Windows Security Logs (event 4688)"
+      - "Linux Audit Logs"
+      - "Process Execution Metadata"
+
+  - step_number: 2
+    title: "Command-Line and Registry Analysis"
+    description: >
+      Check command-line, startup flags, and registry keys associated with system process changes.
+    checklist:
+      - "Is there use of suspicious flags or parameters?"
+      - "Are there registry keys being added/modified for persistence?"
+      - "Does the process autostart on boot or logon?"
+    data_sources:
+      - "Registry Change Logs"
+      - "Command-Line Logs"
+      - "EDR Process Tree"
+      - "Scheduled Task Metadata"
+
+  - step_number: 3
+    title: "Binary Integrity and Reputation Check"
+    description: >
+      Evaluate whether the modified or new process binary is trustworthy.
+    checklist:
+      - "Is the binary signed by a known vendor?"
+      - "Is it stored in a known or trusted path?"
+      - "Does its hash match known malware or suspicious software?"
+    data_sources:
+      - "Binary Metadata"
+      - "Threat Intelligence Platforms"
+      - "File Reputation Sources (VT, ReversingLabs)"
+      - "Endpoint Binary Inventory"
+
+  - step_number: 4
+    title: "Scope and Lateral Impact Assessment"
+    description: >
+      Investigate how the change affects the broader system and network.
+    checklist:
+      - "Has this binary been seen on other systems recently?"
+      - "Did the process launch child processes or network connections?"
+      - "Is there persistence or privilege escalation linked to the process?"
+    data_sources:
+      - "Network Flow Logs"
+      - "EDR Lateral Movement Events"
+      - "SIEM Correlation Rules"
+      - "File Spread Timeline"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Authorized admin changes to system process."
+      - "Medium: Unusual process creation by non-admin user."
+      - "High: Unsigned binary used to modify/initiate a system-level process."
+  - confidence_levels:
+      - "High: Known malicious hash or strong indicators in binary."
+      - "Medium: Suspicious location or user action, limited behavioral evidence."
+      - "Low: Noisy behavior or rare admin task."
+
+ioc_types:
+  - "Modified system binary hash"
+  - "Command-line arguments"
+  - "Registry persistence keys"
+  - "Service/task name"
+  - "Network destinations post-process execution"
+
+queries/examples:
+  - name: "Suspicious Process Start in System Folder"
+    query: >
+      process.name:(*.exe) AND process.path:(C:\\Windows\\System32\\*) AND NOT signature.trusted:true
+  - name: "Unexpected Process Modification"
+    query: >
+      registry.key_modified:(*CurrentVersion\\Run OR *Services*) AND process.parent.name:(powershell.exe OR cmd.exe)
+  - name: "System Process with Network Activity"
+    query: >
+      process.name:(svchost.exe OR cron OR init) AND network.direction:outbound
+
+automation_hooks:
+  - "Auto-query binary hash with VT and submit to sandbox"
+  - "Generate watchlist of modified processes across hosts"
+  - "Trigger isolation workflow if suspicious process is unsigned and persistent"
+  - "Auto-tag registry events with MITRE T1543 if matched"
+
+analyst_guidance:
+  - "Review parent-child relationships to determine initiation method."
+  - "Validate binary metadata and digital signatures."
+  - "Check process creation frequency and if tied to legitimate software deployment."
+  - "Escalate if tied to known malware patterns (e.g., TrickBot, Cobalt Strike)."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1543/"
+  - "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4688"
+  - "https://www.sans.org/white-papers/389/"
+
+review_cycle: "Monthly or after major software deployments and privilege escalation alerts"

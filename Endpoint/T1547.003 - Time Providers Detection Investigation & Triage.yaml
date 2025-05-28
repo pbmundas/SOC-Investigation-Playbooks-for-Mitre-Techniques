@@ -1,0 +1,103 @@
+playbook_name: "T1547.003 - Time Providers Detection: Investigation & Triage"
+tactic: "Persistence"
+technique_id: "T1547.003"
+technique_name: "Time Providers"
+description: >
+  Detect adversaries who modify or replace time providers to maintain persistence or disrupt system time-related defenses.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Time Provider Service and DLL Changes"
+    description: >
+      Detect modifications or additions of time provider services or DLLs.
+    checklist:
+      - "Are there new or modified files related to time services (e.g., W32Time)?"
+      - "Are services registered or altered with suspicious parameters?"
+      - "Are any DLLs loaded by time services unsigned or new?"
+    data_sources:
+      - "Service creation and modification logs"
+      - "File integrity monitoring"
+      - "DLL load events"
+
+  - step_number: 2
+    title: "Detect Abnormal Time Synchronization Behavior"
+    description: >
+      Investigate unexpected changes in system time or synchronization sources.
+    checklist:
+      - "Are system clocks adjusted unexpectedly?"
+      - "Are time syncs performed with untrusted sources?"
+      - "Are there logs of frequent or anomalous time changes?"
+    data_sources:
+      - "System event logs"
+      - "Time sync logs"
+      - "SIEM correlation"
+
+  - step_number: 3
+    title: "Correlate with Other Suspicious Activities"
+    description: >
+      Link time provider modifications to other persistence or evasion techniques.
+    checklist:
+      - "Are time provider changes correlated with suspicious process or network activity?"
+      - "Is there evidence of defense evasion or log tampering?"
+    data_sources:
+      - "Process and network monitoring"
+      - "Security logs"
+
+  - step_number: 4
+    title: "Validate Legitimacy of Time Provider Changes"
+    description: >
+      Confirm whether changes are authorized or part of system updates.
+    checklist:
+      - "Are changes explained by patches or legitimate admin actions?"
+      - "Are endpoint protections enabled?"
+    data_sources:
+      - "Patch and change management"
+      - "EDR alerts"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Authorized time provider updates."
+      - "Medium: Suspicious but unconfirmed changes."
+      - "High: Malicious time provider modifications detected."
+  - confidence_levels:
+      - "High: Known malicious DLL or service hashes."
+      - "Medium: Anomalous but unverified changes."
+      - "Low: Legitimate updates."
+
+ioc_types:
+  - "Modified or new time provider DLL hashes"
+  - "Service creation/modification events"
+  - "System time change events"
+  - "Suspicious time synchronization sources"
+
+queries/examples:
+  - name: "New or Modified Time Provider DLLs"
+    query: >
+      file.path:"C:\\Windows\\System32\\w32time.dll" AND
+      event.action:("file_created" OR "file_modified")
+  - name: "Service Creation or Modification of Time Providers"
+    query: >
+      event.provider:"Service Control Manager" AND
+      event.action:("service_created" OR "service_modified") AND
+      service.name:"W32Time"
+  - name: "Unexpected System Time Changes"
+    query: >
+      event.id:4616
+
+automation_hooks:
+  - "Alert on unauthorized changes to time provider services or DLLs"
+  - "Block suspicious DLL loads by time services"
+  - "Notify on unexpected system time changes"
+
+analyst_guidance:
+  - "Validate changes with IT or patch management."
+  - "Review logs for suspicious time changes."
+  - "Check for correlated malicious activity."
+  - "Consult threat intelligence."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1547/003/"
+  - "https://docs.microsoft.com/en-us/windows-server/networking/windows-time-service/"
+  - "https://www.sans.org/white-papers/39475/"
+
+review_cycle: "Quarterly or after notable time provider threats"

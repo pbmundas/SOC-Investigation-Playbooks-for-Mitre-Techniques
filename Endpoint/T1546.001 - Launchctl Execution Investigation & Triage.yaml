@@ -1,0 +1,112 @@
+playbook_name: "T1546.001 - Launchctl Execution: Investigation & Triage"
+tactic: "Persistence"
+technique_id: "T1546.001"
+technique_name: "Launchctl"
+description: >
+  Playbook to support investigation of suspicious or malicious use of the `launchctl` utility on macOS, 
+  typically leveraged to load, unload, or manage Launch Agents and Launch Daemons for persistence or privilege escalation.
+
+investigation_steps:
+  - step_number: 1
+    title: "Command Execution Review"
+    description: >
+      Investigate instances of `launchctl` being used to load or modify launch services.
+    checklist:
+      - "Was `launchctl load` or `bootstrap` invoked?"
+      - "Was the command executed by a non-privileged or unexpected user?"
+      - "Is the target plist file unusual or unsigned?"
+    data_sources:
+      - "Process Execution Logs"
+      - "Command Line Audit Logs"
+      - "macOS Unified Logs"
+      - "EDR Process Metadata"
+
+  - step_number: 2
+    title: "Linked Plist Verification"
+    description: >
+      Analyze the plist file that was loaded or modified using `launchctl`.
+    checklist:
+      - "What binary or script is referenced in the Program/Arguments?"
+      - "Is the file hosted in non-standard or writable directories?"
+      - "Does the plist persist across reboots?"
+    data_sources:
+      - "File System Logs"
+      - "FIM (File Integrity Monitoring)"
+      - "Plist File Analysis"
+      - "SIEM Correlation Data"
+
+  - step_number: 3
+    title: "User and Execution Context"
+    description: >
+      Validate whether the user context and binary align with legitimate usage.
+    checklist:
+      - "Is the launchctl command used during normal user behavior or startup?"
+      - "Did the process originate from Terminal, script, or suspicious application?"
+      - "Is the executable referenced by plist signed by a trusted authority?"
+    data_sources:
+      - "User Login Logs"
+      - "Parent Process Details"
+      - "Binary Signature Metadata"
+      - "Threat Intelligence Feeds"
+
+  - step_number: 4
+    title: "Persistence or Privilege Escalation Check"
+    description: >
+      Determine if launchctl is used to maintain persistence or elevate privileges.
+    checklist:
+      - "Is the service set to auto-load on system boot or user login?"
+      - "Does it point to malware or a backdoor?"
+      - "Has the user context changed after the service is loaded?"
+    data_sources:
+      - "Launchd Service Configurations"
+      - "User Privilege Change Logs"
+      - "Network Traffic Logs"
+      - "EDR Behavioral Detections"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Legitimate developer or configuration activity."
+      - "Medium: Unsigned binary loaded but no post-execution activity yet."
+      - "High: Known malware or privilege escalation tool loaded via launchctl."
+  - confidence_levels:
+      - "High: Command matches known persistence TTPs or threat actor behavior."
+      - "Medium: Suspicious execution path but requires deeper inspection."
+      - "Low: Routine administrative activity without risk indicators."
+
+ioc_types:
+  - "Plist file path"
+  - "Program or binary path in plist"
+  - "Command line invoking launchctl"
+  - "Unsigned or untrusted binaries"
+  - "User or script source triggering launchctl"
+
+queries/examples:
+  - name: "Suspicious Launchctl Invocation"
+    query: >
+      process.name:"launchctl" AND (process.command_line:*load* OR *bootstrap*) AND NOT user.role:"admin"
+  - name: "Launchctl Executing Unsigned Plist"
+    query: >
+      process.name:"launchctl" AND file.signed:false AND file.path:/Users/*/Library/LaunchAgents/*
+  - name: "Launchctl Triggered by Script"
+    query: >
+      process.parent.name:(bash OR zsh OR python) AND process.name:"launchctl"
+
+automation_hooks:
+  - "Auto-enrich loaded plist file path and associated binary hash"
+  - "Trigger sandbox analysis on suspicious launchctl binaries"
+  - "Auto-isolate host if known malicious Launchctl pattern is matched"
+  - "Add loaded plist path to watchlist for repeated use across endpoints"
+
+analyst_guidance:
+  - "Check if launchctl usage aligns with IT policies or known developer operations."
+  - "Manually review plist files in user directories if automated tools are limited."
+  - "Treat unrecognized `launchctl load` or unsigned binaries as potentially malicious."
+  - "Document and cross-check plist label, path, and binary hash against threat feeds."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1546/001/"
+  - "https://www.sentinelone.com/blog/persistence-on-macos-part-one-launch-agents/"
+  - "https://objective-see.org/blog/blog_0x65.html"
+  - "https://developer.apple.com/library/archive/documentation/Darwin/Reference/ManPages/man1/launchctl.1.html"
+
+review_cycle: "Semi-annually or when new macOS malware using launchctl emerges"

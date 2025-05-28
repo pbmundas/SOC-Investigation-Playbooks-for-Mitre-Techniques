@@ -1,0 +1,82 @@
+playbook_name: "T1495 - Firmware Corruption Detection"
+tactic: "Impact"
+technique_id: "T1495"
+technique_name: "Firmware Corruption"
+description: >
+  Detect attempts to corrupt or manipulate firmware to disrupt system or device operations.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Firmware Integrity"
+    description: >
+      Detect changes or corruption in device or system firmware.
+    checklist:
+      - "Are firmware checksums or hashes mismatched?"
+      - "Are firmware update logs showing unexpected changes?"
+      - "Are unauthorized firmware update tools or commands executed?"
+    data_sources:
+      - "Firmware integrity checks"
+      - "System event logs"
+      - "Endpoint security telemetry"
+
+  - step_number: 2
+    title: "Detect Suspicious Firmware Update Activities"
+    description: >
+      Identify unplanned or unauthorized firmware updates or tampering attempts.
+    checklist:
+      - "Are firmware updates scheduled outside normal maintenance windows?"
+      - "Are unknown processes attempting firmware writes?"
+    data_sources:
+      - "Update management system logs"
+      - "Process command-line monitoring"
+
+  - step_number: 3
+    title: "Correlate with System Instability or Failures"
+    description: >
+      Investigate if firmware corruption correlates with device malfunctions.
+    checklist:
+      - "Are devices rebooting unexpectedly?"
+      - "Are system errors or crashes occurring after firmware changes?"
+    data_sources:
+      - "System health monitoring"
+      - "EDR and hardware logs"
+
+triage_labels:
+  - severity_levels:
+      - "Medium: Suspicious firmware activity."
+      - "High: Confirmed firmware corruption."
+  - confidence_levels:
+      - "High: Verified firmware tampering."
+      - "Medium: Anomalous firmware events."
+      - "Low: False positives due to legitimate updates."
+
+ioc_types:
+  - "Firmware checksum mismatches"
+  - "Unauthorized firmware write attempts"
+  - "Unexpected firmware update logs"
+
+queries/examples:
+  - name: "Detect Firmware Checksum Mismatch"
+    query: >
+      firmware.checksum_valid = false
+
+  - name: "Detect Unauthorized Firmware Update Commands"
+    query: >
+      process.command_line CONTAINS ("fwupdate", "flashrom", "BIOS update") AND
+      user NOT IN (authorized_update_users)
+
+automation_hooks:
+  - "Alert on firmware integrity violations."
+  - "Prevent further firmware writes."
+  - "Engage hardware and incident response teams."
+
+analyst_guidance:
+  - "Verify legitimacy of firmware changes."
+  - "Coordinate with hardware vendors if needed."
+  - "Plan recovery or replacement."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1495/"
+  - "https://www.us-cert.gov/ncas/alerts/TA16-051A"
+
+review_cycle: "Semi-annually or post-incident"

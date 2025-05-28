@@ -1,0 +1,85 @@
+playbook_name: "T1491 - Defacement Detection"
+tactic: "Impact"
+technique_id: "T1491"
+technique_name: "Defacement"
+description: >
+  Detect unauthorized modification of web or application content to disrupt or manipulate services.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Web Content Changes"
+    description: >
+      Detect unexpected or unauthorized changes to website files or application content.
+    checklist:
+      - "Are web files or pages modified outside normal maintenance windows?"
+      - "Are unusual changes in file hashes or timestamps detected?"
+      - "Are unauthorized users or processes accessing web directories?"
+    data_sources:
+      - "File integrity monitoring"
+      - "Web server logs"
+      - "Version control systems"
+
+  - step_number: 2
+    title: "Detect Defacement Indicators"
+    description: >
+      Look for known defacement patterns such as altered index.html or injected scripts.
+    checklist:
+      - "Are defacement message files or graffiti found?"
+      - "Are malicious scripts or redirects injected?"
+    data_sources:
+      - "Web content monitoring tools"
+      - "Intrusion detection systems"
+
+  - step_number: 3
+    title: "Correlate with Access Logs"
+    description: >
+      Check for suspicious login or file modification activity prior to defacement.
+    checklist:
+      - "Are privileged accounts compromised?"
+      - "Is there evidence of lateral movement?"
+    data_sources:
+      - "Authentication logs"
+      - "EDR telemetry"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Authorized content updates."
+      - "Medium: Suspicious content changes."
+      - "High: Confirmed defacement."
+  - confidence_levels:
+      - "High: Verified defacement events."
+      - "Medium: Suspicious anomalies."
+      - "Low: Possible false positives."
+
+ioc_types:
+  - "Modified web files"
+  - "Unauthorized script injections"
+  - "Suspicious user/process access"
+
+queries/examples:
+  - name: "Detect Changes to Web Root Files"
+    query: >
+      file.path IN (web_root_dirs) AND
+      file.hash.changed = true AND
+      file.modified_time > recent_timeframe
+
+  - name: "Detect Suspicious Web Server Access"
+    query: >
+      webserver.access.log.status_code IN (403, 500) AND
+      user.agent NOT IN (known_agents)
+
+automation_hooks:
+  - "Alert on unauthorized web file changes."
+  - "Roll back to known good content."
+  - "Engage incident response."
+
+analyst_guidance:
+  - "Verify if changes were authorized."
+  - "Investigate compromised accounts or systems."
+  - "Remediate and restore content."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1491/"
+  - "https://www.sans.org/white-papers/web-defacement-detection/"
+
+review_cycle: "Quarterly or post-incident"

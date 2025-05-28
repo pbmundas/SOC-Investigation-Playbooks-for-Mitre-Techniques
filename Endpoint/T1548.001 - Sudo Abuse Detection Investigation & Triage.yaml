@@ -1,0 +1,94 @@
+playbook_name: "T1548.001 - Sudo Abuse Detection: Investigation & Triage"
+tactic: "Privilege Escalation"
+technique_id: "T1548.001"
+technique_name: "Abuse Elevation Control Mechanism: Sudo and Sudo Caching"
+description: >
+  Detect and investigate abuse of sudo privileges on Linux/Unix systems for unauthorized privilege escalation.
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect Sudo Usage and Command Execution"
+    description: >
+      Monitor and analyze sudo command execution events.
+    checklist:
+      - "Was sudo used with suspicious or uncommon commands?"
+      - "Was sudo access granted without password due to sudoers misconfiguration?"
+    data_sources:
+      - "Auditd logs (/var/log/audit/audit.log)"
+      - "Syslog (/var/log/auth.log)"
+      - "EDR agent telemetry"
+
+  - step_number: 2
+    title: "Correlate with User and Process Context"
+    description: >
+      Identify the initiating user and process context.
+    checklist:
+      - "Is the user authorized to perform sudo actions?"
+      - "Was the process launched interactively or through a script?"
+    data_sources:
+      - "User session logs"
+      - "Process creation logs"
+      - "Linux EDR"
+
+  - step_number: 3
+    title: "Review Sudoers Configuration"
+    description: >
+      Examine the sudoers file and access policies.
+    checklist:
+      - "Are NOPASSWD entries configured?"
+      - "Are any scripts or binaries given root access via sudo?"
+    data_sources:
+      - "/etc/sudoers"
+      - "/etc/sudoers.d/*"
+
+  - step_number: 4
+    title: "Respond and Contain"
+    description: >
+      Isolate and respond to confirmed misuse.
+    checklist:
+      - "Should sudo privileges be revoked temporarily?"
+      - "Is additional investigation or containment needed?"
+    data_sources:
+      - "Incident response logs"
+      - "IAM tools"
+      - "EDR actions"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Expected sudo use."
+      - "Medium: Unusual sudo command or misconfiguration."
+      - "High: Confirmed abuse of sudo for privilege escalation."
+  - confidence_levels:
+      - "High: Known sudo abuse pattern."
+      - "Medium: Unusual but unconfirmed sudo use."
+      - "Low: False positive or benign."
+
+ioc_types:
+  - "Suspicious sudo commands"
+  - "Usernames with unexpected sudo activity"
+  - "Processes launched via sudo"
+
+queries/examples:
+  - name: "Sudo Execution Detection"
+    query: >
+      sudo OR "COMMAND=" OR "sudoers" in /var/log/auth.log OR audit.log
+
+  - name: "NOPASSWD Sudoers Entries"
+    query: >
+      grep NOPASSWD /etc/sudoers /etc/sudoers.d/*
+
+automation_hooks:
+  - "Trigger alert for new or unusual sudo command usage."
+  - "Notify on changes to sudoers files."
+  - "Auto-isolate systems with confirmed misuse."
+
+analyst_guidance:
+  - "Confirm intent and context of sudo use."
+  - "Check for persistence mechanisms or lateral movement."
+  - "Limit or revoke sudo access as needed."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1548/001/"
+  - "https://linux.die.net/man/5/sudoers"
+
+review_cycle: "Quarterly or upon sudo policy change"

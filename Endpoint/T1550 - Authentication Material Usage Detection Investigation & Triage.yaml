@@ -1,0 +1,84 @@
+playbook_name: "T1550 - Alternate Authentication Material Usage Detection: Investigation & Triage"
+tactic: "Credential Access"
+technique_id: "T1550"
+technique_name: "Use Alternate Authentication Material"
+description: >
+  Detects usage of alternate authentication materials like tokens, tickets, or keys to access accounts or systems.
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect Use of Kerberos Tickets or Tokens"
+    description: >
+      Monitor for unusual use or creation of Kerberos tickets (e.g., Golden Tickets, Silver Tickets).
+    checklist:
+      - "Are there Kerberos tickets created outside normal user activity?"
+      - "Are ticket lifetimes or privilege levels unusual?"
+    data_sources:
+      - "Kerberos authentication logs"
+      - "Security event logs"
+
+  - step_number: 2
+    title: "Identify Usage of Other Authentication Artifacts"
+    description: >
+      Detect use of alternate credentials such as OAuth tokens, API keys, or SSH keys for authentication.
+    checklist:
+      - "Are OAuth tokens used from unexpected sources or with anomalous frequency?"
+      - "Are SSH keys used for access outside normal patterns?"
+    data_sources:
+      - "Authentication logs"
+      - "API gateway logs"
+      - "SSH access logs"
+
+  - step_number: 3
+    title: "Correlate Authentication Material Usage with Suspicious Access"
+    description: >
+      Check if use of alternate authentication material results in access to sensitive resources.
+    checklist:
+      - "Is there access to high-value resources post alternate auth usage?"
+      - "Are these accesses consistent with user roles and times?"
+    data_sources:
+      - "Access logs"
+      - "User activity monitoring"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Legitimate alternate auth material use."
+      - "Medium: Unusual use without confirmed malicious activity."
+      - "High: Unauthorized use leading to sensitive resource access."
+  - confidence_levels:
+      - "High: Confirmed use of forged or stolen authentication materials."
+      - "Medium: Anomalous use patterns."
+      - "Low: Normal use but flagged due to anomalies."
+
+ioc_types:
+  - "Unusual Kerberos ticket requests or renewals"
+  - "OAuth or API tokens used from new or untrusted locations"
+  - "SSH key usage outside baseline behavior"
+
+queries/examples:
+  - name: "Detect Abnormal Kerberos Ticket Usage"
+    query: >
+      event.type == "kerberos_ticket_request" AND
+      ticket.lifetime > normal_threshold AND
+      user.name NOT IN (trusted_accounts)
+
+  - name: "Detect OAuth Token Use from Untrusted IP"
+    query: >
+      event.type == "oauth_token_use" AND
+      source.ip NOT IN (trusted_ip_ranges)
+
+automation_hooks:
+  - "Alert on suspicious authentication material use."
+  - "Revoke or reset tokens and keys upon detection."
+  - "Force re-authentication and credential rotation."
+
+analyst_guidance:
+  - "Review token lifetimes and issuance contexts."
+  - "Validate all authentication material against inventory."
+  - "Recommend restricting use and monitoring of privileged tokens."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1550/"
+  - "https://docs.microsoft.com/en-us/security/compass/identity-protection"
+
+review_cycle: "Monthly or after incidents involving alternate auth material"
