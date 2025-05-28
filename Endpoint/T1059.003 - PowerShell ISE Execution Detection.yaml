@@ -1,0 +1,51 @@
+playbook_name: "PowerShell ISE Execution Detection"
+tactic: "Execution"
+technique_id: "T1059.003"
+technique_name: "PowerShell ISE"
+description: >
+  Detects usage of PowerShell ISE (Integrated Scripting Environment), which may be abused by adversaries
+  to execute and test malicious scripts stealthily.
+
+detection_sources:
+  - Sysmon (Event ID 1)
+  - Windows Security logs
+  - PowerShell Operational logs
+  - EDR telemetry
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect ISE Launch"
+    description: >
+      Monitor for execution of powershell_ise.exe.
+    checklist:
+      - "Verify parent process (was it launched by user or from script?)"
+      - "Capture command-line arguments"
+      - "Check for encoded or obfuscated scripts"
+
+  - step_number: 2
+    title: "Correlate with PowerShell Execution"
+    description: >
+      Look for script execution or suspicious commands.
+    checklist:
+      - "Check if ISE was used for live testing or execution"
+      - "Compare against baseline developer/admin usage"
+      - "Review recent PowerShell logs (ScriptBlock, Module, Operational)"
+
+  - step_number: 3
+    title: "Contain and Mitigate"
+    checklist:
+      - "Isolate host if ISE abuse confirmed"
+      - "Investigate user's activities and privileges"
+      - "Hunt for lateral movement"
+
+triage_labels:
+  - severity: Medium
+  - confidence: Medium
+
+ioc_types:
+  - Image
+  - CommandLine
+  - User
+
+references:
+  - https://attack.mitre.org/techniques/T1059/003/

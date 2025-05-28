@@ -1,0 +1,82 @@
+playbook_name: "T1025 - Removable Media Data Access Detection: Investigation & Triage"
+tactic: "Collection"
+technique_id: "T1025"
+technique_name: "Removable Media Data Access"
+description: >
+  Detects adversaries accessing or copying sensitive data to removable media devices such as USB drives.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor USB or Removable Media Connection Events"
+    description: >
+      Identify when removable storage devices are connected to endpoints.
+    checklist:
+      - "Are there unexpected or unauthorized USB devices connected?"
+      - "Is there a correlation with sensitive data access following device connection?"
+    data_sources:
+      - "Endpoint device logs"
+      - "Windows event logs (Event ID 1006, 4663)"
+
+  - step_number: 2
+    title: "Detect File Copy or Write Operations to Removable Media"
+    description: >
+      Detect file operations involving copying or moving files to removable devices.
+    checklist:
+      - "Are sensitive files copied to removable devices?"
+      - "Is file copying activity occurring during unusual hours or by unusual users?"
+    data_sources:
+      - "File system monitoring"
+      - "USB device usage logs"
+
+  - step_number: 3
+    title: "Correlate with User and Process Behavior"
+    description: >
+      Review processes and user accounts involved in removable media data access.
+    checklist:
+      - "Are known or authorized users performing the actions?"
+      - "Is there any suspicious process involved?"
+    data_sources:
+      - "Process monitoring"
+      - "User behavior analytics"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Authorized removable media use."
+      - "Medium: Unusual removable media activity."
+      - "High: Unauthorized copying of sensitive data to removable devices."
+  - confidence_levels:
+      - "High: Verified sensitive data copied to removable media."
+      - "Medium: Suspicious file activity on removable devices."
+      - "Low: Benign removable media usage."
+
+ioc_types:
+  - "Removable media connected to endpoint"
+  - "File write/copy operations to USB or external devices"
+  - "Unusual user or process activity around device use"
+
+queries/examples:
+  - name: "Detect Removable Media Connection"
+    query: >
+      event_id IN (1006, 4663) AND
+      device.type = "removable"
+
+  - name: "File Copy to Removable Device"
+    query: >
+      file.copy_operation = true AND
+      destination.device.type = "removable"
+
+automation_hooks:
+  - "Generate alerts on unauthorized removable media connections."
+  - "Block write access to removable devices for sensitive data."
+  - "Notify security team immediately on suspicious activity."
+
+analyst_guidance:
+  - "Confirm if removable media use is authorized."
+  - "Investigate user and process details."
+  - "Implement policies to control removable media use."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1025/"
+  - "https://docs.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4663"
+
+review_cycle: "Quarterly or after detection of removable media data access"

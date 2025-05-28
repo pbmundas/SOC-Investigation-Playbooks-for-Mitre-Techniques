@@ -1,0 +1,88 @@
+playbook_name: "T1070.001 - Event Log Clearing Detection: Investigation & Triage"
+tactic: "Defense Evasion"
+technique_id: "T1070.001"
+technique_name: "Event Log Clearing"
+description: >
+  Detect attempts to clear or erase event logs to remove forensic evidence of malicious activity.
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect Event Log Clear Commands"
+    description: >
+      Identify usage of commands/tools like 'wevtutil.exe clear-log', 'Clear-EventLog', or Windows API calls that clear logs.
+    checklist:
+      - "Are commands like Clear-EventLog or wevtutil clear-log executed?"
+      - "Are these commands run by unauthorized users or suspicious processes?"
+    data_sources:
+      - "Process command line logs"
+      - "Windows Event logs (e.g., Security Event ID 1102)"
+      - "Endpoint telemetry"
+
+  - step_number: 2
+    title: "Monitor Event Log Clearance Event IDs"
+    description: >
+      Look for Windows event IDs related to event log clearing activities.
+    checklist:
+      - "Event ID 1102 (The audit log was cleared)"
+      - "Event ID 104 (Security log cleared)"
+    data_sources:
+      - "Windows Security Event Logs"
+
+  - step_number: 3
+    title: "Correlate with Other Suspicious Activities"
+    description: >
+      Check if event log clearing is associated with suspicious processes, privilege escalation, or malware execution.
+    checklist:
+      - "Are log clearing events close in time with other suspicious events?"
+      - "Is there abnormal account usage around these events?"
+    data_sources:
+      - "SIEM logs"
+      - "Endpoint detection logs"
+
+  - step_number: 4
+    title: "Respond and Recover"
+    description: >
+      Initiate incident response, check for other indicators, and attempt to restore logs from backups.
+    checklist:
+      - "Isolate compromised systems if needed."
+      - "Restore cleared logs if backups exist."
+    data_sources:
+      - "Backup repositories"
+      - "Incident response tools"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Authorized log clearing with documented approval."
+      - "Medium: Unexpected log clearing requiring investigation."
+      - "High: Unauthorized or suspicious event log clearing."
+  - confidence_levels:
+      - "High: Clear evidence of unauthorized event log clearing."
+      - "Medium: Suspicious but inconclusive log clearing events."
+      - "Low: Benign or scheduled log maintenance."
+
+ioc_types:
+  - "Event ID 1102"
+  - "Clear-EventLog command"
+  - "wevtutil clear-log usage"
+
+queries/examples:
+  - name: "Windows Security Log Cleared"
+    query: >
+      EventID:1102
+  - name: "Command Line for Clearing Logs"
+    query: >
+      process.command_line:*Clear-EventLog* OR process.command_line:*wevtutil clear-log*
+
+automation_hooks:
+  - "Alert on Event ID 1102 occurrences."
+  - "Trigger workflow to verify user authorization."
+
+analyst_guidance:
+  - "Validate if log clearing was scheduled or authorized."
+  - "Look for accompanying suspicious activities."
+  - "Coordinate with incident responders."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1070/001/"
+
+review_cycle: "Quarterly or post-incident"

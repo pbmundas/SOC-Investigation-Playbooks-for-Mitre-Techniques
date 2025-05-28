@@ -1,0 +1,85 @@
+playbook_name: "T1021 - Remote Services Detection: Investigation & Triage"
+tactic: "Lateral Movement"
+technique_id: "T1021"
+technique_name: "Remote Services"
+description: >
+  Detects adversaries using remote services such as SSH, RDP, or SMB to move laterally across systems.
+
+investigation_steps:
+  - step_number: 1
+    title: "Identify Use of Remote Service Protocols"
+    description: >
+      Monitor network connections and process activity involving remote service protocols (SSH, SMB, RDP).
+    checklist:
+      - "Are there unusual or unauthorized remote connection attempts?"
+      - "Is there use of remote services outside business hours or from unusual IPs?"
+    data_sources:
+      - "Network logs"
+      - "Process creation logs"
+      - "Firewall logs"
+
+  - step_number: 2
+    title: "Detect Authentication Attempts Over Remote Services"
+    description: >
+      Monitor successful and failed login attempts via remote services.
+    checklist:
+      - "Are there repeated authentication failures?"
+      - "Are successful logins from anomalous accounts or locations?"
+    data_sources:
+      - "Authentication logs"
+      - "Remote service logs"
+
+  - step_number: 3
+    title: "Correlate Remote Service Use with Lateral Movement Indicators"
+    description: >
+      Check for follow-up actions such as new process creations, file transfers, or privilege escalations.
+    checklist:
+      - "Is remote session followed by suspicious activity?"
+      - "Are there signs of credential use or malware?"
+    data_sources:
+      - "Process logs"
+      - "File access logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Known and authorized remote sessions."
+      - "Medium: Remote sessions outside normal patterns."
+      - "High: Unauthorized or suspicious remote service use."
+  - confidence_levels:
+      - "High: Confirmed unauthorized remote connection."
+      - "Medium: Unusual but unconfirmed remote service usage."
+      - "Low: Routine remote administration."
+
+ioc_types:
+  - "Network connections on SSH (22), SMB (445), RDP (3389)"
+  - "Remote login attempts or successes"
+  - "Unexpected process launches following remote access"
+
+queries/examples:
+  - name: "Detect SSH Remote Sessions"
+    query: >
+      network.destination_port == 22 AND network.direction == "inbound"
+
+  - name: "Detect SMB Remote Access"
+    query: >
+      network.destination_port == 445 AND network.direction == "inbound"
+
+  - name: "Detect RDP Remote Access"
+    query: >
+      network.destination_port == 3389 AND network.direction == "inbound"
+
+automation_hooks:
+  - "Alert on unauthorized remote service connections."
+  - "Block suspicious IP addresses."
+  - "Force re-authentication or account lockout on suspicious logins."
+
+analyst_guidance:
+  - "Verify legitimacy of remote access."
+  - "Investigate post-connection activities."
+  - "Implement stricter remote access controls."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1021/"
+  - "https://docs.microsoft.com/en-us/windows/security/threat-protection/auditing/basic-audit-logon-events"
+
+review_cycle: "Monthly or after detection of unauthorized remote service usage"

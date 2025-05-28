@@ -1,0 +1,82 @@
+playbook_name: "T1057 - Process Discovery Detection: Investigation & Triage"
+tactic: "Discovery"
+technique_id: "T1057"
+technique_name: "Process Discovery"
+description: >
+  Detects adversaries enumerating running processes on a system to gather information on active applications and services for further exploitation or lateral movement.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Process Enumeration Commands and API Calls"
+    description: >
+      Identify use of tools or commands such as `tasklist`, `ps`, `Get-Process`, or API calls like `EnumProcesses` used to list running processes.
+    checklist:
+      - "Are process enumeration commands or scripts executed?"
+      - "Are these actions performed by unusual or unauthorized users?"
+    data_sources:
+      - "Process creation logs"
+      - "Command-line auditing"
+      - "API monitoring logs"
+
+  - step_number: 2
+    title: "Detect Anomalous or Automated Process Enumeration"
+    description: >
+      Look for repeated or high-frequency process discovery, which may indicate automated reconnaissance or scanning.
+    checklist:
+      - "Is process enumeration occurring frequently or at odd times?"
+      - "Are non-admin users performing process discovery?"
+    data_sources:
+      - "User activity logs"
+      - "Endpoint monitoring"
+
+  - step_number: 3
+    title: "Correlate Process Discovery with Other Malicious Activity"
+    description: >
+      Determine if process discovery is followed by lateral movement, privilege escalation, or malicious payload execution.
+    checklist:
+      - "Is there evidence of suspicious process creation after discovery?"
+      - "Are there related alerts or suspicious network connections?"
+    data_sources:
+      - "Endpoint detection logs"
+      - "Network logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Process discovery by legitimate admin users."
+      - "Medium: Discovery by standard users or during unusual times."
+      - "High: Discovery preceding malicious activity."
+  - confidence_levels:
+      - "High: Confirmed unauthorized process enumeration."
+      - "Medium: Suspicious process discovery activity."
+      - "Low: Routine system monitoring."
+
+ioc_types:
+  - "Execution of `tasklist`, `ps`, or PowerShell `Get-Process`"
+  - "API calls to enumerate processes"
+  - "Process enumeration by suspicious user context"
+
+queries/examples:
+  - name: "Detect PowerShell Get-Process Usage"
+    query: >
+      process.name == "powershell.exe" AND
+      process.command_line MATCHES "(?i)Get-Process"
+
+  - name: "Detect tasklist Command"
+    query: >
+      process.name == "tasklist.exe"
+
+automation_hooks:
+  - "Alert on process enumeration by unauthorized users."
+  - "Throttle or block suspicious process enumeration commands."
+  - "Investigate user context and subsequent activities."
+
+analyst_guidance:
+  - "Determine if process discovery is authorized."
+  - "Correlate with signs of compromise or lateral movement."
+  - "Recommend restricting access to process enumeration tools."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1057/"
+  - "https://docs.microsoft.com/en-us/windows/win32/api/psapi/nf-psapi-enumprocesses"
+
+review_cycle: "Quarterly or after detection of suspicious process discovery"

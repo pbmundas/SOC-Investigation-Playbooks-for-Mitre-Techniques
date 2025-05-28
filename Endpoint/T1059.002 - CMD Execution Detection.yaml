@@ -1,0 +1,62 @@
+playbook_name: "T1059.002 - CMD Execution Detection"
+tactic: "Execution"
+technique_id: "T1059.002"
+technique_name: "Command Prompt (cmd.exe)"
+description: >
+  Detects execution of Windows Command Prompt (cmd.exe) which may be used by adversaries for
+  executing commands or scripts.
+
+detection_sources:
+  - Sysmon process creation logs (EventID 1)
+  - Endpoint Detection and Response (EDR)
+  - Windows Security logs
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect cmd.exe Execution"
+    description: >
+      Monitor for process creation events of cmd.exe and analyze command lines.
+    checklist:
+      - "Look for cmd.exe process starts"
+      - "Capture command line parameters"
+      - "Identify suspicious batch or script executions"
+    data_sources:
+      - "Sysmon EventID 1"
+      - "EDR telemetry"
+
+  - step_number: 2
+    title: "Analyze Command Prompt Usage"
+    description: >
+      Investigate cmd.exe usage for suspicious activities such as lateral movement or persistence.
+    checklist:
+      - "Look for commands spawning remote sessions or modifying system settings"
+      - "Check for unusual scripts or batch files executed"
+    data_sources:
+      - "Command line logs"
+      - "Network logs"
+
+  - step_number: 3
+    title: "Response"
+    description: >
+      Take appropriate remediation steps.
+    checklist:
+      - "Isolate endpoint if needed"
+      - "Investigate user account behavior"
+      - "Run malware scans"
+    data_sources:
+      - "Endpoint management"
+
+triage_labels:
+  - severity:
+      - "Medium: Suspicious cmd.exe usage"
+      - "High: Confirmed malicious commands"
+  - confidence:
+      - "High: Known malicious command patterns"
+      - "Medium: Suspicious but inconclusive"
+
+ioc_types:
+  - Process Name
+  - Command Line
+
+reference_links:
+  - https://attack.mitre.org/techniques/T1059/002/

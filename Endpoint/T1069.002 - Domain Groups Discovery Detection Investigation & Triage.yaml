@@ -1,0 +1,84 @@
+playbook_name: "T1069.002 - Domain Groups Discovery Detection: Investigation & Triage"
+tactic: "Discovery"
+technique_id: "T1069.002"
+technique_name: "Domain Groups Discovery"
+description: >
+  Detects adversaries enumerating domain groups to gather information on user privileges and group memberships across the domain, useful for privilege escalation or lateral movement.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Domain Group Enumeration Commands and Queries"
+    description: >
+      Identify execution of commands such as `net group /domain`, `Get-ADGroup`, LDAP queries, or PowerShell cmdlets querying domain group memberships.
+    checklist:
+      - "Are domain group enumeration commands or LDAP queries detected?"
+      - "Are queries performed by unauthorized or suspicious accounts?"
+    data_sources:
+      - "Process creation logs"
+      - "Active Directory query logs"
+      - "PowerShell and LDAP monitoring"
+
+  - step_number: 2
+    title: "Detect Suspicious or High-Volume Domain Group Queries"
+    description: >
+      Look for multiple or bulk queries for domain group information in a short time frame, especially targeting privileged groups.
+    checklist:
+      - "Is there enumeration of sensitive or admin domain groups?"
+      - "Are queries executed from unusual systems or user accounts?"
+    data_sources:
+      - "AD logs"
+      - "User activity logs"
+
+  - step_number: 3
+    title: "Correlate Domain Group Discovery with Privilege Escalation or Lateral Movement"
+    description: >
+      Assess if domain group enumeration is followed by attempts to access privileged resources or escalate privileges.
+    checklist:
+      - "Are suspicious logins or access attempts observed after discovery?"
+      - "Is there evidence of privilege abuse or credential theft?"
+    data_sources:
+      - "Authentication logs"
+      - "Endpoint detection logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Domain group enumeration by authorized admins."
+      - "Medium: Enumeration by standard users or during unusual times."
+      - "High: Enumeration linked to suspicious or malicious activity."
+  - confidence_levels:
+      - "High: Confirmed unauthorized domain group enumeration."
+      - "Medium: Suspicious but unconfirmed."
+      - "Low: Legitimate administrative activity."
+
+ioc_types:
+  - "Commands like `net group /domain`"
+  - "PowerShell cmdlets such as `Get-ADGroup` querying domain groups"
+  - "LDAP queries for domain group enumeration"
+  - "Unusual user or system initiating domain group queries"
+
+queries/examples:
+  - name: "Detect net group /domain Command"
+    query: >
+      process.name == "net.exe" AND
+      process.command_line CONTAINS "group /domain"
+
+  - name: "Detect PowerShell Domain Group Queries"
+    query: >
+      process.name == "powershell.exe" AND
+      process.command_line MATCHES "(?i)Get-ADGroup"
+
+automation_hooks:
+  - "Alert on unauthorized domain group enumeration."
+  - "Restrict LDAP and AD query access to authorized users."
+  - "Investigate suspicious querying accounts."
+
+analyst_guidance:
+  - "Verify if domain group enumeration is part of normal admin tasks."
+  - "Correlate with lateral movement or privilege escalation indicators."
+  - "Recommend tightening AD query permissions and monitoring."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1069/002/"
+  - "https://docs.microsoft.com/en-us/powershell/module/activedirectory/get-adgroup"
+
+review_cycle: "Quarterly or after detection of suspicious domain group discovery"

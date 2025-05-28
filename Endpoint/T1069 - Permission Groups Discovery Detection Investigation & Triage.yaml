@@ -1,0 +1,83 @@
+playbook_name: "T1069 - Permission Groups Discovery Detection: Investigation & Triage"
+tactic: "Discovery"
+technique_id: "T1069"
+technique_name: "Permission Groups Discovery"
+description: >
+  Detects adversaries enumerating permission groups to identify user privileges, group memberships, and security roles for privilege escalation or lateral movement.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Group Enumeration Commands and Tools"
+    description: >
+      Identify use of commands like `net group`, `Get-ADGroup`, or PowerShell cmdlets querying group membership.
+    checklist:
+      - "Are group enumeration commands executed on endpoints or servers?"
+      - "Are unusual or unauthorized accounts performing group discovery?"
+    data_sources:
+      - "Process creation logs"
+      - "Command-line auditing"
+      - "Directory service query logs"
+
+  - step_number: 2
+    title: "Detect Abnormal Group Enumeration Activity"
+    description: >
+      Look for enumeration of privileged or sensitive groups by non-admin or suspicious users.
+    checklist:
+      - "Is group discovery focused on high-privilege groups?"
+      - "Is enumeration activity concentrated in a short time frame?"
+    data_sources:
+      - "Active Directory logs"
+      - "User activity monitoring"
+
+  - step_number: 3
+    title: "Correlate with Privilege Escalation or Lateral Movement Attempts"
+    description: >
+      Determine if group enumeration precedes or correlates with privilege escalation or lateral movement.
+    checklist:
+      - "Are there signs of credential misuse following discovery?"
+      - "Is suspicious account activity observed post-discovery?"
+    data_sources:
+      - "Authentication logs"
+      - "Endpoint detection logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Group enumeration by authorized admins."
+      - "Medium: Enumeration by non-privileged users."
+      - "High: Discovery linked to privilege escalation or lateral movement."
+  - confidence_levels:
+      - "High: Confirmed unauthorized group enumeration."
+      - "Medium: Suspicious enumeration without confirmed abuse."
+      - "Low: Routine group membership audits."
+
+ioc_types:
+  - "Commands like `net group`, `Get-ADGroup`"
+  - "PowerShell cmdlets querying Active Directory groups"
+  - "Enumeration by suspicious users or processes"
+
+queries/examples:
+  - name: "Detect net group Command"
+    query: >
+      process.name == "net.exe" AND
+      process.command_line CONTAINS "group"
+
+  - name: "Detect PowerShell Group Queries"
+    query: >
+      process.name == "powershell.exe" AND
+      process.command_line MATCHES "(?i)Get-ADGroup|Get-LocalGroup"
+
+automation_hooks:
+  - "Alert on unauthorized permission group enumeration."
+  - "Restrict access to group enumeration tools."
+  - "Investigate user context and correlate with privilege abuse."
+
+analyst_guidance:
+  - "Confirm legitimacy of group enumeration."
+  - "Correlate with privilege escalation attempts."
+  - "Recommend limiting permissions for group query access."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1069/"
+  - "https://docs.microsoft.com/en-us/powershell/module/activedirectory/get-adgroup"
+
+review_cycle: "Quarterly or after detection of suspicious group enumeration"

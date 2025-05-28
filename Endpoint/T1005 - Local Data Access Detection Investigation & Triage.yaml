@@ -1,0 +1,84 @@
+playbook_name: "T1005 - Local Data Access Detection: Investigation & Triage"
+tactic: "Collection"
+technique_id: "T1005"
+technique_name: "Local Data Access"
+description: >
+  Detects adversaries accessing sensitive data stored locally on compromised systems to collect information.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Access to Sensitive Data Files"
+    description: >
+      Identify access or read events on files or directories containing sensitive data.
+    checklist:
+      - "Are there unusual file access patterns on sensitive or critical data files?"
+      - "Is the access performed by unauthorized users or unusual processes?"
+    data_sources:
+      - "File access logs"
+      - "Endpoint detection and response (EDR) telemetry"
+
+  - step_number: 2
+    title: "Detect Abnormal Bulk File Reads"
+    description: >
+      Monitor for processes reading large amounts of files or data in a short time frame.
+    checklist:
+      - "Are there multiple files accessed rapidly by the same process?"
+      - "Are the accessed files from sensitive directories?"
+    data_sources:
+      - "Process monitoring logs"
+      - "File system monitoring"
+
+  - step_number: 3
+    title: "Correlate with Other Suspicious Activities"
+    description: >
+      Check if local data access correlates with lateral movement, privilege escalation, or data staging.
+    checklist:
+      - "Is local data access followed by network activity or file copying?"
+      - "Are the accessing accounts compromised or suspicious?"
+    data_sources:
+      - "Network logs"
+      - "User activity monitoring"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Access by authorized users or backup processes."
+      - "Medium: Access to sensitive data by unusual accounts."
+      - "High: Unauthorized or suspicious bulk data access."
+  - confidence_levels:
+      - "High: Verified unauthorized access to sensitive data."
+      - "Medium: Suspicious file access patterns."
+      - "Low: Normal user activity."
+
+ioc_types:
+  - "Unusual file read events on sensitive directories"
+  - "Processes reading large volumes of files quickly"
+  - "Access by suspicious or unknown user accounts"
+
+queries/examples:
+  - name: "Detect Bulk File Reads in Sensitive Directories"
+    query: >
+      file.access_type = "read" AND
+      file.path MATCHES ("/confidential|/secret|/finance|/hr/") AND
+      file.read_count > 20 WITHIN 10 minutes
+
+  - name: "Unusual User Access to Sensitive Files"
+    query: >
+      user.name NOT IN ("backup", "admin") AND
+      file.access_type = "read" AND
+      file.path MATCHES ("/sensitive_data/")
+
+automation_hooks:
+  - "Alert on bulk access to sensitive local files."
+  - "Restrict or quarantine suspicious processes."
+  - "Notify security team for incident review."
+
+analyst_guidance:
+  - "Verify if data access was authorized."
+  - "Investigate processes and users involved."
+  - "Check for related suspicious activities such as exfiltration."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1005/"
+  - "https://www.sans.org/white-papers/398/"
+
+review_cycle: "Quarterly or after detection of suspicious local data access"

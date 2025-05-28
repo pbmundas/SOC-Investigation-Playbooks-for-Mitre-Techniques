@@ -1,0 +1,94 @@
+playbook_name: "T1055.002 - PE Injection Detection: Investigation & Triage"
+tactic: "Defense Evasion"
+technique_id: "T1055.002"
+technique_name: "Portable Executable Injection"
+description: >
+  Detect attempts to inject Portable Executable (PE) code into the address space of another process for stealthy execution.
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect Memory Allocation and Writing Events"
+    description: >
+      Identify memory allocations with subsequent writing activity.
+    checklist:
+      - "Are processes allocating and writing to remote memory?"
+      - "Is the memory marked executable after writing?"
+    data_sources:
+      - "API telemetry (e.g., VirtualAllocEx, WriteProcessMemory)"
+      - "EDR memory monitoring"
+
+  - step_number: 2
+    title: "Identify Manual Mapping of PE Files"
+    description: >
+      Detect processes manually mapping PE structures into memory.
+    checklist:
+      - "Are headers and sections being parsed manually?"
+      - "Are import tables and relocation data being handled by non-loader code?"
+    data_sources:
+      - "Memory forensics"
+      - "Process behavior analysis"
+
+  - step_number: 3
+    title: "Correlate with Execution Behavior"
+    description: >
+      Link memory injection to spawned threads or anomalous execution.
+    checklist:
+      - "Is there thread creation in remote processes?"
+      - "Are injected threads executing malicious code?"
+    data_sources:
+      - "EDR thread telemetry"
+      - "SIEM alerts"
+
+  - step_number: 4
+    title: "Respond and Contain"
+    description: >
+      Take immediate containment action if PE injection confirmed.
+    checklist:
+      - "Is process injection malicious?"
+      - "Has persistence or lateral movement followed?"
+    data_sources:
+      - "Incident response logs"
+      - "Threat intel context"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Legitimate dev tool usage."
+      - "Medium: Suspicious memory manipulation."
+      - "High: Confirmed PE injection."
+  - confidence_levels:
+      - "High: Manual mapping patterns confirmed."
+      - "Medium: Anomalous memory behavior."
+      - "Low: Rare or unconfirmed API sequences."
+
+ioc_types:
+  - "Injected memory regions"
+  - "Remote thread activity"
+  - "PE header anomalies"
+  - "Mapped executable sections"
+
+queries/examples:
+  - name: "Memory Injection API Sequences"
+    query: >
+      api.call:(VirtualAllocEx AND WriteProcessMemory AND CreateRemoteThread)
+  - name: "Manual PE Mapping Indicators"
+    query: >
+      memory.region.type:executable AND pe.headers.present:false
+  - name: "Remote Thread Execution"
+    query: >
+      process.threads.created_in_remote_process:true
+
+automation_hooks:
+  - "Alert on PE injection sequences."
+  - "Capture memory dump for analysis."
+  - "Isolate endpoint if injection validated."
+
+analyst_guidance:
+  - "Use volatility or memory forensic tools to validate."
+  - "Link with lateral movement indicators."
+  - "Report IoCs to threat intel feeds."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1055/002/"
+  - "https://malpedia.caad.fkie.fraunhofer.de/"
+
+review_cycle: "Quarterly or post malware campaign analysis"

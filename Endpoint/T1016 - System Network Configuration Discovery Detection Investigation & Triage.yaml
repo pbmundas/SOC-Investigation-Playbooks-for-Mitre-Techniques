@@ -1,0 +1,82 @@
+playbook_name: "T1016 - System Network Configuration Discovery Detection: Investigation & Triage"
+tactic: "Discovery"
+technique_id: "T1016"
+technique_name: "System Network Configuration Discovery"
+description: >
+  Detects adversaries collecting network configuration details on systems, including IP addresses, network interfaces, routing tables, and DNS settings, to assist in reconnaissance and planning lateral movement.
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect Network Configuration Commands and Tools"
+    description: >
+      Monitor commands such as `ipconfig`, `ifconfig`, `netsh`, `route`, `ip`, or PowerShell cmdlets that retrieve network interface or routing information.
+    checklist:
+      - "Are network configuration commands executed?"
+      - "Are these commands run by unauthorized or unusual accounts?"
+    data_sources:
+      - "Process creation logs"
+      - "Command-line monitoring"
+      - "PowerShell logging"
+
+  - step_number: 2
+    title: "Identify Suspicious or Repeated Network Configuration Queries"
+    description: >
+      Detect frequent or automated execution of network configuration commands, especially across multiple hosts.
+    checklist:
+      - "Is network discovery performed outside normal admin hours?"
+      - "Are non-admin users executing network configuration commands?"
+    data_sources:
+      - "User activity logs"
+      - "Endpoint logs"
+
+  - step_number: 3
+    title: "Correlate Network Discovery with Other Reconnaissance or Lateral Movement Activities"
+    description: >
+      Investigate if network configuration discovery correlates with scanning, connection attempts, or exploitation.
+    checklist:
+      - "Is network discovery followed by port scans or remote connections?"
+      - "Are there signs of reconnaissance targeting internal resources?"
+    data_sources:
+      - "Network logs"
+      - "Endpoint detection logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Network configuration discovery by authorized admins."
+      - "Medium: Discovery by standard users or unusual accounts."
+      - "High: Discovery associated with suspicious activity."
+  - confidence_levels:
+      - "High: Confirmed unauthorized network configuration discovery."
+      - "Medium: Suspicious activity with limited context."
+      - "Low: Routine administrative commands."
+
+ioc_types:
+  - "Execution of `ipconfig`, `ifconfig`, `netsh`, `route`, or `ip` commands"
+  - "PowerShell network configuration cmdlets"
+  - "Repeated or automated network queries by suspicious users"
+
+queries/examples:
+  - name: "Detect ipconfig Command"
+    query: >
+      process.name == "ipconfig.exe"
+
+  - name: "Detect PowerShell Network Configuration Commands"
+    query: >
+      process.name == "powershell.exe" AND
+      process.command_line MATCHES "(?i)Get-NetIPConfiguration|Get-NetRoute"
+
+automation_hooks:
+  - "Alert on unauthorized network configuration discovery."
+  - "Throttle repeated network configuration commands."
+  - "Investigate user context and subsequent network activity."
+
+analyst_guidance:
+  - "Confirm if network configuration discovery is legitimate."
+  - "Correlate with network reconnaissance or lateral movement."
+  - "Recommend restricting command execution to admins."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1016/"
+  - "https://docs.microsoft.com/en-us/powershell/module/nettcpip/get-netipconfiguration"
+
+review_cycle: "Quarterly or after detection of suspicious network configuration discovery"

@@ -1,0 +1,78 @@
+playbook_name: "T1027.004 - Compile-after-Delivery Detection: Investigation & Triage"
+tactic: "Defense Evasion"
+technique_id: "T1027.004"
+technique_name: "Compile after Delivery"
+description: >
+  Detect adversaries delivering source code or scripts and compiling/executing them on target systems to evade detection.
+
+investigation_steps:
+  - step_number: 1
+    title: "Identify Source Code or Script Delivery"
+    description: >
+      Detect files that contain source code or scripts delivered to endpoints.
+    checklist:
+      - "Are there unusual file transfers of source code or script files?"
+      - "Are development tools or compilers present or executed unexpectedly?"
+    data_sources:
+      - "File transfer logs"
+      - "Endpoint file creation logs"
+
+  - step_number: 2
+    title: "Detect Compilation Activity"
+    description: >
+      Monitor execution of compilers or scripting environments compiling code.
+    checklist:
+      - "Are compiler binaries (e.g., cl.exe, gcc) executed on endpoints?"
+      - "Is there script execution following file creation?"
+    data_sources:
+      - "Process creation logs"
+      - "Command-line logging"
+
+  - step_number: 3
+    title: "Correlate Execution of Compiled Binaries"
+    description: >
+      Check if compiled binaries are subsequently executed and linked to suspicious activity.
+    checklist:
+      - "Are compiled binaries executed shortly after creation?"
+      - "Is there network or other suspicious behavior linked to these binaries?"
+    data_sources:
+      - "Process execution logs"
+      - "Network activity logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Known development environment activity."
+      - "Medium: Suspicious compile after delivery with no known good context."
+      - "High: Executed malicious binaries compiled after delivery."
+  - confidence_levels:
+      - "High: Detected compile and suspicious execution."
+      - "Medium: Compile activity with no further execution."
+      - "Low: False positives from normal development activity."
+
+ioc_types:
+  - "Unexpected compiler execution"
+  - "Newly created executable files"
+  - "Source code or scripts delivered to endpoints"
+
+queries/examples:
+  - name: "Detect Compiler Executions"
+    query: >
+      process.name:(cl.exe OR gcc OR csc.exe OR msbuild.exe)
+  - name: "Detect Newly Created Executables"
+    query: >
+      file.created:[now-24h TO now] AND file.extension:(exe OR dll)
+
+automation_hooks:
+  - "Alert on unusual compiler usage on endpoints."
+  - "Trigger sandbox analysis of compiled binaries."
+  - "Monitor network behavior following compilation."
+
+analyst_guidance:
+  - "Validate if compile activity is part of approved development."
+  - "Investigate binaries created and executed post-compilation."
+  - "Correlate with file delivery and network anomalies."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1027/004/"
+
+review_cycle: "Quarterly or after compile-after-delivery incidents"

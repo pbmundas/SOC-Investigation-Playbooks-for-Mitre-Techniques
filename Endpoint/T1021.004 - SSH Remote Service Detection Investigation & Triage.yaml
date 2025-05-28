@@ -1,0 +1,86 @@
+playbook_name: "T1021.004 - SSH Remote Service Detection: Investigation & Triage"
+tactic: "Lateral Movement"
+technique_id: "T1021.004"
+technique_name: "SSH Remote Service"
+description: >
+  Detects adversaries leveraging SSH (Secure Shell) for remote access and lateral movement.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor SSH Connection Attempts"
+    description: >
+      Track inbound SSH connections and authentication attempts.
+    checklist:
+      - "Are there repeated failed login attempts indicating brute force?"
+      - "Are successful logins from unusual users or IP addresses?"
+    data_sources:
+      - "SSH logs"
+      - "Authentication logs"
+      - "Network connection logs"
+
+  - step_number: 2
+    title: "Detect Use of SSH Tunneling or Port Forwarding"
+    description: >
+      Identify suspicious SSH tunnels or port forwarding activities that may indicate data exfiltration or pivoting.
+    checklist:
+      - "Are there SSH sessions with unusual commands or tunneling flags?"
+      - "Is there unexpected traffic routed through SSH tunnels?"
+    data_sources:
+      - "SSH session logs"
+      - "Network flow logs"
+
+  - step_number: 3
+    title: "Correlate SSH Sessions with Other Malicious Activities"
+    description: >
+      Check for lateral movement, privilege escalation, or malware activity following SSH access.
+    checklist:
+      - "Are there suspicious process creations or file accesses after SSH login?"
+      - "Is there unusual network communication following SSH sessions?"
+    data_sources:
+      - "Process logs"
+      - "File system logs"
+      - "Network logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Authorized SSH access."
+      - "Medium: SSH access from new or unusual sources."
+      - "High: Unauthorized or suspicious SSH usage."
+  - confidence_levels:
+      - "High: Confirmed unauthorized SSH access."
+      - "Medium: Suspicious SSH login patterns."
+      - "Low: Routine system administration."
+
+ioc_types:
+  - "Inbound SSH connections on port 22"
+  - "Failed and successful SSH logins"
+  - "Unusual SSH tunneling or port forwarding"
+
+queries/examples:
+  - name: "Detect SSH Connections"
+    query: >
+      network.destination_port == 22 AND network.direction == "inbound"
+
+  - name: "Detect Failed SSH Logins"
+    query: >
+      ssh.auth.status == "failure"
+
+  - name: "Detect Successful SSH Logins"
+    query: >
+      ssh.auth.status == "success"
+
+automation_hooks:
+  - "Alert on repeated failed SSH login attempts."
+  - "Block suspicious source IPs."
+  - "Enforce multi-factor authentication on SSH."
+
+analyst_guidance:
+  - "Validate SSH login legitimacy."
+  - "Investigate follow-up actions post-login."
+  - "Harden SSH access controls."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1021/004/"
+  - "https://linux.die.net/man/1/ssh"
+
+review_cycle: "Monthly or after detection of suspicious SSH activity"

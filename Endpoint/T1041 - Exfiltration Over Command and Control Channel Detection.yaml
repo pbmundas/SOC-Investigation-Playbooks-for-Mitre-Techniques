@@ -1,0 +1,83 @@
+playbook_name: "T1041 - Exfiltration Over Command and Control Channel Detection"
+tactic: "Exfiltration"
+technique_id: "T1041"
+technique_name: "Exfiltration Over C2 Channel"
+description: >
+  Detect adversaries exfiltrating data by using their command and control channels.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Data Transfers on Known C2 Channels"
+    description: >
+      Identify large or unusual outbound data transfers over established C2 communications.
+    checklist:
+      - "Are there spikes in outbound data volume on known C2 sessions?"
+      - "Is data being sent at unusual times or frequencies?"
+    data_sources:
+      - "Network flow logs"
+      - "EDR network telemetry"
+      - "C2 detection alerts"
+
+  - step_number: 2
+    title: "Analyze Payload Characteristics"
+    description: >
+      Inspect payload for encoded, compressed, or encrypted exfiltrated data.
+    checklist:
+      - "Is there evidence of data encoding or encryption within C2 traffic?"
+      - "Are payload sizes larger than typical command messages?"
+    data_sources:
+      - "Network packet captures"
+      - "Network analysis tools"
+
+  - step_number: 3
+    title: "Correlate with Endpoint Activity"
+    description: >
+      Investigate endpoint processes that establish C2 channels.
+    checklist:
+      - "Which processes are communicating over C2?"
+      - "Are there file creation or read events correlated with C2 data transfer?"
+    data_sources:
+      - "Endpoint logs"
+      - "Process monitoring"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Normal C2 communications."
+      - "Medium: Suspicious data volumes."
+      - "High: Confirmed data exfiltration."
+  - confidence_levels:
+      - "High: Confirmed exfiltration via C2."
+      - "Medium: Behavioral anomalies."
+      - "Low: Possible false positives."
+
+ioc_types:
+  - "Unusual data volume on C2"
+  - "Encoded/encrypted payloads"
+  - "Suspicious process activity"
+
+queries/examples:
+  - name: "Detect Large Outbound Data on C2 Ports"
+    query: >
+      network.outbound_bytes > threshold AND
+      network.destination_port IN c2_ports
+
+  - name: "Detect Suspicious Process Communications Over C2"
+    query: >
+      endpoint.process IN suspicious_processes AND
+      network.connection_to_c2 = true
+
+automation_hooks:
+  - "Alert on suspicious exfiltration over C2."
+  - "Isolate affected endpoints."
+  - "Trigger incident response."
+
+analyst_guidance:
+  - "Validate exfiltration and data volume."
+  - "Identify data types and scope."
+  - "Coordinate with network and IR teams."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1041/"
+  - "https://www.fireeye.com/blog/threat-research/2016/02/c2_traffic_analysis.html"
+
+review_cycle: "Quarterly or after incidents"

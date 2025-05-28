@@ -1,0 +1,65 @@
+playbook_name: "T1059.001 - PowerShell Execution Detection"
+tactic: "Execution"
+technique_id: "T1059.001"
+technique_name: "PowerShell"
+description: >
+  Detects adversary execution of PowerShell commands and scripts used for reconnaissance,
+  execution, and lateral movement.
+
+detection_sources:
+  - PowerShell logs (Operational and Script Block Logging)
+  - Sysmon process creation logs (EventID 1)
+  - Endpoint Detection and Response (EDR)
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect PowerShell Execution"
+    description: >
+      Monitor process creation events for PowerShell and analyze command line arguments.
+    checklist:
+      - "Look for powershell.exe and pwsh.exe process starts"
+      - "Analyze command line for encoded commands, script blocks, or suspicious parameters"
+      - "Check for bypass execution policies (e.g., -ExecutionPolicy Bypass)"
+    data_sources:
+      - "Sysmon EventID 1"
+      - "PowerShell Operational Logs"
+      - "EDR telemetry"
+
+  - step_number: 2
+    title: "Investigate Suspicious PowerShell Commands"
+    description: >
+      Review commands for obfuscation, downloading payloads, or lateral movement.
+    checklist:
+      - "Look for encoded base64 commands (-EncodedCommand)"
+      - "Identify network connections initiated by PowerShell"
+      - "Check for reflective loading or process injection"
+    data_sources:
+      - "PowerShell Script Block Logs"
+      - "Network logs"
+
+  - step_number: 3
+    title: "Response"
+    description: >
+      Respond to confirmed malicious PowerShell activity.
+    checklist:
+      - "Isolate endpoint"
+      - "Disable affected accounts"
+      - "Perform endpoint malware scans"
+    data_sources:
+      - "Endpoint management"
+
+triage_labels:
+  - severity:
+      - "High: Malicious PowerShell activity confirmed"
+      - "Medium: Suspicious PowerShell command detected"
+  - confidence:
+      - "High: Known malicious patterns"
+      - "Medium: Obfuscated but unconfirmed"
+
+ioc_types:
+  - Process Name
+  - Command Line
+  - File Hash
+
+reference_links:
+  - https://attack.mitre.org/techniques/T1059/001/

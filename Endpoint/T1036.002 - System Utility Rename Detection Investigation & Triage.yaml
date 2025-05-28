@@ -1,0 +1,87 @@
+playbook_name: "T1036.002 - System Utility Rename Detection: Investigation & Triage"
+tactic: "Defense Evasion"
+technique_id: "T1036.002"
+technique_name: "System Utility Rename"
+description: >
+  Detect adversaries renaming system utilities to evade detection or masquerade as legitimate files.
+
+investigation_steps:
+  - step_number: 1
+    title: "Identify Renamed System Utilities"
+    description: >
+      Scan file systems for known system utilities with altered file names.
+    checklist:
+      - "Are common system utilities renamed to non-standard names?"
+      - "Are renamed utilities located outside expected directories?"
+      - "Is the rename recent and unauthorized?"
+    data_sources:
+      - "File system inventory"
+      - "File integrity monitoring"
+      - "Endpoint logs"
+
+  - step_number: 2
+    title: "Validate File Signatures and Hashes"
+    description: >
+      Verify digital signatures and file hashes against known good baselines.
+    checklist:
+      - "Are signatures invalid or missing?"
+      - "Do hashes differ from known system utility files?"
+    data_sources:
+      - "Digital signature logs"
+      - "Threat intelligence databases"
+
+  - step_number: 3
+    title: "Monitor Execution of Renamed Utilities"
+    description: >
+      Observe execution patterns and check for suspicious behavior from renamed utilities.
+    checklist:
+      - "Are renamed utilities used for privilege escalation or persistence?"
+      - "Do they spawn unexpected child processes?"
+    data_sources:
+      - "Process monitoring"
+      - "EDR telemetry"
+
+  - step_number: 4
+    title: "Respond and Mitigate"
+    description: >
+      Restore proper utility names and alert on unauthorized renaming attempts.
+    checklist:
+      - "Rename utilities back to standard names."
+      - "Create alerts for future renames."
+    data_sources:
+      - "Endpoint management"
+      - "SIEM"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Authorized renames for system maintenance."
+      - "Medium: Suspicious renames without clear intent."
+      - "High: Malicious renames linked to attack."
+  - confidence_levels:
+      - "High: Confirmed malicious activity."
+      - "Medium: Suspicious but unconfirmed."
+      - "Low: False positive."
+
+ioc_types:
+  - "Renamed system utilities"
+  - "Unsigned or altered binaries"
+  - "Execution from unusual paths"
+
+queries/examples:
+  - name: "Detect renamed system utilities"
+    query: >
+      file.name.keyword NOT IN ["cmd.exe", "powershell.exe", "net.exe", "sc.exe"] AND
+      file.original_name.keyword IN ["cmd.exe", "powershell.exe", "net.exe", "sc.exe"]
+
+automation_hooks:
+  - "Alert on creation or modification of renamed system utilities."
+  - "Trigger integrity checks on system binaries."
+
+analyst_guidance:
+  - "Check if rename is approved for maintenance."
+  - "Correlate with suspicious process activity."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1036/002/"
+
+review_cycle: "Quarterly or after detection incidents"

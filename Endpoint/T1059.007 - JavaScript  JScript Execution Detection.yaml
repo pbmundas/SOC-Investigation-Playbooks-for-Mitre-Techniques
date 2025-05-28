@@ -1,0 +1,45 @@
+playbook_name: "JavaScript / JScript Execution Detection"
+tactic: "Execution"
+technique_id: "T1059.007"
+technique_name: "JavaScript / JScript"
+description: >
+  Detects execution of JavaScript or JScript files via wscript.exe or cscript.exe, typically used in phishing and initial access.
+
+detection_sources:
+  - Sysmon (Event ID 1)
+  - Windows Security logs
+  - Script block logging (PowerShell/WSH)
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect JavaScript Execution"
+    checklist:
+      - "Monitor wscript.exe or cscript.exe with .js/.jse files"
+      - "Check if script file was dropped in user temp or download folders"
+      - "Review parent process for phishing context (e.g., Outlook.exe, browser)"
+
+  - step_number: 2
+    title: "Analyze Payload and Behavior"
+    checklist:
+      - "Extract and decode script contents"
+      - "Look for obfuscation, encoded content, downloader behavior"
+      - "Use sandbox or hybrid analysis"
+
+  - step_number: 3
+    title: "Containment & Threat Hunting"
+    checklist:
+      - "Quarantine affected machine"
+      - "Search enterprise logs for similar script hashes or IOCs"
+      - "Check email gateway for similar attachments"
+
+triage_labels:
+  - severity: High
+  - confidence: High
+
+ioc_types:
+  - File Name
+  - Script Hash
+  - CommandLine
+
+references:
+  - https://attack.mitre.org/techniques/T1059/007/

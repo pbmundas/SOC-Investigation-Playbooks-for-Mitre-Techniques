@@ -1,0 +1,89 @@
+playbook_name: "T1055.004 - APC Injection Detection: Investigation & Triage"
+tactic: "Defense Evasion"
+technique_id: "T1055.004"
+technique_name: "APC Injection"
+description: >
+  Detect Asynchronous Procedure Call (APC) injection used by adversaries to queue code execution in the context of another thread.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor APC Queueing Behavior"
+    description: >
+      Detect use of QueueUserAPC targeting remote threads.
+    checklist:
+      - "Are threads in remote processes being targeted by APCs?"
+      - "Are APCs queuing suspicious shellcode or module loads?"
+    data_sources:
+      - "API telemetry"
+      - "Thread injection logs"
+
+  - step_number: 2
+    title: "Track Execution Flow from APCs"
+    description: >
+      Monitor for execution initiated from APC routines in unusual memory regions.
+    checklist:
+      - "Is code executing from heap or injected memory?"
+      - "Are legitimate processes exhibiting suspicious behavior post-APC?"
+    data_sources:
+      - "EDR"
+      - "Memory analysis"
+
+  - step_number: 3
+    title: "Correlate with Indicators of Malicious Activity"
+    description: >
+      Combine APC usage data with known malware behavior and tools.
+    checklist:
+      - "Does the process match malware profiles?"
+      - "Are persistence mechanisms observed alongside?"
+    data_sources:
+      - "SIEM alerts"
+      - "Threat intelligence feeds"
+
+  - step_number: 4
+    title: "Validate and Contain"
+    description: >
+      Confirm malicious APC injection and initiate containment.
+    checklist:
+      - "Is APC origin suspicious or undocumented?"
+      - "Is memory capture or live response needed?"
+    data_sources:
+      - "IR response tools"
+      - "Memory forensics"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Benign APCs by normal apps."
+      - "Medium: Unusual APCs in critical processes."
+      - "High: Confirmed malicious APC injection."
+  - confidence_levels:
+      - "High: Known tools using APC injection."
+      - "Medium: Suspicious but unverified sequences."
+      - "Low: Isolated or rare APC usage."
+
+ioc_types:
+  - "Thread context targets"
+  - "QueueUserAPC calls"
+  - "Unusual memory execution paths"
+
+queries/examples:
+  - name: "QueueUserAPC in Remote Threads"
+    query: >
+      api.call:QueueUserAPC AND thread.target_process:!self
+  - name: "APC Triggered Execution in Heap"
+    query: >
+      thread.execution_region:(heap OR unknown_memory)
+
+automation_hooks:
+  - "Alert on remote APCs."
+  - "Trigger memory snapshot if injection suspected."
+  - "Isolate host for deeper analysis."
+
+analyst_guidance:
+  - "Trace APCs back to originating code."
+  - "Capture volatile memory."
+  - "Escalate for containment if confirmed malicious."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1055/004/"
+
+review_cycle: "Quarterly or after malware campaign analysis"

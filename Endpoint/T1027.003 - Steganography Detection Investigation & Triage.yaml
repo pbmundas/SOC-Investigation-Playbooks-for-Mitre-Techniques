@@ -1,0 +1,78 @@
+playbook_name: "T1027.003 - Steganography Detection: Investigation & Triage"
+tactic: "Defense Evasion"
+technique_id: "T1027.003"
+technique_name: "Steganography"
+description: >
+  Detect use of steganography to hide data within images, audio, or other files.
+
+investigation_steps:
+  - step_number: 1
+    title: "Identify Files with Steganographic Content"
+    description: >
+      Detect files with unusual metadata, size anomalies, or embedded hidden data.
+    checklist:
+      - "Are image/audio files larger than expected?"
+      - "Are metadata or headers inconsistent with file type?"
+    data_sources:
+      - "File metadata analysis"
+      - "File size anomaly detection"
+
+  - step_number: 2
+    title: "Analyze Network Traffic for Steganographic Transfers"
+    description: >
+      Identify exfiltration attempts using steganographic files.
+    checklist:
+      - "Are large image/audio files sent over unusual protocols?"
+      - "Is traffic timing or pattern suspicious?"
+    data_sources:
+      - "Network traffic logs"
+      - "Proxy logs"
+
+  - step_number: 3
+    title: "Use Specialized Tools to Extract Hidden Data"
+    description: >
+      Apply steganalysis tools to suspected files for hidden payload extraction.
+    checklist:
+      - "Can hidden data be extracted or detected?"
+      - "Is extracted data malicious or suspicious?"
+    data_sources:
+      - "Steganalysis tool outputs"
+      - "Malware analysis labs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Legitimate use of media files."
+      - "Medium: Suspicious steganographic files detected."
+      - "High: Confirmed malicious hidden payload."
+  - confidence_levels:
+      - "High: Extracted hidden malicious data."
+      - "Medium: Anomalies detected without extraction."
+      - "Low: False positives from benign files."
+
+ioc_types:
+  - "Image/audio files with hidden data"
+  - "Suspicious metadata or headers"
+  - "Network traffic carrying steganographic files"
+
+queries/examples:
+  - name: "Detect Large Image Files"
+    query: >
+      file.extension:(jpg OR png OR bmp) AND file.size:[500000 TO *]
+  - name: "Network Transfer of Media Files"
+    query: >
+      network.transport:(http OR https) AND file.extension:(jpg OR mp3)
+
+automation_hooks:
+  - "Alert on large media files transferred unusually."
+  - "Trigger steganalysis on files flagged as suspicious."
+  - "Integrate with malware sandbox for payload extraction."
+
+analyst_guidance:
+  - "Validate if large files are normal for environment."
+  - "Use steganalysis tools on suspicious files."
+  - "Correlate with other attacker activity indicators."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1027/003/"
+
+review_cycle: "Quarterly or after steganography incident"

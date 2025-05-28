@@ -1,0 +1,84 @@
+playbook_name: "T1021.002 - SMB Admin Shares Detection: Investigation & Triage"
+tactic: "Lateral Movement"
+technique_id: "T1021.002"
+technique_name: "SMB/Windows Admin Shares"
+description: >
+  Detects adversaries leveraging SMB admin shares (e.g., C$, ADMIN$) for lateral movement or remote file access.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Access to SMB Admin Shares"
+    description: >
+      Track connections and accesses to SMB administrative shares on endpoints.
+    checklist:
+      - "Are there unexpected or unauthorized connections to admin shares?"
+      - "Are access attempts coming from unusual user accounts or hosts?"
+    data_sources:
+      - "SMB access logs"
+      - "Network connection logs"
+      - "File access logs"
+
+  - step_number: 2
+    title: "Detect Remote Execution Over SMB Shares"
+    description: >
+      Identify suspicious remote process creations or file transfers over SMB admin shares.
+    checklist:
+      - "Are files copied to admin shares without authorization?"
+      - "Is there evidence of remote execution commands?"
+    data_sources:
+      - "Process creation logs"
+      - "File transfer logs"
+      - "SMB audit logs"
+
+  - step_number: 3
+    title: "Correlate SMB Admin Access with Other Lateral Movement Indicators"
+    description: >
+      Look for subsequent malicious activity such as privilege escalation, credential dumping, or persistence.
+    checklist:
+      - "Are there logins or new sessions initiated after SMB admin share access?"
+      - "Is there unusual privilege use or account behavior?"
+    data_sources:
+      - "Authentication logs"
+      - "Process logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Admin share access by authorized admins."
+      - "Medium: Unusual but non-malicious admin share usage."
+      - "High: Unauthorized or suspicious admin share access."
+  - confidence_levels:
+      - "High: Confirmed unauthorized SMB admin share access."
+      - "Medium: Suspicious access patterns."
+      - "Low: Routine admin activity."
+
+ioc_types:
+  - "Access to C$, ADMIN$, IPC$ shares over SMB"
+  - "Remote file copies or execution over SMB"
+  - "Unusual user or host access to admin shares"
+
+queries/examples:
+  - name: "Detect Access to SMB Admin Shares"
+    query: >
+      network.destination_port == 445 AND
+      file.path MATCHES ".*\\\\(C\\$|ADMIN\\$|IPC\\$)\\\\.*"
+
+  - name: "Detect Remote Execution Commands Over SMB"
+    query: >
+      process.command_line MATCHES "(?i)(psexec|wmiexec|smbclient)" AND
+      network.destination_port == 445
+
+automation_hooks:
+  - "Alert on unauthorized SMB admin share access."
+  - "Block suspicious IP addresses or user accounts."
+  - "Quarantine affected systems for further investigation."
+
+analyst_guidance:
+  - "Confirm if SMB admin share access is authorized."
+  - "Investigate any lateral movement activity."
+  - "Recommend restricting SMB admin shares where possible."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1021/002/"
+  - "https://docs.microsoft.com/en-us/windows-server/storage/file-server/troubleshoot/smb-admin-shares"
+
+review_cycle: "Monthly or after detection of suspicious SMB admin share activity"

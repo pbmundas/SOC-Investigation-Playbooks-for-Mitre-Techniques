@@ -1,0 +1,84 @@
+playbook_name: "T1036.004 - Binary Masquerading Detection: Investigation & Triage"
+tactic: "Defense Evasion"
+technique_id: "T1036.004"
+technique_name: "Binary Masquerading"
+description: >
+  Detect adversaries masquerading malicious binaries as legitimate binaries by copying or replacing files.
+
+investigation_steps:
+  - step_number: 1
+    title: "Identify Binary Name Collisions"
+    description: >
+      Detect binaries named identical or similar to legitimate binaries but located in unusual directories.
+    checklist:
+      - "Are there duplicate binaries with common system binary names?"
+      - "Are binary hashes different from known good versions?"
+    data_sources:
+      - "File integrity monitoring"
+      - "Threat intelligence"
+
+  - step_number: 2
+    title: "Verify File Integrity and Signatures"
+    description: >
+      Compare digital signatures and hashes with baseline known binaries.
+    checklist:
+      - "Is digital signature invalid or missing?"
+      - "Do hashes differ from official binaries?"
+    data_sources:
+      - "Digital signature logs"
+      - "File hash databases"
+
+  - step_number: 3
+    title: "Monitor Execution and Behavior"
+    description: >
+      Observe execution patterns, looking for malicious behavior or privilege escalation.
+    checklist:
+      - "Does the binary spawn unusual child processes?"
+      - "Is there suspicious network activity?"
+    data_sources:
+      - "Process monitoring"
+      - "Network telemetry"
+
+  - step_number: 4
+    title: "Respond and Remediate"
+    description: >
+      Quarantine masqueraded binaries and restore legitimate files.
+    checklist:
+      - "Remove suspicious binaries."
+      - "Alert on binary replacement attempts."
+    data_sources:
+      - "Endpoint protection"
+      - "SIEM"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Legitimate binaries with version mismatches."
+      - "Medium: Suspicious masquerading binaries."
+      - "High: Confirmed malicious masquerading."
+  - confidence_levels:
+      - "High: Verified malicious binaries."
+      - "Medium: Suspicious but unconfirmed."
+      - "Low: False positives."
+
+ioc_types:
+  - "Duplicate binary names"
+  - "Invalid or missing digital signatures"
+  - "Hash mismatches"
+
+queries/examples:
+  - name: "Detect binaries named as system files outside standard paths"
+    query: >
+      file.name:("svchost.exe" OR "explorer.exe") AND NOT file.path:"C:\\Windows\\System32"
+
+automation_hooks:
+  - "Alert on binaries replacing system files."
+  - "Trigger file integrity verification."
+
+analyst_guidance:
+  - "Validate binary origin and legitimacy."
+  - "Investigate associated process behavior."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1036/004/"
+
+review_cycle: "Quarterly or after detections"

@@ -1,0 +1,66 @@
+playbook_name: "T1059 - Command and Scripting Interpreter Execution Detection"
+tactic: "Execution"
+technique_id: "T1059"
+technique_name: "Command and Scripting Interpreter"
+description: >
+  Detects adversary use of command line interfaces and scripting interpreters to execute commands
+  for execution, persistence, or lateral movement.
+
+detection_sources:
+  - Endpoint Detection and Response (EDR)
+  - Sysmon process creation logs (EventID 1)
+  - PowerShell and command prompt logs
+  - Windows Event Logs (e.g., Sysmon, Security)
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect Command/Script Interpreter Execution"
+    description: >
+      Monitor process creation events for command line and script interpreters.
+    checklist:
+      - "Look for process creation events involving cmd.exe, powershell.exe, wscript.exe, cscript.exe, bash, sh, python, etc."
+      - "Capture full command lines for suspicious or anomalous commands"
+      - "Identify parent-child process relationships"
+    data_sources:
+      - "Sysmon EventID 1"
+      - "EDR telemetry"
+
+  - step_number: 2
+    title: "Analyze Command Line Activity"
+    description: >
+      Review commands executed for signs of malicious behavior.
+    checklist:
+      - "Look for encoded or obfuscated commands"
+      - "Identify command chaining or execution of downloaders"
+      - "Check for lateral movement or persistence commands"
+    data_sources:
+      - "Command line logs"
+      - "Threat intelligence"
+
+  - step_number: 3
+    title: "Response"
+    description: >
+      Take action based on investigation findings.
+    checklist:
+      - "Isolate affected host if malicious activity confirmed"
+      - "Block or restrict suspicious accounts"
+      - "Deploy endpoint remediation"
+    data_sources:
+      - "Endpoint management"
+      - "Identity management"
+
+triage_labels:
+  - severity:
+      - "Medium: Suspicious interpreter execution"
+      - "High: Confirmed malicious commands"
+  - confidence:
+      - "High: Known malicious commands or behavior"
+      - "Medium: Suspicious but unconfirmed"
+
+ioc_types:
+  - Process Name
+  - Command Line
+  - User Account
+
+reference_links:
+  - https://attack.mitre.org/techniques/T1059/

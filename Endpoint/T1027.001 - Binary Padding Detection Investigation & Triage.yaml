@@ -1,0 +1,79 @@
+playbook_name: "T1027.001 - Binary Padding Detection: Investigation & Triage"
+tactic: "Defense Evasion"
+technique_id: "T1027.001"
+technique_name: "Binary Padding"
+description: >
+  Detect adversaries adding benign data to binaries to evade hash-based detection.
+
+investigation_steps:
+  - step_number: 1
+    title: "Identify Executables with Unusual Size or Padding"
+    description: >
+      Analyze executable files for abnormal size increases or trailing null bytes.
+    checklist:
+      - "Are executable file sizes inconsistent with known good versions?"
+      - "Is there unusual trailing data or padding in binaries?"
+    data_sources:
+      - "File hash databases"
+      - "File system metadata"
+      - "Endpoint detection logs"
+
+  - step_number: 2
+    title: "Check Hash Mismatches and Signature Changes"
+    description: >
+      Compare file hashes with trusted baseline and known signatures.
+    checklist:
+      - "Does the file hash differ from the trusted hash?"
+      - "Are digital signatures missing or invalid?"
+    data_sources:
+      - "Hash repositories"
+      - "Code signing logs"
+
+  - step_number: 3
+    title: "Correlate with Process Execution and Network Activity"
+    description: >
+      Confirm if padded binaries are executed and linked to malicious activity.
+    checklist:
+      - "Is the binary executed from an unusual location?"
+      - "Does execution coincide with suspicious network connections?"
+    data_sources:
+      - "Process creation logs"
+      - "Network traffic logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Known benign binaries with padding."
+      - "Medium: Unusual binaries with suspicious padding."
+      - "High: Executed binaries with malicious padding."
+  - confidence_levels:
+      - "High: Hash mismatch and suspicious execution."
+      - "Medium: Padding detected but no execution."
+      - "Low: False positives due to legitimate updates."
+
+ioc_types:
+  - "File hash mismatches"
+  - "Executables with trailing padding bytes"
+  - "Unsigned or tampered binaries"
+
+queries/examples:
+  - name: "Detect Large Executable Files with Padding"
+    query: >
+      file.extension:"exe" AND file.size:[5000000 TO *] AND NOT file.hash:known_good_hashes
+  - name: "Detect Executables with Null Byte Padding"
+    query: >
+      file.content:"\x00\x00\x00" AND file.extension:"exe"
+
+automation_hooks:
+  - "Alert on execution of binaries with unknown or mismatched hashes."
+  - "Trigger file integrity checks on suspicious executables."
+  - "Automate hash verification against known repositories."
+
+analyst_guidance:
+  - "Verify if padding is part of legitimate software update."
+  - "Analyze the origin and execution context of padded binaries."
+  - "Correlate with other endpoint or network anomalies."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1027/001/"
+
+review_cycle: "Quarterly or after detection of binary tampering incidents"

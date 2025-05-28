@@ -1,0 +1,85 @@
+playbook_name: "T1039 - Network Shared Drive Data Access Detection: Investigation & Triage"
+tactic: "Collection"
+technique_id: "T1039"
+technique_name: "Network Shared Drive Data Access"
+description: >
+  Detects adversaries accessing data on network shared drives to collect sensitive information or facilitate lateral movement.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Access to Network Shared Drives"
+    description: >
+      Identify file access events on network shares, focusing on unusual user accounts or high-volume access.
+    checklist:
+      - "Are there file read or write operations on network shares by non-standard accounts?"
+      - "Is there an unusual volume or pattern of file access?"
+    data_sources:
+      - "File server access logs"
+      - "Network share auditing logs"
+      - "Endpoint file access logs"
+
+  - step_number: 2
+    title: "Detect Unusual Data Access Patterns"
+    description: >
+      Look for bulk file copying or accessing sensitive directories that are not typical for the user.
+    checklist:
+      - "Is data accessed outside normal business hours?"
+      - "Are large numbers of files accessed or copied?"
+      - "Is sensitive data being accessed without proper authorization?"
+    data_sources:
+      - "File access metadata"
+      - "Data Loss Prevention (DLP) logs"
+
+  - step_number: 3
+    title: "Correlate with Other Intrusion Indicators"
+    description: >
+      Check if network share access correlates with other suspicious activities such as credential use anomalies or lateral movement.
+    checklist:
+      - "Is there concurrent suspicious login or privilege escalation?"
+      - "Are there related alerts for malware or suspicious processes?"
+    data_sources:
+      - "Authentication logs"
+      - "Endpoint detection logs"
+      - "SIEM correlation rules"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Authorized access by known users."
+      - "Medium: Suspicious access pattern requiring investigation."
+      - "High: Confirmed unauthorized data access on network shares."
+  - confidence_levels:
+      - "High: Verified unauthorized access and potential data theft."
+      - "Medium: Unusual access pattern without confirmed intent."
+      - "Low: Routine access activity."
+
+ioc_types:
+  - "Access to network shares from unusual user accounts or endpoints"
+  - "High volume or off-hours file access"
+  - "Access to sensitive or restricted shared folders"
+
+queries/examples:
+  - name: "Detect Large Volume Access to Network Shares"
+    query: >
+      file.access_count > 100 WITHIN 10 minutes AND
+      network_share.accessed == true
+
+  - name: "Detect Network Share Access Outside Business Hours"
+    query: >
+      file.access_time NOT BETWEEN ("08:00", "18:00") AND
+      network_share.accessed == true
+
+automation_hooks:
+  - "Alert on suspicious network share access."
+  - "Block or restrict access from anomalous users or endpoints."
+  - "Notify data owners and security teams for incident handling."
+
+analyst_guidance:
+  - "Validate user authorization and business need for access."
+  - "Review related login and process activity for compromise."
+  - "Enforce network share access controls and monitoring."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1039/"
+  - "https://docs.microsoft.com/en-us/windows/security/threat-protection/auditing/event-5145"
+
+review_cycle: "Monthly or after detection of abnormal shared drive access"

@@ -1,0 +1,85 @@
+playbook_name: "T1021.001 - RDP Detection: Investigation & Triage"
+tactic: "Lateral Movement"
+technique_id: "T1021.001"
+technique_name: "Remote Desktop Protocol"
+description: >
+  Detects adversaries using the Remote Desktop Protocol (RDP) for lateral movement or remote control.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor RDP Connection Attempts"
+    description: >
+      Track inbound network connections to RDP port (3389) and detect connection patterns.
+    checklist:
+      - "Are there repeated or unusual connection attempts to port 3389?"
+      - "Are connections originating from suspicious IP addresses or geolocations?"
+    data_sources:
+      - "Network traffic logs"
+      - "Firewall logs"
+
+  - step_number: 2
+    title: "Analyze Authentication Logs for RDP"
+    description: >
+      Review successful and failed RDP login attempts.
+    checklist:
+      - "Are there multiple failed login attempts suggesting brute force?"
+      - "Are successful logins from unusual accounts or sources?"
+    data_sources:
+      - "Windows Security Event Logs (Event ID 4624, 4625)"
+      - "Remote Desktop logs"
+
+  - step_number: 3
+    title: "Correlate RDP Sessions with Post-Access Activities"
+    description: >
+      Investigate activities following RDP logins such as new process launches, lateral movement, or data access.
+    checklist:
+      - "Is there abnormal process creation or file access during or after RDP sessions?"
+      - "Are there privilege escalations or suspicious network connections?"
+    data_sources:
+      - "Process creation logs"
+      - "File access logs"
+      - "Network logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Authorized RDP sessions from known users."
+      - "Medium: RDP access outside of business hours or unusual IPs."
+      - "High: Unauthorized or brute force RDP attempts."
+  - confidence_levels:
+      - "High: Confirmed unauthorized or brute force RDP access."
+      - "Medium: Suspicious RDP connection patterns."
+      - "Low: Normal remote administration."
+
+ioc_types:
+  - "Network connections to port 3389"
+  - "Failed and successful RDP login attempts"
+  - "Abnormal process or file activity after RDP login"
+
+queries/examples:
+  - name: "Detect RDP Network Connections"
+    query: >
+      network.destination_port == 3389 AND network.direction == "inbound"
+
+  - name: "Detect RDP Failed Logins"
+    query: >
+      event.id == 4625 AND event.data.LogonType == 10
+
+  - name: "Detect RDP Successful Logins"
+    query: >
+      event.id == 4624 AND event.data.LogonType == 10
+
+automation_hooks:
+  - "Alert on multiple failed RDP login attempts."
+  - "Block suspicious IP addresses targeting RDP."
+  - "Require multi-factor authentication for RDP."
+
+analyst_guidance:
+  - "Validate source and legitimacy of RDP sessions."
+  - "Investigate follow-up activities post-RDP access."
+  - "Recommend hardening RDP access and monitoring."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1021/001/"
+  - "https://docs.microsoft.com/en-us/windows/security/threat-protection/auditing/basic-audit-logon-events"
+
+review_cycle: "Monthly or after detection of suspicious RDP activity"

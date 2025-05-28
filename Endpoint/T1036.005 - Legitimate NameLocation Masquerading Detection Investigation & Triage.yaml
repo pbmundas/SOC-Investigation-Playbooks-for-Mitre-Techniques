@@ -1,0 +1,84 @@
+playbook_name: "T1036.005 - Legitimate Name/Location Masquerading Detection: Investigation & Triage"
+tactic: "Defense Evasion"
+technique_id: "T1036.005"
+technique_name: "Masquerading: Legitimate Name/Location"
+description: >
+  Detect adversaries using legitimate file names or placing malicious files in legitimate locations to evade detection.
+
+investigation_steps:
+  - step_number: 1
+    title: "Identify Files with Legitimate Names in Suspicious Locations"
+    description: >
+      Search for files with legitimate system or application names running or stored outside expected directories.
+    checklist:
+      - "Are files named after common system utilities located outside standard paths?"
+      - "Are files with legitimate names exhibiting unusual behavior?"
+    data_sources:
+      - "File system monitoring"
+      - "Process creation logs"
+
+  - step_number: 2
+    title: "Verify File Integrity and Digital Signatures"
+    description: >
+      Validate the authenticity of files by checking digital signatures and comparing hashes to known good baselines.
+    checklist:
+      - "Is the file unsigned or signed by an unknown publisher?"
+      - "Does the hash differ from the official binary?"
+    data_sources:
+      - "File hash databases"
+      - "Digital signature verification logs"
+
+  - step_number: 3
+    title: "Monitor Execution and Behavior of Masqueraded Files"
+    description: >
+      Observe if these files spawn suspicious child processes or perform unauthorized actions.
+    checklist:
+      - "Do masqueraded files initiate network connections?"
+      - "Are there attempts to escalate privileges?"
+    data_sources:
+      - "Endpoint detection and response (EDR)"
+      - "Network traffic logs"
+
+  - step_number: 4
+    title: "Respond and Mitigate"
+    description: >
+      Quarantine suspicious files and alert relevant teams for further analysis.
+    checklist:
+      - "Isolate or remove files that fail verification."
+      - "Implement monitoring rules to detect reoccurrence."
+    data_sources:
+      - "Endpoint management"
+      - "SIEM alerts"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Files located in unusual locations but verified safe."
+      - "Medium: Suspicious behavior without confirmed maliciousness."
+      - "High: Confirmed malicious masquerading."
+  - confidence_levels:
+      - "High: Verified threats."
+      - "Medium: Indicators present but incomplete."
+      - "Low: Likely false positives."
+
+ioc_types:
+  - "File names identical to legitimate system binaries"
+  - "Files located outside normal directories"
+  - "Unsigned or altered binaries"
+
+queries/examples:
+  - name: "Detect legitimate-named files in non-standard locations"
+    query: >
+      file.name:("svchost.exe" OR "explorer.exe") AND NOT file.path:"C:\\Windows\\System32"
+
+automation_hooks:
+  - "Alert on process executions from suspicious locations."
+  - "Trigger automated file integrity checks."
+
+analyst_guidance:
+  - "Validate if file location change was authorized."
+  - "Correlate with threat intelligence feeds."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1036/005/"
+
+review_cycle: "Quarterly or post-incident"

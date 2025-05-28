@@ -1,0 +1,84 @@
+playbook_name: "T1036.003 - File Extension Masquerading Detection: Investigation & Triage"
+tactic: "Defense Evasion"
+technique_id: "T1036.003"
+technique_name: "File Extension Masquerading"
+description: >
+  Detect adversaries using deceptive file extensions (e.g., 'file.txt.exe') to masquerade malicious files as benign.
+
+investigation_steps:
+  - step_number: 1
+    title: "Identify Suspicious File Extensions"
+    description: >
+      Search for files with double or misleading extensions.
+    checklist:
+      - "Are files using extensions to disguise executable content?"
+      - "Are suspicious files located in user directories or temp folders?"
+    data_sources:
+      - "File system scans"
+      - "Endpoint telemetry"
+
+  - step_number: 2
+    title: "Verify File Types and Signatures"
+    description: >
+      Check the actual file type and digital signatures, ignoring the displayed extension.
+    checklist:
+      - "Does the file content match the extension?"
+      - "Are digital signatures valid?"
+    data_sources:
+      - "File metadata"
+      - "Digital signature logs"
+
+  - step_number: 3
+    title: "Monitor Execution of Masqueraded Files"
+    description: >
+      Detect execution or loading of files masquerading via extensions.
+    checklist:
+      - "Is a file with a misleading extension executed?"
+      - "Does the process exhibit suspicious behavior?"
+    data_sources:
+      - "Process monitoring"
+      - "EDR telemetry"
+
+  - step_number: 4
+    title: "Respond and Mitigate"
+    description: >
+      Block or quarantine suspicious files and alert users.
+    checklist:
+      - "Remove masqueraded files."
+      - "Educate users on extension risks."
+    data_sources:
+      - "Endpoint protection"
+      - "User awareness systems"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Known safe files with unusual extensions."
+      - "Medium: Suspicious masquerading files."
+      - "High: Confirmed malicious masquerading."
+  - confidence_levels:
+      - "High: Verified malicious files."
+      - "Medium: Suspicious but unconfirmed."
+      - "Low: False positives."
+
+ioc_types:
+  - "Files with double extensions"
+  - "Mismatch between file extension and type"
+  - "Unsigned executable files"
+
+queries/examples:
+  - name: "Detect files with double extensions"
+    query: >
+      file.name:*.*.* AND file.extension.keyword != file.true_extension.keyword
+
+automation_hooks:
+  - "Block execution of files with suspicious extensions."
+  - "Trigger alerts on download or creation."
+
+analyst_guidance:
+  - "Review file content regardless of extension."
+  - "Confirm source and user action related to file."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1036/003/"
+
+review_cycle: "Quarterly or after incidents"

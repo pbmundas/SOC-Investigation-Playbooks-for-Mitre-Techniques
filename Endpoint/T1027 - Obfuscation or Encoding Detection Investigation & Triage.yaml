@@ -1,0 +1,85 @@
+playbook_name: "T1027 - Obfuscation or Encoding Detection: Investigation & Triage"
+tactic: "Defense Evasion"
+technique_id: "T1027"
+technique_name: "Obfuscation or Encoding"
+description: >
+  Detect adversaries using obfuscation or encoding to hide malicious payloads or evade detection.
+
+investigation_steps:
+  - step_number: 1
+    title: "Identify Obfuscated Scripts or Files"
+    description: >
+      Scan scripts, binaries, and network traffic for encoded or obfuscated content.
+    checklist:
+      - "Are there base64, hex, or custom-encoded strings?"
+      - "Is PowerShell or script content heavily obfuscated?"
+    data_sources:
+      - "File scans"
+      - "Network traffic inspection"
+      - "EDR script monitoring"
+
+  - step_number: 2
+    title: "Deobfuscate and Analyze Content"
+    description: >
+      Use decoding tools to reveal actual payload or commands.
+    checklist:
+      - "Can obfuscated content be decoded?"
+      - "Does decoded content contain malicious commands or code?"
+    data_sources:
+      - "Threat intelligence tools"
+      - "Decoding scripts"
+
+  - step_number: 3
+    title: "Monitor Execution of Obfuscated Code"
+    description: >
+      Detect runtime behavior indicative of obfuscation usage.
+    checklist:
+      - "Are scripts executed with unusual parameters?"
+      - "Do obfuscated scripts spawn suspicious processes?"
+    data_sources:
+      - "Process monitoring"
+      - "EDR telemetry"
+
+  - step_number: 4
+    title: "Respond and Mitigate"
+    description: >
+      Block or quarantine obfuscated files and monitor sources.
+    checklist:
+      - "Prevent execution of detected obfuscated scripts."
+      - "Alert on repeat occurrences from same origin."
+    data_sources:
+      - "Endpoint protection"
+      - "SIEM"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Obfuscation used in legitimate contexts."
+      - "Medium: Suspicious obfuscation without confirmed maliciousness."
+      - "High: Confirmed malicious obfuscation."
+  - confidence_levels:
+      - "High: Decoded malicious content."
+      - "Medium: Indicators present."
+      - "Low: False positives."
+
+ioc_types:
+  - "Encoded scripts or payloads"
+  - "Suspicious PowerShell commands"
+  - "Unusual network encoding"
+
+queries/examples:
+  - name: "Detect base64 encoded commands in PowerShell"
+    query: >
+      process.name:"powershell.exe" AND process.command_line:*base64*
+
+automation_hooks:
+  - "Alert on execution of encoded scripts."
+  - "Block execution of scripts from untrusted sources."
+
+analyst_guidance:
+  - "Analyze decoded content carefully."
+  - "Correlate with threat intel and other detections."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1027/"
+
+review_cycle: "Quarterly or after incidents"

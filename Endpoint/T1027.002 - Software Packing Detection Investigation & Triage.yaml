@@ -1,0 +1,78 @@
+playbook_name: "T1027.002 - Software Packing Detection: Investigation & Triage"
+tactic: "Defense Evasion"
+technique_id: "T1027.002"
+technique_name: "Software Packing"
+description: >
+  Detect use of packers or compression tools to obfuscate executable code.
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect Packed or Compressed Executables"
+    description: >
+      Identify executables with signatures or headers indicating packing.
+    checklist:
+      - "Is the binary packed with common packers (UPX, Themida, etc.)?"
+      - "Are executable sections unusually compressed or encrypted?"
+    data_sources:
+      - "Static file analysis"
+      - "File metadata and headers"
+
+  - step_number: 2
+    title: "Analyze Runtime Behavior of Packed Executables"
+    description: >
+      Monitor execution patterns typical for unpacking behavior.
+    checklist:
+      - "Does the binary unpack code into memory dynamically?"
+      - "Are API calls consistent with unpacking or decryption?"
+    data_sources:
+      - "Process monitoring"
+      - "API call logs"
+
+  - step_number: 3
+    title: "Correlate with Threat Intelligence"
+    description: >
+      Check if the packing method aligns with known malware families.
+    checklist:
+      - "Is the packer linked to known threats?"
+      - "Are network connections consistent with known malware?"
+    data_sources:
+      - "Threat intel feeds"
+      - "Network logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Legitimate software using packers."
+      - "Medium: Suspicious packed executables."
+      - "High: Packed executables linked to malware."
+  - confidence_levels:
+      - "High: Known malicious packer detected."
+      - "Medium: Unknown packer, suspicious context."
+      - "Low: Common legitimate packer usage."
+
+ioc_types:
+  - "Packed executable signatures"
+  - "Unusual executable header data"
+  - "API calls typical of unpacking"
+
+queries/examples:
+  - name: "Detect UPX Packed Executables"
+    query: >
+      file.content:"UPX!" AND file.extension:"exe"
+  - name: "Executables with Suspicious Packing"
+    query: >
+      file.metadata.packed:true
+
+automation_hooks:
+  - "Alert on execution of unknown packed binaries."
+  - "Trigger sandbox execution for behavior analysis."
+  - "Block binaries packed with known malicious packers."
+
+analyst_guidance:
+  - "Verify if packing is normal for the software."
+  - "Analyze unpacked behavior in sandbox or live environment."
+  - "Cross-check with threat intelligence on packers."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1027/002/"
+
+review_cycle: "Quarterly or after packed binary incidents"

@@ -1,0 +1,46 @@
+playbook_name: "Python Execution Detection"
+tactic: "Execution"
+technique_id: "T1059.006"
+technique_name: "Python"
+description: >
+  Detects execution of Python interpreters that may be abused to run malicious scripts or payloads in compromised systems.
+
+detection_sources:
+  - Sysmon (Event ID 1 on Windows)
+  - Linux Auditd or Sysmon for Linux
+  - EDR telemetry
+  - Command-line logs
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect Python Interpreter Usage"
+    checklist:
+      - "Look for python.exe, python3, or python2 process launches"
+      - "Check command-line arguments for encoded, obfuscated, or file-based script execution"
+      - "Check if Python was installed by default or dropped manually"
+
+  - step_number: 2
+    title: "Analyze Context"
+    checklist:
+      - "Was the script executed from temp/downloads directory?"
+      - "Review user privileges and process tree"
+      - "Extract script if possible and perform static analysis"
+
+  - step_number: 3
+    title: "Response Actions"
+    checklist:
+      - "Kill the Python process if suspicious"
+      - "Search for lateral movement or persistence setup"
+      - "Scan host and related IPs for artifacts"
+
+triage_labels:
+  - severity: High (if sourced externally or unknown scripts)
+  - confidence: High
+
+ioc_types:
+  - Process Path
+  - Command-line
+  - Script Hash
+
+references:
+  - https://attack.mitre.org/techniques/T1059/006/

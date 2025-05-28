@@ -1,0 +1,93 @@
+playbook_name: "T1055.003 - Thread Hijacking Detection: Investigation & Triage"
+tactic: "Defense Evasion"
+technique_id: "T1055.003"
+technique_name: "Thread Execution Hijacking"
+description: >
+  Detect thread hijacking where adversaries manipulate execution flow of legitimate threads for stealthy code execution.
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect Thread Context Manipulation"
+    description: >
+      Look for APIs like SetThreadContext, SuspendThread, and ResumeThread used in sequence.
+    checklist:
+      - "Are thread handles being accessed by unrelated processes?"
+      - "Are threads being suspended and modified?"
+    data_sources:
+      - "API monitoring"
+      - "Thread event telemetry"
+
+  - step_number: 2
+    title: "Identify Suspicious Thread Start Locations"
+    description: >
+      Monitor thread start addresses pointing to injected or non-module regions.
+    checklist:
+      - "Are new thread start addresses outside known image sections?"
+      - "Is there code execution from heap or stack?"
+    data_sources:
+      - "Memory monitoring"
+      - "EDR"
+
+  - step_number: 3
+    title: "Correlate with Process Behavior"
+    description: >
+      Analyze thread behavior for malicious intent.
+    checklist:
+      - "Is the thread performing lateral movement or persistence tasks?"
+      - "Does behavior align with malware patterns?"
+    data_sources:
+      - "Process telemetry"
+      - "SIEM alerts"
+
+  - step_number: 4
+    title: "Validate and Respond"
+    description: >
+      Confirm hijacking and begin containment.
+    checklist:
+      - "Is thread execution hijacking verified?"
+      - "Are system snapshots or memory dumps needed?"
+    data_sources:
+      - "Incident response tools"
+      - "Forensics"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Non-malicious context modifications."
+      - "Medium: Unusual thread control APIs."
+      - "High: Verified thread hijacking."
+  - confidence_levels:
+      - "High: Known thread hijacking patterns."
+      - "Medium: Partial sequence observed."
+      - "Low: Unconfirmed API use."
+
+ioc_types:
+  - "Thread start addresses"
+  - "API call sequences"
+  - "Injected memory pointers"
+  - "Behavioral thread anomalies"
+
+queries/examples:
+  - name: "Thread Context Modification API Calls"
+    query: >
+      api.call:(SetThreadContext OR SuspendThread OR ResumeThread)
+  - name: "Injected Thread Start Address"
+    query: >
+      thread.start_address:NOT_IN(known_module_ranges)
+  - name: "Hijacked Thread Execution"
+    query: >
+      behavior.thread.execution_path:heap OR stack
+
+automation_hooks:
+  - "Alert on hijacking API sequences."
+  - "Block or suspend hijacked threads."
+  - "Trigger forensic capture."
+
+analyst_guidance:
+  - "Use EDR or memory forensic tools to confirm."
+  - "Correlate with execution flow and binary analysis."
+  - "Initiate containment for confirmed hijacks."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1055/003/"
+
+review_cycle: "Quarterly or after related APT activity"

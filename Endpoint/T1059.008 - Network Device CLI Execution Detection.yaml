@@ -1,0 +1,45 @@
+playbook_name: "Network Device CLI Execution Detection"
+tactic: "Execution"
+technique_id: "T1059.008"
+technique_name: "Network Device CLI"
+description: >
+  Detects command-line interface execution on routers, switches, or other network appliances by unauthorized users.
+
+detection_sources:
+  - Network device logs (Syslog, SSH login, Command history)
+  - Configuration management systems (e.g., RANCID, Oxidized)
+  - AAA logs (TACACS+, RADIUS)
+
+investigation_steps:
+  - step_number: 1
+    title: "Identify CLI Access Events"
+    checklist:
+      - "Review syslog for 'exec' commands or login events"
+      - "Correlate with user identity (valid admin or rogue?)"
+      - "Check for out-of-hours logins"
+
+  - step_number: 2
+    title: "Analyze Command Behavior"
+    checklist:
+      - "Look for 'configure terminal', 'write memory', 'tftp', 'copy', or 'shell'"
+      - "Compare commands to baseline behavior or approved change tickets"
+      - "Determine if privilege escalation occurred"
+
+  - step_number: 3
+    title: "Remediation"
+    checklist:
+      - "Revoke compromised credentials"
+      - "Restore device config from backup if altered"
+      - "Search for lateral movement or device pivoting"
+
+triage_labels:
+  - severity: High
+  - confidence: High
+
+ioc_types:
+  - User Account
+  - IP Address
+  - CLI Command String
+
+references:
+  - https://attack.mitre.org/techniques/T1059/008/

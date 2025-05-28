@@ -1,0 +1,83 @@
+playbook_name: "T1048 - Exfiltration Over Alternative Protocol Detection"
+tactic: "Exfiltration"
+technique_id: "T1048"
+technique_name: "Exfiltration Over Alternative Protocol"
+description: >
+  Detect data exfiltration using non-standard or less common protocols (FTP, SSH, DNS, ICMP, etc.).
+
+investigation_steps:
+  - step_number: 1
+    title: "Identify Unusual Protocol Usage"
+    description: >
+      Monitor network traffic for use of alternative protocols commonly used for exfiltration.
+    checklist:
+      - "Are there spikes in FTP, SSH, DNS tunneling, or ICMP traffic?"
+      - "Is protocol use outside normal business hours or to unusual destinations?"
+    data_sources:
+      - "Network flow logs"
+      - "Firewall logs"
+      - "DNS logs"
+
+  - step_number: 2
+    title: "Analyze Payload and Session Characteristics"
+    description: >
+      Examine sessions for signs of data transfer such as large payloads, encoding, or tunneling.
+    checklist:
+      - "Are payload sizes larger than expected?"
+      - "Is there evidence of DNS tunneling or covert channels?"
+    data_sources:
+      - "Packet captures"
+      - "Network anomaly detection tools"
+
+  - step_number: 3
+    title: "Correlate with Endpoint and Process Activity"
+    description: >
+      Investigate processes involved in alternative protocol communications.
+    checklist:
+      - "Are there processes that initiated connections using alternative protocols?"
+      - "Are file access or staging activities correlated?"
+    data_sources:
+      - "EDR logs"
+      - "Process monitoring"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Expected use of alternative protocols."
+      - "Medium: Suspicious or anomalous activity."
+      - "High: Confirmed data exfiltration."
+  - confidence_levels:
+      - "High: Confirmed exfiltration."
+      - "Medium: Behavioral anomalies."
+      - "Low: Possible false positives."
+
+ioc_types:
+  - "Unusual protocol connections"
+  - "Encoded or tunneled data"
+  - "Suspicious endpoint process activity"
+
+queries/examples:
+  - name: "Detect DNS Tunneling"
+    query: >
+      dns.query_length > threshold AND
+      dns.query_name REGEX '[a-z0-9]{20,}'
+
+  - name: "Detect Large FTP Uploads"
+    query: >
+      network.protocol = "FTP" AND
+      network.upload_bytes > threshold
+
+automation_hooks:
+  - "Alert on anomalous alternative protocol use."
+  - "Isolate endpoints showing suspicious activity."
+  - "Trigger forensic investigation."
+
+analyst_guidance:
+  - "Validate protocol use and destinations."
+  - "Identify files or data transferred."
+  - "Coordinate with network and IR teams."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1048/"
+  - "https://www.sans.org/white-papers/detecting-covert-protocols/"
+
+review_cycle: "Quarterly or post-incident"

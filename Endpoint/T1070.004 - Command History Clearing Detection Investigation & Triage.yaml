@@ -1,0 +1,88 @@
+playbook_name: "T1070.004 - Command History Clearing Detection: Investigation & Triage"
+tactic: "Defense Evasion"
+technique_id: "T1070.004"
+technique_name: "Command History Clearing"
+description: >
+  Detect clearing or deletion of shell or command history to cover attacker tracks.
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect Clearing of Shell History Files"
+    description: >
+      Monitor deletion or truncation of history files like ~/.bash_history, ~/.zsh_history, or Windows PowerShell history.
+    checklist:
+      - "Are shell history files deleted or truncated?"
+      - "Are suspicious commands executed before history clearing?"
+    data_sources:
+      - "Filesystem monitoring"
+      - "Auditd or endpoint telemetry"
+      - "PowerShell event logs"
+
+  - step_number: 2
+    title: "Detect Use of Commands to Clear History"
+    description: >
+      Identify commands such as 'history -c', 'rm ~/.bash_history', 'Clear-History' (PowerShell), or environment modifications disabling history.
+    checklist:
+      - "Are history clearing commands executed by unusual users/processes?"
+      - "Are environment variables set to disable command logging?"
+    data_sources:
+      - "Process command line logs"
+      - "Shell session monitoring"
+      - "PowerShell logs"
+
+  - step_number: 3
+    title: "Correlate with Suspicious Activities"
+    description: >
+      Check if history clearing coincides with privilege escalation, malware execution, or lateral movement.
+    checklist:
+      - "Are history clearing events clustered with suspicious activity?"
+      - "Are unusual user accounts involved?"
+    data_sources:
+      - "SIEM correlation"
+      - "Endpoint detection"
+
+  - step_number: 4
+    title: "Response and Recovery"
+    description: >
+      Investigate the scope, recover command logs if possible, and harden systems against future clearing.
+    checklist:
+      - "Restore history files from backups or monitoring logs."
+      - "Implement shell logging enhancements."
+    data_sources:
+      - "Backup and monitoring tools"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Authorized clearing or maintenance."
+      - "Medium: Unexplained clearing requiring investigation."
+      - "High: Unauthorized or malicious history clearing."
+  - confidence_levels:
+      - "High: Confirmed history clearing by unauthorized user."
+      - "Medium: Suspicious but incomplete evidence."
+      - "Low: Benign clearing or user action."
+
+ioc_types:
+  - "Deletion/truncation of shell history files"
+  - "History clearing commands (e.g. history -c, Clear-History)"
+
+queries/examples:
+  - name: "Detect bash history file deletion"
+    query: >
+      file.name:.bash_history AND event.action:deleted
+  - name: "PowerShell Clear-History usage"
+    query: >
+      process.command_line:*Clear-History*
+
+automation_hooks:
+  - "Alert on deletion/truncation of history files."
+  - "Trigger investigation workflow on Clear-History commands."
+
+analyst_guidance:
+  - "Confirm if history clearing was scheduled or authorized."
+  - "Look for related malicious activity."
+  - "Engage incident response if unauthorized."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1070/004/"
+
+review_cycle: "Quarterly or post-incident"

@@ -1,0 +1,83 @@
+playbook_name: "T1043 - Standard Protocol Usage Detection"
+tactic: "Command and Control"
+technique_id: "T1043"
+technique_name: "Standard Application Layer Protocol"
+description: >
+  Detect adversaries using common application layer protocols (HTTP, HTTPS, DNS, etc.) for command and control to blend with normal traffic.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Network Traffic on Standard Protocols"
+    description: >
+      Analyze network traffic for unusual patterns or volumes on common protocols like HTTP, HTTPS, DNS.
+    checklist:
+      - "Are there anomalies in request frequency, size, or timing?"
+      - "Is communication occurring to unusual or suspicious domains?"
+      - "Are there uncommon user-agent strings or headers in HTTP traffic?"
+    data_sources:
+      - "Network traffic logs"
+      - "Proxy and firewall logs"
+      - "DNS query logs"
+
+  - step_number: 2
+    title: "Inspect Encrypted Traffic for Anomalies"
+    description: >
+      Since HTTPS is encrypted, look for metadata anomalies such as unusual certificates or TLS versions.
+    checklist:
+      - "Are there self-signed or unusual certificates?"
+      - "Is there traffic to suspicious IP addresses or domains with valid certs?"
+    data_sources:
+      - "TLS/SSL inspection logs"
+      - "Network metadata"
+
+  - step_number: 3
+    title: "Correlate with Endpoint and Process Activity"
+    description: >
+      Identify which processes or users are generating the network traffic.
+    checklist:
+      - "Are legitimate processes responsible or suspicious executables?"
+      - "Are there process command line anomalies?"
+    data_sources:
+      - "Endpoint process logs"
+      - "EDR telemetry"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Expected protocol usage."
+      - "Medium: Suspicious patterns."
+      - "High: Confirmed malicious C2 over standard protocols."
+  - confidence_levels:
+      - "High: IOC or signature match."
+      - "Medium: Behavioral anomalies."
+      - "Low: Potential false positives."
+
+ioc_types:
+  - "Suspicious domains or IPs"
+  - "Anomalous HTTP headers or user agents"
+  - "Unusual TLS certificates"
+
+queries/examples:
+  - name: "Detect Unusual HTTP User Agents"
+    query: >
+      http.user_agent NOT IN (known_good_agents)
+
+  - name: "Detect DNS Requests to Rare Domains"
+    query: >
+      dns.query_name NOT IN known_good_domains AND
+      dns.query_count > threshold
+
+automation_hooks:
+  - "Alert on suspicious standard protocol use."
+  - "Initiate threat hunting on endpoints involved."
+  - "Block or monitor suspicious domains."
+
+analyst_guidance:
+  - "Investigate context of standard protocol use."
+  - "Confirm whether traffic is benign or malicious."
+  - "Update allow/block lists accordingly."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1043/"
+  - "https://www.sans.org/white-papers/command-and-control/"
+
+review_cycle: "Biannual or post-incident"

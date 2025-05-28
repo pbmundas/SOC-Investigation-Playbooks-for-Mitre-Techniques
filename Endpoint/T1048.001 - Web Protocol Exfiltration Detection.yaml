@@ -1,0 +1,85 @@
+playbook_name: "T1048.001 - Web Protocol Exfiltration Detection"
+tactic: "Exfiltration"
+technique_id: "T1048.001"
+technique_name: "Exfiltration Over Web Protocols"
+description: >
+  Detect exfiltration of data using common web protocols such as HTTP or HTTPS.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Outbound Web Traffic"
+    description: >
+      Identify large or anomalous data uploads over HTTP/HTTPS to external domains.
+    checklist:
+      - "Are there unusual volumes or frequencies of outbound HTTP/HTTPS traffic?"
+      - "Is data sent to suspicious or rare domains?"
+      - "Is there evidence of encoding, encryption, or obfuscation in the traffic?"
+    data_sources:
+      - "Network traffic logs"
+      - "Proxy logs"
+      - "Web gateway logs"
+
+  - step_number: 2
+    title: "Correlate with Endpoint Activity"
+    description: >
+      Check for processes involved in data staging or network communication over web protocols.
+    checklist:
+      - "Are there file compression or encryption operations prior to exfiltration?"
+      - "Are unusual or unauthorized applications generating web traffic?"
+    data_sources:
+      - "Endpoint detection and response (EDR) logs"
+      - "Process monitoring"
+
+  - step_number: 3
+    title: "Analyze Domain and Certificate Reputation"
+    description: >
+      Validate destination domains and SSL/TLS certificates for legitimacy.
+    checklist:
+      - "Is the domain newly registered or uncommon?"
+      - "Are certificates self-signed or from suspicious authorities?"
+    data_sources:
+      - "DNS logs"
+      - "SSL/TLS inspection logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Normal business web traffic."
+      - "Medium: Suspicious or anomalous traffic."
+      - "High: Confirmed data exfiltration."
+  - confidence_levels:
+      - "High: Verified exfiltration events."
+      - "Medium: Behavioral anomalies."
+      - "Low: Possible false positives."
+
+ioc_types:
+  - "Suspicious external domains"
+  - "Unusual SSL/TLS certificates"
+  - "High-volume HTTP/HTTPS uploads"
+
+queries/examples:
+  - name: "Detect Large HTTP POST Requests"
+    query: >
+      network.protocol = "HTTP" AND
+      http.request_method = "POST" AND
+      network.upload_bytes > threshold
+
+  - name: "Identify Connections to New or Rare Domains"
+    query: >
+      dns.query_name NOT IN (known_good_domains) AND
+      network.protocol IN ("HTTP", "HTTPS")
+
+automation_hooks:
+  - "Alert on high-volume HTTP POSTs to uncommon domains."
+  - "Isolate endpoints with suspicious web traffic."
+  - "Trigger forensic analysis."
+
+analyst_guidance:
+  - "Verify if web protocol use is authorized."
+  - "Investigate files or data involved."
+  - "Engage incident response if confirmed."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1048/001/"
+  - "https://www.sans.org/white-papers/exfiltration-detection/"
+
+review_cycle: "Quarterly or post-incident"

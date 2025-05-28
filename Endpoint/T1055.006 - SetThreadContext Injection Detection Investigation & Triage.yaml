@@ -1,0 +1,89 @@
+playbook_name: "T1055.006 - SetThreadContext Injection Detection: Investigation & Triage"
+tactic: "Defense Evasion"
+technique_id: "T1055.006"
+technique_name: "SetThreadContext Injection"
+description: >
+  Detect SetThreadContext-based code injection where adversaries control execution flow by modifying thread context in a remote process.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Use of SetThreadContext"
+    description: >
+      Identify sequences involving SuspendThread, VirtualAllocEx, WriteProcessMemory, and SetThreadContext.
+    checklist:
+      - "Are remote threads being suspended and context modified?"
+      - "Are executable memory regions created just before this?"
+    data_sources:
+      - "API telemetry"
+      - "Thread context logs"
+
+  - step_number: 2
+    title: "Correlate with Remote Memory Allocation"
+    description: >
+      Validate that written memory regions are executable and used by SetThreadContext.
+    checklist:
+      - "Is memory marked PAGE_EXECUTE_READWRITE?"
+      - "Is context set to point to written region?"
+    data_sources:
+      - "Memory mapping logs"
+      - "EDR behavior traces"
+
+  - step_number: 3
+    title: "Track Post-Injection Execution Behavior"
+    description: >
+      Follow execution from set context region and detect malicious behavior.
+    checklist:
+      - "Does the thread execute shellcode or malware payloads?"
+      - "Are post-injection behaviors consistent with known malware?"
+    data_sources:
+      - "Process execution logs"
+      - "SIEM alerts"
+
+  - step_number: 4
+    title: "Validate and Respond"
+    description: >
+      Confirm malicious SetThreadContext injection and take action.
+    checklist:
+      - "Is endpoint at risk or in active compromise?"
+      - "Is isolation or image capture required?"
+    data_sources:
+      - "Incident response actions"
+      - "Threat intelligence context"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Rare legit debugging behavior."
+      - "Medium: Unusual memory context setting."
+      - "High: Confirmed injection via SetThreadContext."
+  - confidence_levels:
+      - "High: Known toolchains using this method."
+      - "Medium: Suspicious API usage in sequence."
+      - "Low: Unverified or incomplete sequences."
+
+ioc_types:
+  - "Suspended thread IDs"
+  - "Injected memory regions"
+  - "SetThreadContext API calls"
+
+queries/examples:
+  - name: "SetThreadContext Injection Pattern"
+    query: >
+      api.call:(SuspendThread AND VirtualAllocEx AND WriteProcessMemory AND SetThreadContext)
+  - name: "Thread Context Points to Executable Heap"
+    query: >
+      thread.context.instruction_pointer:heap_memory_region
+
+automation_hooks:
+  - "Trigger alert on suspicious SetThreadContext sequence."
+  - "Block or suspend affected threads."
+  - "Capture forensic snapshot."
+
+analyst_guidance:
+  - "Correlate context changes with memory regions."
+  - "Use EDR/memory tools to investigate deeply."
+  - "Engage IR team upon confirmation."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1055/006/"
+
+review_cycle: "Quarterly or post APT detection"

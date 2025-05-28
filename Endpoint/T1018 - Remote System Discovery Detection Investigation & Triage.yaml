@@ -1,0 +1,82 @@
+playbook_name: "T1018 - Remote System Discovery Detection: Investigation & Triage"
+tactic: "Discovery"
+technique_id: "T1018"
+technique_name: "Remote System Discovery"
+description: >
+  Detects adversaries scanning or querying remote systems on a network to identify potential targets for lateral movement or exploitation.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Network Scanning and Remote Discovery Tools"
+    description: >
+      Identify use of tools or commands such as `ping`, `nbtstat`, `net view`, `arp`, Nmap, or PowerShell cmdlets scanning or enumerating remote systems.
+    checklist:
+      - "Are network discovery or scanning commands detected?"
+      - "Are scans conducted by unauthorized or unusual accounts?"
+    data_sources:
+      - "Network logs"
+      - "Process creation logs"
+      - "Command-line auditing"
+
+  - step_number: 2
+    title: "Detect Anomalous Remote System Enumeration Activity"
+    description: >
+      Look for scanning of multiple hosts or IP ranges within a short time frame.
+    checklist:
+      - "Is scanning targeting critical or sensitive network segments?"
+      - "Are scans performed outside normal operational hours?"
+    data_sources:
+      - "Network flow logs"
+      - "User activity monitoring"
+
+  - step_number: 3
+    title: "Correlate Remote System Discovery with Follow-up Activities"
+    description: >
+      Assess if remote system discovery is followed by lateral movement, exploitation, or data exfiltration.
+    checklist:
+      - "Is there evidence of credential use or connection attempts to discovered hosts?"
+      - "Are there related alerts for privilege escalation or malware?"
+    data_sources:
+      - "Endpoint detection logs"
+      - "Authentication and access logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Network scans by authorized personnel."
+      - "Medium: Unusual scanning by standard users."
+      - "High: Scanning linked to active intrusion or compromise."
+  - confidence_levels:
+      - "High: Confirmed unauthorized remote system scanning."
+      - "Medium: Suspicious scanning activity."
+      - "Low: Routine network administration."
+
+ioc_types:
+  - "Use of `ping`, `nbtstat`, `net view`, `arp`, or Nmap"
+  - "PowerShell remote discovery cmdlets"
+  - "Scanning from suspicious accounts or hosts"
+
+queries/examples:
+  - name: "Detect nbtstat Command"
+    query: >
+      process.name == "nbtstat.exe"
+
+  - name: "Detect PowerShell Network Scanning"
+    query: >
+      process.name == "powershell.exe" AND
+      process.command_line MATCHES "(?i)Test-Connection|Invoke-Command|Get-NetNeighbor"
+
+automation_hooks:
+  - "Alert on unauthorized network scanning or enumeration."
+  - "Limit scanning tools access to authorized users."
+  - "Investigate scanning origin and user context."
+
+analyst_guidance:
+  - "Validate if remote system discovery is authorized."
+  - "Correlate with lateral movement or exploitation attempts."
+  - "Recommend monitoring and restricting scanning tools."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1018/"
+  - "https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.management/test-connection"
+
+review_cycle: "Quarterly or after detection of suspicious remote system discovery"

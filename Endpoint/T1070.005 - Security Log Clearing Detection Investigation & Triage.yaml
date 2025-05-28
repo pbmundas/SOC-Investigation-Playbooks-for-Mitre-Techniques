@@ -1,0 +1,87 @@
+playbook_name: "T1070.005 - Security Log Clearing Detection: Investigation & Triage"
+tactic: "Defense Evasion"
+technique_id: "T1070.005"
+technique_name: "Security Log Clearing"
+description: >
+  Detect attempts to clear security event logs specifically to remove evidence of attacker activities.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Security Log Clearance Events"
+    description: >
+      Detect event log clearance focusing on security logs (Windows Security Event Log or equivalent).
+    checklist:
+      - "Are security logs cleared or truncated?"
+      - "Are there events indicating log clearing like Event ID 1102?"
+    data_sources:
+      - "Windows Security Event Logs"
+      - "Sysmon or endpoint monitoring"
+
+  - step_number: 2
+    title: "Detect Commands or API Usage"
+    description: >
+      Identify usage of tools or commands clearing security logs.
+    checklist:
+      - "Are commands like 'wevtutil' used to clear security logs?"
+      - "Are API calls related to event log clearance detected?"
+    data_sources:
+      - "Process command line logs"
+      - "API monitoring"
+
+  - step_number: 3
+    title: "Correlate with Other Malicious Events"
+    description: >
+      Investigate if clearing aligns with privilege escalation, malware execution, or lateral movement.
+    checklist:
+      - "Is clearing closely timed with suspicious activities?"
+      - "Are user accounts involved suspicious?"
+    data_sources:
+      - "SIEM logs"
+      - "Endpoint telemetry"
+
+  - step_number: 4
+    title: "Response Actions"
+    description: >
+      Isolate affected systems, restore logs if possible, and harden logging.
+    checklist:
+      - "Restore logs from backups."
+      - "Review user privileges and access."
+    data_sources:
+      - "Backup tools"
+      - "Incident response tools"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Authorized security log clearing."
+      - "Medium: Unexpected clearing requiring review."
+      - "High: Malicious or unauthorized security log clearing."
+  - confidence_levels:
+      - "High: Confirmed clearance of security logs."
+      - "Medium: Suspicious activity detected."
+      - "Low: Benign or scheduled maintenance."
+
+ioc_types:
+  - "Event ID 1102"
+  - "wevtutil clear commands targeting security logs"
+
+queries/examples:
+  - name: "Security log cleared events"
+    query: >
+      EventID:1102 AND LogName:Security
+  - name: "Clear security logs command line"
+    query: >
+      process.command_line:*wevtutil clear-log Security*
+
+automation_hooks:
+  - "Alert on security log clearance events."
+  - "Trigger immediate investigation workflow."
+
+analyst_guidance:
+  - "Validate authorization for security log clearing."
+  - "Check for concurrent suspicious behavior."
+  - "Coordinate with IR team."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1070/005/"
+
+review_cycle: "Quarterly or post-incident"

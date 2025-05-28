@@ -1,0 +1,78 @@
+playbook_name: "T1056.003 - Web Input Capture Detection: Investigation & Triage"
+tactic: "Collection"
+technique_id: "T1056.003"
+technique_name: "Web Input Capture"
+description: >
+  Detects adversaries capturing input data via web forms or browsers by using malicious scripts or browser extensions.
+
+investigation_steps:
+  - step_number: 1
+    title: "Identify Malicious Browser Extensions or Scripts"
+    description: >
+      Detect installation or execution of suspicious browser extensions or injected scripts that capture web input.
+    checklist:
+      - "Are there unknown or unsigned browser extensions installed?"
+      - "Is there evidence of script injection in web pages?"
+    data_sources:
+      - "Browser logs"
+      - "Web proxy logs"
+      - "Endpoint monitoring"
+
+  - step_number: 2
+    title: "Monitor Network Traffic for Captured Input Data"
+    description: >
+      Detect outbound transmission of captured input data such as form entries or credentials.
+    checklist:
+      - "Is input data sent to suspicious or unknown endpoints?"
+      - "Are there anomalous POST requests or webhooks?"
+    data_sources:
+      - "Network traffic logs"
+      - "Proxy logs"
+
+  - step_number: 3
+    title: "Correlate Web Input Capture with Credential Access or Exfiltration"
+    description: >
+      Investigate if captured input data is used for unauthorized access or exfiltration.
+    checklist:
+      - "Is there login activity using captured credentials?"
+      - "Are there data exfiltration events following web input capture?"
+    data_sources:
+      - "Authentication logs"
+      - "Network logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Authorized browser extensions or scripts."
+      - "Medium: Suspicious web input capture activity."
+      - "High: Malicious web input capture linked to credential theft or espionage."
+  - confidence_levels:
+      - "High: Verified malicious web input capture and credential use."
+      - "Medium: Detection of suspicious browser activity."
+      - "Low: Legitimate browser extension use."
+
+ioc_types:
+  - "Installation of suspicious browser extensions"
+  - "Injected scripts capturing web form data"
+  - "Outbound network traffic with captured inputs"
+
+queries/examples:
+  - name: "Detect Suspicious Browser Extension Installation"
+    query: >
+      browser.extension.name IN ("UnknownExtension", "MaliciousInputCapture")
+
+  - name: "Detect Script Injection in Web Traffic"
+    query: >
+      web.session.response_body MATCHES ("<script.*inputCapture.*>")
+
+automation_hooks:
+  - "Alert on suspicious browser extension installs."
+  - "Block or quarantine network traffic with captured input."
+  - "Notify SOC team for urgent investigation."
+
+analyst_guidance:
+  - "Confirm if browser extensions/scripts are authorized."
+  - "Analyze the scope and timing of input capture."
+  - "Investigate credential use and exfiltration."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1056/

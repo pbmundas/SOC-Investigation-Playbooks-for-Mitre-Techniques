@@ -1,0 +1,81 @@
+playbook_name: "T1056.001 - Keylogging Detection: Investigation & Triage"
+tactic: "Collection"
+technique_id: "T1056.001"
+technique_name: "Keylogging"
+description: >
+  Detects adversaries capturing keystrokes by monitoring for keylogger malware or suspicious hooks into input devices.
+
+investigation_steps:
+  - step_number: 1
+    title: "Identify Keylogger Process Execution"
+    description: >
+      Detect execution of known or suspicious keylogger binaries or scripts.
+    checklist:
+      - "Are there unknown or unsigned processes hooking keyboard inputs?"
+      - "Is there evidence of process injection or hooking APIs related to input?"
+    data_sources:
+      - "Process creation logs"
+      - "API monitoring (hooking detection)"
+      - "Endpoint Detection & Response (EDR) telemetry"
+
+  - step_number: 2
+    title: "Monitor Keylogger Log Files or Artifacts"
+    description: >
+      Detect creation or access to files commonly used by keyloggers to store captured keystrokes.
+    checklist:
+      - "Are log files with keystroke patterns created or modified?"
+      - "Are these files accessed or transmitted externally?"
+    data_sources:
+      - "File system monitoring"
+      - "Network logs"
+
+  - step_number: 3
+    title: "Correlate Keylogging with Sensitive Data Access or Exfiltration"
+    description: >
+      Investigate whether keylogging activity is followed by credential use or data exfiltration.
+    checklist:
+      - "Is there network communication shortly after keystroke capture?"
+      - "Are compromised credentials detected following keylogging?"
+    data_sources:
+      - "Network monitoring"
+      - "Authentication logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Authorized or benign keylogger usage."
+      - "Medium: Suspicious keylogging without confirmed malicious activity."
+      - "High: Malicious keylogging linked to credential theft or espionage."
+  - confidence_levels:
+      - "High: Confirmed keylogger execution and data exfiltration."
+      - "Medium: Detection of input hooks or keylogger processes."
+      - "Low: Legitimate monitoring tools."
+
+ioc_types:
+  - "Keylogger process execution"
+  - "Creation or access of keystroke log files"
+  - "Outbound network traffic containing captured keystrokes"
+
+queries/examples:
+  - name: "Detect Known Keylogger Executables"
+    query: >
+      process.name IN ("keylogger.exe", "kl.exe", "hooklogger.exe")
+
+  - name: "Detect Input API Hooking"
+    query: >
+      process.api_calls CONTAINS ("SetWindowsHookEx", "GetAsyncKeyState")
+
+automation_hooks:
+  - "Alert on keylogger execution and input hooking."
+  - "Block suspicious keystroke log file transmissions."
+  - "Notify SOC team for immediate investigation."
+
+analyst_guidance:
+  - "Validate if keylogging is authorized (e.g., corporate monitoring)."
+  - "Trace process lineage and user context."
+  - "Search for related credential theft or lateral movement."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1056/001/"
+  - "https://www.sans.org/white-papers/398/"
+
+review_cycle: "Monthly or upon detection of keylogger activity"

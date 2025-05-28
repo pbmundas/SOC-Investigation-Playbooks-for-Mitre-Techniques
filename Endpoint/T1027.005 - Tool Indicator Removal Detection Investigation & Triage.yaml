@@ -1,0 +1,78 @@
+playbook_name: "T1027.005 - Tool Indicator Removal Detection: Investigation & Triage"
+tactic: "Defense Evasion"
+technique_id: "T1027.005"
+technique_name: "Indicator Removal on Tools"
+description: >
+  Detect adversaries removing or tampering with indicators on their tools to evade detection.
+
+investigation_steps:
+  - step_number: 1
+    title: "Identify Altered or Tampered Tools"
+    description: >
+      Detect changes to tool binaries or removal of identifying metadata.
+    checklist:
+      - "Are tool file hashes differing from known baseline?"
+      - "Are digital signatures missing or invalid?"
+    data_sources:
+      - "File integrity monitoring"
+      - "Code signing logs"
+
+  - step_number: 2
+    title: "Monitor Tool Behavior for Evasion"
+    description: >
+      Detect suspicious tool behavior inconsistent with original versions.
+    checklist:
+      - "Are tools modifying logs, artifacts, or security products?"
+      - "Is there evidence of tool self-modification?"
+    data_sources:
+      - "Process behavior logs"
+      - "Security monitoring logs"
+
+  - step_number: 3
+    title: "Correlate with Other Evasion Techniques"
+    description: >
+      Investigate if indicator removal is part of broader defense evasion.
+    checklist:
+      - "Are indicators removed in conjunction with log clearing or artifact removal?"
+      - "Is the tool execution linked with other suspicious activity?"
+    data_sources:
+      - "Endpoint logs"
+      - "SIEM correlations"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Tools updated or patched legitimately."
+      - "Medium: Tools with altered metadata but no malicious activity."
+      - "High: Tools tampered for malicious evasion."
+  - confidence_levels:
+      - "High: Hash mismatches and suspicious behavior."
+      - "Medium: Metadata changes only."
+      - "Low: False positives from legitimate updates."
+
+ioc_types:
+  - "Altered tool hashes"
+  - "Missing or invalid signatures"
+  - "Unusual tool behavior or modifications"
+
+queries/examples:
+  - name: "Detect Tool Hash Mismatches"
+    query: >
+      file.name:("tool.exe" OR "sysmon.exe") AND NOT file.hash:known_hashes
+  - name: "Detect Missing Signatures"
+    query: >
+      file.signature:missing AND file.name:("tool.exe")
+
+automation_hooks:
+  - "Alert on hash mismatches for critical tools."
+  - "Block execution of tampered tools if possible."
+  - "Trigger forensic analysis on altered tools."
+
+analyst_guidance:
+  - "Confirm if tool updates are authorized."
+  - "Analyze behavioral differences from original tools."
+  - "Investigate linked events for malicious activity."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1027/005/"
+
+review_cycle: "Quarterly or after tool tampering incidents"

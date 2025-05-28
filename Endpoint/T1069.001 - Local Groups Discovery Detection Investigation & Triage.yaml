@@ -1,0 +1,83 @@
+playbook_name: "T1069.001 - Local Groups Discovery Detection: Investigation & Triage"
+tactic: "Discovery"
+technique_id: "T1069.001"
+technique_name: "Local Groups Discovery"
+description: >
+  Detects adversaries enumerating local groups on a system to identify user privileges and potential targets for lateral movement or privilege escalation.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Local Group Enumeration Commands"
+    description: >
+      Identify use of commands such as `net localgroup`, `Get-LocalGroup`, or PowerShell scripts enumerating local group memberships.
+    checklist:
+      - "Are local group enumeration commands executed?"
+      - "Are these actions performed by unauthorized or unusual accounts?"
+    data_sources:
+      - "Process creation logs"
+      - "Command-line auditing"
+      - "Endpoint logs"
+
+  - step_number: 2
+    title: "Detect Unusual Local Group Enumeration Patterns"
+    description: >
+      Look for frequent or broad local group enumeration activity, especially by non-admin users.
+    checklist:
+      - "Is local group enumeration performed outside normal hours?"
+      - "Is there enumeration of multiple local groups in a short time frame?"
+    data_sources:
+      - "User activity logs"
+      - "Endpoint monitoring"
+
+  - step_number: 3
+    title: "Correlate Local Group Discovery with Malicious Activity"
+    description: >
+      Determine if local group discovery is followed by privilege escalation or lateral movement attempts.
+    checklist:
+      - "Are there subsequent privilege escalation or suspicious logins?"
+      - "Is local admin group membership targeted?"
+    data_sources:
+      - "Authentication logs"
+      - "Endpoint detection system logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Local group enumeration by authorized personnel."
+      - "Medium: Enumeration by non-admin or suspicious accounts."
+      - "High: Discovery linked to privilege abuse or lateral movement."
+  - confidence_levels:
+      - "High: Confirmed unauthorized local group enumeration."
+      - "Medium: Suspicious enumeration activity."
+      - "Low: Routine system audits."
+
+ioc_types:
+  - "Execution of `net localgroup` command"
+  - "PowerShell cmdlets like `Get-LocalGroup`"
+  - "Enumeration from suspicious users or processes"
+
+queries/examples:
+  - name: "Detect net localgroup Command"
+    query: >
+      process.name == "net.exe" AND
+      process.command_line CONTAINS "localgroup"
+
+  - name: "Detect PowerShell Get-LocalGroup Usage"
+    query: >
+      process.name == "powershell.exe" AND
+      process.command_line MATCHES "(?i)Get-LocalGroup"
+
+automation_hooks:
+  - "Alert on unauthorized local group enumeration."
+  - "Restrict access to local group enumeration commands."
+  - "Investigate subsequent suspicious activity."
+
+analyst_guidance:
+  - "Validate intent and legitimacy of local group queries."
+  - "Correlate with privilege escalation or lateral movement attempts."
+  - "Recommend restricting local group enumeration to admins."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1069/001/"
+  - "https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.localaccounts/get-localgroup"
+
+review_cycle: "Quarterly or after detection of local group enumeration"

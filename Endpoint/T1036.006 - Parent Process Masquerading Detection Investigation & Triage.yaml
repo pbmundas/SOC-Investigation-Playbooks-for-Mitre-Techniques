@@ -1,0 +1,85 @@
+playbook_name: "T1036.006 - Parent Process Masquerading Detection: Investigation & Triage"
+tactic: "Defense Evasion"
+technique_id: "T1036.006"
+technique_name: "Masquerading: Parent Process"
+description: >
+  Detect adversaries manipulating parent process information to hide malicious activity.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Parent-Child Process Relationships"
+    description: >
+      Identify anomalies in parent process IDs or unusual parent-child process combinations.
+    checklist:
+      - "Are critical system processes spawned by unexpected parents?"
+      - "Is the parent process ID spoofed or inconsistent?"
+    data_sources:
+      - "Process monitoring logs"
+      - "Endpoint detection and response (EDR)"
+
+  - step_number: 2
+    title: "Verify Legitimate Parent Process"
+    description: >
+      Confirm that parent processes are legitimate and not masqueraded.
+    checklist:
+      - "Is the parent process a signed system binary?"
+      - "Does the parent process execution context align with expected behavior?"
+    data_sources:
+      - "File integrity and signature logs"
+      - "Threat intelligence feeds"
+
+  - step_number: 3
+    title: "Investigate Suspicious Parent-Child Process Chains"
+    description: >
+      Analyze process chains for signs of masquerading or process hollowing.
+    checklist:
+      - "Are there processes hiding under legitimate parents?"
+      - "Are child processes performing suspicious activities?"
+    data_sources:
+      - "EDR telemetry"
+      - "Process lineage analysis"
+
+  - step_number: 4
+    title: "Respond and Mitigate"
+    description: >
+      Terminate malicious processes and block parent process manipulation.
+    checklist:
+      - "Kill malicious child processes."
+      - "Deploy detection rules for parent process anomalies."
+    data_sources:
+      - "Endpoint protection"
+      - "SIEM"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Unusual but explainable parent-child relations."
+      - "Medium: Suspicious process parent manipulation."
+      - "High: Confirmed parent process masquerading."
+  - confidence_levels:
+      - "High: Confirmed spoofing."
+      - "Medium: Indicators present."
+      - "Low: False positives."
+
+ioc_types:
+  - "Inconsistent parent process IDs"
+  - "Unsigned or suspicious parent processes"
+  - "Unexpected process chains"
+
+queries/examples:
+  - name: "Detect suspicious parent-child process relationships"
+    query: >
+      process.parent_name NOT IN ["explorer.exe", "services.exe", "svchost.exe"] AND
+      process.name IN ["cmd.exe", "powershell.exe"]
+
+automation_hooks:
+  - "Alert on process parent-child anomalies."
+  - "Trigger behavioral analysis on flagged processes."
+
+analyst_guidance:
+  - "Verify process ancestry using endpoint telemetry."
+  - "Cross-check with known benign parent-child pairs."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1036/006/"
+
+review_cycle: "Quarterly or after incidents"

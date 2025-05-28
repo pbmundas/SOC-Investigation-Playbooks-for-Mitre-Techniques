@@ -1,0 +1,89 @@
+playbook_name: "T1070 - Host Artifact Removal Detection: Investigation & Triage"
+tactic: "Defense Evasion"
+technique_id: "T1070"
+technique_name: "Indicator Removal on Host"
+description: >
+  Detect attempts to remove host-based forensic artifacts such as log files, event logs, or temporary files to cover tracks.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Deletion or Modification of Logs"
+    description: >
+      Detect deletions or tampering of event logs, security logs, and audit trails.
+    checklist:
+      - "Are log files deleted or cleared unexpectedly?"
+      - "Are audit policies changed or disabled?"
+    data_sources:
+      - "File system monitoring"
+      - "Windows Event Logs"
+      - "Audit logs"
+
+  - step_number: 2
+    title: "Detect Use of Clearing or Erasing Commands"
+    description: >
+      Identify usage of tools or commands such as 'wevtutil', 'Clear-EventLog', or log wiping scripts.
+    checklist:
+      - "Are clearing commands executed by unusual users or processes?"
+      - "Is there a pattern of repeated log clearance?"
+    data_sources:
+      - "Command line monitoring"
+      - "Process logs"
+
+  - step_number: 3
+    title: "Correlate with Suspicious Activity"
+    description: >
+      Investigate if artifact removal correlates with suspicious access, privilege escalation, or lateral movement.
+    checklist:
+      - "Is log removal timed with other malicious actions?"
+      - "Are other defense evasion techniques observed?"
+    data_sources:
+      - "SIEM correlation"
+      - "Endpoint telemetry"
+
+  - step_number: 4
+    title: "Recover and Respond"
+    description: >
+      Attempt log recovery and initiate incident response.
+    checklist:
+      - "Restore logs from backups if possible."
+      - "Contain and remediate affected hosts."
+    data_sources:
+      - "Backup systems"
+      - "IR tools"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Legitimate log maintenance or archiving."
+      - "Medium: Unexpected log clearance needing review."
+      - "High: Confirmed log tampering linked to attack."
+  - confidence_levels:
+      - "High: Matches known artifact removal behavior."
+      - "Medium: Suspicious log operations."
+      - "Low: Routine maintenance."
+
+ioc_types:
+  - "Log file deletions"
+  - "Clear-eventlog commands"
+  - "Audit policy changes"
+
+queries/examples:
+  - name: "Windows Clear Event Log Commands"
+    query: >
+      process.command_line:*Clear-EventLog* OR process.command_line:*wevtutil*"
+  - name: "Linux Log File Deletions"
+    query: >
+      process.name:rm AND file.path:/var/log/*
+
+automation_hooks:
+  - "Alert on event log clearing commands."
+  - "Flag hosts with repeated log file deletions."
+
+analyst_guidance:
+  - "Review user/process context for log removal."
+  - "Check for other attack indicators."
+  - "Coordinate with IR for potential compromise."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1070/"
+
+review_cycle: "Quarterly or post-incident"

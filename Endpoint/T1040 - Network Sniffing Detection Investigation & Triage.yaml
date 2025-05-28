@@ -1,0 +1,81 @@
+playbook_name: "T1040 - Network Sniffing Detection: Investigation & Triage"
+tactic: "Credential Access"
+technique_id: "T1040"
+technique_name: "Network Sniffing"
+description: >
+  Detects attempts by adversaries to capture network traffic to steal credentials, session tokens, or other sensitive data by using packet capture tools or network sniffing utilities.
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect Execution of Known Network Sniffing Tools"
+    description: >
+      Identify process executions of tools like Wireshark, tcpdump, tshark, or custom sniffing utilities.
+    checklist:
+      - "Are known sniffing tool processes running on endpoints?"
+      - "Are these processes executed by authorized personnel or suspicious accounts?"
+    data_sources:
+      - "Process creation logs"
+      - "Endpoint detection and response (EDR) logs"
+
+  - step_number: 2
+    title: "Monitor Network Interface Modes"
+    description: >
+      Detect changes of network interfaces into promiscuous mode indicative of sniffing.
+    checklist:
+      - "Has any interface been switched to promiscuous mode unexpectedly?"
+      - "Are these changes correlated with suspicious user activity?"
+    data_sources:
+      - "Network interface configuration logs"
+      - "System audit logs"
+
+  - step_number: 3
+    title: "Analyze Network Traffic for Unusual Packet Captures"
+    description: >
+      Review network traffic patterns for signs of sniffing or unauthorized capture attempts.
+    checklist:
+      - "Is there unusual volume or type of traffic from sniffing hosts?"
+      - "Are there network captures being stored or transmitted to external locations?"
+    data_sources:
+      - "Network flow logs"
+      - "Data loss prevention (DLP) systems"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Authorized sniffing in controlled environments."
+      - "Medium: Sniffing attempts in non-sensitive networks."
+      - "High: Unauthorized sniffing in sensitive or production networks."
+  - confidence_levels:
+      - "High: Confirmed sniffing tool execution or interface promiscuous mode."
+      - "Medium: Suspicious network traffic patterns consistent with sniffing."
+      - "Low: Ambiguous or benign network monitoring."
+
+ioc_types:
+  - "Process executions of tcpdump, wireshark, tshark"
+  - "Network interface promiscuous mode enablement"
+  - "Unusual network capture or export activity"
+
+queries/examples:
+  - name: "Detect Tcpdump Process Execution"
+    query: >
+      process.name == "tcpdump" OR
+      process.command_line CONTAINS "tcpdump"
+
+  - name: "Detect Promiscuous Mode Enablement"
+    query: >
+      network.interface.status_changes CONTAINS "promiscuous"
+
+automation_hooks:
+  - "Alert on unauthorized network sniffing tool execution."
+  - "Block suspicious process executions if possible."
+  - "Notify security team on promiscuous mode changes."
+
+analyst_guidance:
+  - "Verify if sniffing tools are authorized for troubleshooting."
+  - "Assess if sniffing is targeting sensitive network segments."
+  - "Recommend restricting sniffing tool usage and monitoring network interfaces."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1040/"
+  - "https://www.sans.org/white-papers/36298/"
+
+review_cycle: "Quarterly or after sniffing tool detections"

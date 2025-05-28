@@ -1,0 +1,82 @@
+playbook_name: "T1048.002 - Asymmetric Cryptography Exfiltration Detection"
+tactic: "Exfiltration"
+technique_id: "T1048.002"
+technique_name: "Exfiltration Over Asymmetric Cryptography"
+description: >
+  Detect data exfiltration via encrypted communication using asymmetric cryptography methods.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Encrypted Traffic for Anomalies"
+    description: >
+      Identify encrypted outbound traffic that deviates from normal patterns, especially with new or unknown keys.
+    checklist:
+      - "Are there unusual encrypted sessions or key exchanges?"
+      - "Is encrypted traffic sent to uncommon or suspicious endpoints?"
+      - "Are cryptographic keys or certificates newly generated?"
+    data_sources:
+      - "Network traffic and TLS inspection logs"
+      - "Key management and certificate logs"
+
+  - step_number: 2
+    title: "Analyze Endpoint Cryptographic Operations"
+    description: >
+      Check processes for asymmetric encryption usage tied to data exfiltration.
+    checklist:
+      - "Are files encrypted or prepared with public/private keys?"
+      - "Are suspicious or unauthorized cryptographic tools running?"
+    data_sources:
+      - "Endpoint logs"
+      - "EDR telemetry"
+
+  - step_number: 3
+    title: "Review Key Exchange and Certificate Usage"
+    description: >
+      Validate the legitimacy of keys and certificates used in communication.
+    checklist:
+      - "Are there self-signed or otherwise suspicious certificates?"
+      - "Are keys rotated unusually frequently?"
+    data_sources:
+      - "Certificate management systems"
+      - "Network monitoring"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Legitimate encrypted communication."
+      - "Medium: Anomalous cryptographic use."
+      - "High: Confirmed exfiltration via asymmetric encryption."
+  - confidence_levels:
+      - "High: Verified malicious encrypted data transfer."
+      - "Medium: Suspicious cryptographic behavior."
+      - "Low: Possible false positives."
+
+ioc_types:
+  - "Unusual certificate or key usage"
+  - "Anomalous encrypted network sessions"
+  - "Unauthorized cryptographic tools/processes"
+
+queries/examples:
+  - name: "Detect Unusual TLS Certificates"
+    query: >
+      tls.certificate_issuer NOT IN (trusted_issuers) AND
+      network.destination_port IN (443, other_encrypted_ports)
+
+  - name: "Detect Newly Generated Cryptographic Keys"
+    query: >
+      process.command_line CONTAINS ("openssl genpkey" OR "ssh-keygen")
+
+automation_hooks:
+  - "Alert on anomalous cryptographic key generation."
+  - "Flag encrypted sessions to uncommon endpoints."
+  - "Initiate endpoint investigation."
+
+analyst_guidance:
+  - "Verify if cryptographic use is business justified."
+  - "Investigate involved files and keys."
+  - "Coordinate response with crypto and IR teams."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1048/002/"
+  - "https://www.us-cert.gov/ncas/tips/ST04-016"
+
+review_cycle: "Quarterly or post-incident"

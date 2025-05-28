@@ -1,0 +1,82 @@
+playbook_name: "T1055 - Process Injection Detection: Investigation & Triage"
+tactic: "Defense Evasion"
+technique_id: "T1055"
+technique_name: "Process Injection"
+description: >
+  Detect process injection techniques used to evade defenses or execute malicious code within legitimate processes.
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect Process Memory Manipulation"
+    description: >
+      Monitor for suspicious memory allocation and writing behaviors.
+    checklist:
+      - "Are APIs like WriteProcessMemory, VirtualAllocEx used suspiciously?"
+      - "Is shellcode detected in memory?"
+    data_sources:
+      - "Sysmon (Event ID 10)"
+      - "EDR memory events"
+
+  - step_number: 2
+    title: "Identify Suspicious Process Relationships"
+    description: >
+      Correlate parent and child processes involved in injection.
+    checklist:
+      - "Is a non-standard parent process injecting into system processes?"
+      - "Is the parent executable unsigned or recently dropped?"
+    data_sources:
+      - "Process tree logs"
+      - "Binary metadata"
+
+  - step_number: 3
+    title: "Correlate with Malicious Behavior"
+    description: >
+      Link injection to malicious payload execution or evasion.
+    checklist:
+      - "Does the injected process connect to external IPs?"
+      - "Is there an increase in anomalous process activity?"
+    data_sources:
+      - "Network connections"
+      - "Behavior analytics"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Legitimate tool behavior (e.g., AV tools)."
+      - "Medium: Suspicious but unconfirmed injections."
+      - "High: Confirmed malicious injection."
+  - confidence_levels:
+      - "High: API and payload matches to known malware."
+      - "Medium: Unknown source binary with suspicious injection."
+      - "Low: Inconclusive injection events."
+
+ioc_types:
+  - "Injected process names"
+  - "Memory manipulation API usage"
+  - "External connections post-injection"
+
+queries/examples:
+  - name: "Suspicious Memory Injection"
+    query: >
+      api.called:(WriteProcessMemory OR VirtualAllocEx) AND
+      process.parent.name:NOT_IN(known_good_list)
+
+  - name: "Injected Process Behavior"
+    query: >
+      process.name:IN(system_procs) AND
+      network.outbound.connection:true
+
+automation_hooks:
+  - "Alert on memory injection APIs."
+  - "Quarantine binaries exhibiting injection behavior."
+  - "Trigger network block on C2 indicators."
+
+analyst_guidance:
+  - "Analyze memory dumps of injected processes."
+  - "Correlate with threat intel on similar injection techniques."
+  - "Consider behavioral baselining to reduce false positives."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1055/"
+  - "https://learn.microsoft.com/en-us/windows/win32/api/memoryapi/"
+
+review_cycle: "Bi-monthly or upon new injection technique disclosures"

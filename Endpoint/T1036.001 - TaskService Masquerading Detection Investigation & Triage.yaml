@@ -1,0 +1,88 @@
+playbook_name: "T1036.001 - Task/Service Masquerading Detection: Investigation & Triage"
+tactic: "Defense Evasion"
+technique_id: "T1036.001"
+technique_name: "Task/Service Masquerading"
+description: >
+  Detect adversaries masquerading malicious tasks or services as legitimate ones by using trusted names or locations.
+
+investigation_steps:
+  - step_number: 1
+    title: "Enumerate Scheduled Tasks and Services"
+    description: >
+      Identify scheduled tasks or services with suspicious names, locations, or configurations.
+    checklist:
+      - "Are there tasks/services with names matching legitimate ones but different executable paths?"
+      - "Are task descriptions or service descriptions unusual or missing?"
+      - "Are scheduled tasks/services created or modified recently without authorization?"
+    data_sources:
+      - "Windows Task Scheduler logs"
+      - "Service control manager logs"
+      - "Configuration management systems"
+
+  - step_number: 2
+    title: "Validate Executable Paths and Signatures"
+    description: >
+      Verify that executables launched by tasks/services are legitimate and signed.
+    checklist:
+      - "Do executables run from expected directories?"
+      - "Are digital signatures valid?"
+      - "Are hashes consistent with known good files?"
+    data_sources:
+      - "File system scans"
+      - "Digital signature logs"
+
+  - step_number: 3
+    title: "Monitor Behavior of Tasks and Services"
+    description: >
+      Detect suspicious behavior such as unexpected network connections, privilege escalations, or process spawning.
+    checklist:
+      - "Do tasks/services spawn unexpected child processes?"
+      - "Is there unusual network activity?"
+    data_sources:
+      - "Process and network monitoring"
+      - "EDR telemetry"
+
+  - step_number: 4
+    title: "Respond and Remediate"
+    description: >
+      Disable or remove suspicious tasks/services and strengthen monitoring.
+    checklist:
+      - "Disable unauthorized tasks/services."
+      - "Set alerts for future suspicious creations."
+    data_sources:
+      - "Endpoint management"
+      - "SIEM alerts"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Known benign tasks/services."
+      - "Medium: Suspicious masquerading tasks/services."
+      - "High: Confirmed malicious masquerading."
+  - confidence_levels:
+      - "High: Verified malicious tasks/services."
+      - "Medium: Suspicious but unconfirmed."
+      - "Low: Known benign anomalies."
+
+ioc_types:
+  - "Scheduled tasks or services with spoofed names"
+  - "Executables running from unusual paths"
+  - "Unsigned or invalid signatures"
+
+queries/examples:
+  - name: "Detect scheduled tasks running executables from unusual paths"
+    query: >
+      task.path NOT IN ["C:\\Windows\\System32\\", "C:\\Program Files\\"]
+
+automation_hooks:
+  - "Alert on creation or modification of tasks/services with suspicious attributes."
+  - "Trigger signature and hash validation upon detection."
+
+analyst_guidance:
+  - "Cross-check task/service legitimacy with system baselines."
+  - "Investigate process behavior spawned by tasks/services."
+  - "Confirm if recent changes were authorized."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1036/001/"
+
+review_cycle: "Quarterly or after suspicious task/service detections"

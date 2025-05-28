@@ -1,0 +1,89 @@
+playbook_name: "T1070.003 - Application Log Deletion Detection: Investigation & Triage"
+tactic: "Defense Evasion"
+technique_id: "T1070.003"
+technique_name: "Application Log Deletion"
+description: >
+  Detect deletion or tampering of application-specific logs that may contain evidence of attacker activity.
+
+investigation_steps:
+  - step_number: 1
+    title: "Identify Deletion or Modification of Application Logs"
+    description: >
+      Monitor critical application log files for unexpected deletions, truncations, or modifications.
+    checklist:
+      - "Are application logs deleted or modified outside maintenance windows?"
+      - "Is there suspicious user or process activity on these files?"
+    data_sources:
+      - "File integrity monitoring"
+      - "Application logging systems"
+      - "Endpoint monitoring"
+
+  - step_number: 2
+    title: "Detect Use of Suspicious Commands or Scripts"
+    description: >
+      Identify use of scripts or commands aimed at cleaning or deleting application logs.
+    checklist:
+      - "Are known log-cleaning scripts executed?"
+      - "Are file deletions linked to suspicious user accounts or processes?"
+    data_sources:
+      - "Command line auditing"
+      - "Process monitoring"
+
+  - step_number: 3
+    title: "Correlate with Malicious Application Activity"
+    description: >
+      Investigate if log deletion aligns with malware execution, privilege escalation, or suspicious application behavior.
+    checklist:
+      - "Is log deletion timed with other malicious activities?"
+      - "Are there indicators of lateral movement or persistence?"
+    data_sources:
+      - "SIEM correlation"
+      - "Endpoint telemetry"
+
+  - step_number: 4
+    title: "Respond and Recover"
+    description: >
+      Recover logs if possible and remediate affected applications or systems.
+    checklist:
+      - "Restore from backup if available."
+      - "Investigate and contain affected systems."
+    data_sources:
+      - "Backup repositories"
+      - "Incident response tools"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Authorized log rotation or archiving."
+      - "Medium: Unexpected deletions needing review."
+      - "High: Malicious log deletion confirmed."
+  - confidence_levels:
+      - "High: Clear evidence of unauthorized log deletions."
+      - "Medium: Suspicious but inconclusive evidence."
+      - "Low: Routine log management."
+
+ioc_types:
+  - "Application log file deletion"
+  - "Suspicious script executions"
+  - "Unauthorized file modifications"
+
+queries/examples:
+  - name: "Application Log Deletion via rm"
+    query: >
+      process.name:rm AND file.path:/var/app/logs/*
+  - name: "Suspicious Script Executions"
+    query: >
+      process.command_line:*clean_logs.sh*
+
+automation_hooks:
+  - "Alert on deletion/modification of key application logs."
+  - "Trigger review workflow for suspicious scripts."
+
+analyst_guidance:
+  - "Confirm if log deletion was part of maintenance."
+  - "Investigate related malicious activity."
+  - "Engage incident response if confirmed."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1070/003/"
+
+review_cycle: "Quarterly or post-incident"

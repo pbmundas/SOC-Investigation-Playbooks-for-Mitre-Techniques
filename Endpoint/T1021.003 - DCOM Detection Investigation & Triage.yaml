@@ -1,0 +1,83 @@
+playbook_name: "T1021.003 - DCOM Detection: Investigation & Triage"
+tactic: "Lateral Movement"
+technique_id: "T1021.003"
+technique_name: "Distributed Component Object Model"
+description: >
+  Detects adversaries leveraging DCOM (Distributed Component Object Model) for remote code execution and lateral movement.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor DCOM Remote Execution Activities"
+    description: >
+      Identify execution of commands or scripts using DCOM interfaces remotely.
+    checklist:
+      - "Are there remote procedure calls (RPC) or COM object activations from unusual hosts?"
+      - "Are DCOM operations initiated by non-standard users or outside business hours?"
+    data_sources:
+      - "RPC logs"
+      - "Process creation logs"
+      - "Windows event logs"
+
+  - step_number: 2
+    title: "Detect Anomalous DCOM Service Usage"
+    description: >
+      Track unusual invocation of COM services or use of tools that leverage DCOM.
+    checklist:
+      - "Are tools like wmiprvse.exe or mmc.exe used abnormally?"
+      - "Are there unexpected COM object activations?"
+    data_sources:
+      - "Process monitoring"
+      - "WMI activity logs"
+
+  - step_number: 3
+    title: "Correlate DCOM Activity with Other Lateral Movement Indicators"
+    description: >
+      Look for signs of privilege escalation, credential dumping, or data exfiltration following DCOM use.
+    checklist:
+      - "Is there suspicious network or process activity following DCOM remote execution?"
+      - "Are there concurrent authentication anomalies?"
+    data_sources:
+      - "Network logs"
+      - "Authentication logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Normal use of DCOM for administration."
+      - "Medium: Suspicious or unusual DCOM activity."
+      - "High: Unauthorized or malicious DCOM remote execution."
+  - confidence_levels:
+      - "High: Confirmed malicious DCOM usage."
+      - "Medium: Suspicious but unconfirmed."
+      - "Low: Routine administrative activity."
+
+ioc_types:
+  - "Remote RPC calls invoking DCOM services"
+  - "Unusual execution of wmiprvse.exe or related tools"
+  - "Unexpected COM object activations"
+
+queries/examples:
+  - name: "Detect Remote DCOM Execution"
+    query: >
+      process.command_line MATCHES "(?i)(dcom|wmiprvse|mmc)" AND
+      network.remote_ip != local_ip
+
+  - name: "Detect RPC Calls Associated with DCOM"
+    query: >
+      rpc.call.destination_port == 135 AND
+      process.name IN ("wmiprvse.exe", "mmc.exe")
+
+automation_hooks:
+  - "Alert on suspicious DCOM remote execution."
+  - "Restrict RPC and DCOM ports where possible."
+  - "Force re-authentication after DCOM alerts."
+
+analyst_guidance:
+  - "Validate if DCOM usage is legitimate."
+  - "Investigate associated lateral movement activities."
+  - "Implement network segmentation and access control."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1021/003/"
+  - "https://docs.microsoft.com/en-us/windows/win32/com/dcom-overview"
+
+review_cycle: "Quarterly or after detection of suspicious DCOM activity"

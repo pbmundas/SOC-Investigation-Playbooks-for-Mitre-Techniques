@@ -1,0 +1,47 @@
+playbook_name: "Unix Shell Execution Detection"
+tactic: "Execution"
+technique_id: "T1059.004"
+technique_name: "Unix Shell"
+description: >
+  Detects execution of Unix/Linux shell interpreters (bash, sh, dash, etc.), often used in post-compromise scripts
+  or for direct command execution.
+
+detection_sources:
+  - Auditd (execve)
+  - Sysmon for Linux
+  - EDR or SIEM integrations
+  - Shell history logs
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Shell Execution"
+    checklist:
+      - "Look for executions of /bin/bash, /bin/sh, /usr/bin/zsh, etc."
+      - "Capture the command line and parent processes"
+      - "Check whether the shell is interactive or non-interactive (scripted)"
+
+  - step_number: 2
+    title: "Contextual Analysis"
+    checklist:
+      - "Was this invoked from a cron, ssh, or reverse shell?"
+      - "Check for script injection or strange paths"
+      - "Correlate with user activity or privilege escalation attempts"
+
+  - step_number: 3
+    title: "Remediation"
+    checklist:
+      - "Contain user or system access"
+      - "Review audit trails"
+      - "Search for rootkits or persistent agents"
+
+triage_labels:
+  - severity: Medium to High
+  - confidence: Variable (based on behavior)
+
+ioc_types:
+  - Command Path
+  - Script Content
+  - User
+
+references:
+  - https://attack.mitre.org/techniques/T1059/004/

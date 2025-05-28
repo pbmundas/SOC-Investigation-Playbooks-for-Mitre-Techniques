@@ -1,0 +1,83 @@
+playbook_name: "T1008 - Fallback Channel Command and Control Detection"
+tactic: "Command and Control"
+technique_id: "T1008"
+technique_name: "Fallback Channel"
+description: >
+  Detect adversaries using fallback communication channels for command and control if primary channels are unavailable.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor for Secondary or Unusual Communication Channels"
+    description: >
+      Identify communications over less common ports, protocols, or services that may be fallback C2 channels.
+    checklist:
+      - "Are endpoints communicating on unusual ports or protocols?"
+      - "Is there communication to rarely used external IPs/domains?"
+      - "Are there sudden shifts in network traffic patterns?"
+    data_sources:
+      - "Network flow logs"
+      - "Firewall and proxy logs"
+
+  - step_number: 2
+    title: "Correlate with Primary C2 Channel Status"
+    description: >
+      Check if the primary C2 channel was disrupted prior to fallback communication.
+    checklist:
+      - "Is there evidence of blocking or interruption of normal C2?"
+      - "Are fallback channels initiated soon after primary channel failures?"
+    data_sources:
+      - "Network security device logs"
+      - "Incident response reports"
+
+  - step_number: 3
+    title: "Investigate Endpoint and Process Activity"
+    description: >
+      Analyze endpoint activity for tools or processes initiating fallback communication.
+    checklist:
+      - "Are there suspicious processes initiating network connections?"
+      - "Is there abnormal process spawning correlated with fallback communication?"
+    data_sources:
+      - "Endpoint logs"
+      - "EDR telemetry"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Legitimate alternate communications."
+      - "Medium: Suspicious fallback communications."
+      - "High: Confirmed fallback channel C2."
+  - confidence_levels:
+      - "High: Behavioral or IOC match."
+      - "Medium: Anomalies without full context."
+      - "Low: Possible false positives."
+
+ioc_types:
+  - "Communication over unusual ports/protocols"
+  - "Known fallback C2 IPs/domains"
+  - "Process/network correlations"
+
+queries/examples:
+  - name: "Detect Network Connections on Non-Standard Ports"
+    query: >
+      network.destination_port NOT IN (80,443,53,22,3389) AND
+      network.connection_count > threshold
+
+  - name: "Detect Endpoint Processes Initiating Network Connections After Primary C2 Loss"
+    query: >
+      endpoint.process_name IN suspicious_processes AND
+      network.connection_start_time AFTER primary_C2_disruption_time
+
+automation_hooks:
+  - "Alert on fallback channel communication."
+  - "Isolate affected endpoints."
+  - "Trigger threat hunting and forensic analysis."
+
+analyst_guidance:
+  - "Validate if fallback communication is malicious."
+  - "Investigate network logs for primary channel disruptions."
+  - "Coordinate with endpoint security teams."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1008/"
+  - "https://www.fireeye.com/blog/threat-research/2016/02/understanding_c2_fallback.html"
+
+review_cycle: "Biannual or post-incident"

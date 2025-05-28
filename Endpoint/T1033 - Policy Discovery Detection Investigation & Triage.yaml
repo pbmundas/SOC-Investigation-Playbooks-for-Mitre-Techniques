@@ -1,0 +1,82 @@
+playbook_name: "T1033 - Policy Discovery Detection: Investigation & Triage"
+tactic: "Discovery"
+technique_id: "T1033"
+technique_name: "System Owner/User Discovery (Policy Discovery)"
+description: >
+  Detects adversaries gathering information about system or domain policies including user privileges, group policies, or system configurations to understand security posture or plan privilege escalation.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Commands and Queries Retrieving Policy Information"
+    description: >
+      Identify execution of commands or tools querying Group Policy Objects (GPOs), user rights assignments, or security policies.
+    checklist:
+      - "Are there LDAP or PowerShell queries targeting policy objects?"
+      - "Are queries performed by unusual or unauthorized users?"
+    data_sources:
+      - "PowerShell logs"
+      - "LDAP query logs"
+
+  - step_number: 2
+    title: "Detect Access to Local or Domain Policy Files"
+    description: >
+      Monitor file or registry access related to policy configuration files.
+    checklist:
+      - "Are policy files or registry keys accessed unexpectedly?"
+      - "Is the access correlated with suspicious process activity?"
+    data_sources:
+      - "File system monitoring"
+      - "Registry audit logs"
+
+  - step_number: 3
+    title: "Correlate Policy Discovery with Other Recon Activities"
+    description: >
+      Determine if policy discovery is linked with privilege escalation or lateral movement attempts.
+    checklist:
+      - "Are there subsequent attempts to modify privileges?"
+      - "Is there suspicious authentication or process creation after discovery?"
+    data_sources:
+      - "Authentication logs"
+      - "Process creation logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Legitimate policy audits."
+      - "Medium: Policy discovery by non-admin users."
+      - "High: Discovery linked to suspicious privilege escalation."
+  - confidence_levels:
+      - "High: Confirmed unauthorized policy queries."
+      - "Medium: Suspicious but unverified policy access."
+      - "Low: Normal administrative activity."
+
+ioc_types:
+  - "LDAP queries to Group Policy or user rights"
+  - "PowerShell commands querying policies"
+  - "Access to local or domain policy files"
+
+queries/examples:
+  - name: "Detect PowerShell GPO Queries"
+    query: >
+      process.name == "powershell.exe" AND
+      process.command_line MATCHES "(?i)Get-GPO|Get-ADObject -Filter 'ObjectClass -eq \"groupPolicyContainer\"'"
+
+  - name: "Detect Access to Local Security Policy Files"
+    query: >
+      file.path ENDSWITH "secpol.msc" OR
+      registry.key_path CONTAINS "SOFTWARE\\Policies"
+
+automation_hooks:
+  - "Alert on suspicious policy discovery commands."
+  - "Restrict access to policy files and LDAP queries."
+  - "Review user permissions and audit logs."
+
+analyst_guidance:
+  - "Confirm if policy discovery is legitimate."
+  - "Check for signs of privilege escalation."
+  - "Recommend hardening access controls for policy objects."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1033/"
+  - "https://docs.microsoft.com/en-us/windows/security/threat-protection/auditing/basic-audit-policy-change"
+
+review_cycle: "Quarterly or after detection of suspicious policy discovery"

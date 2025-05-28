@@ -1,0 +1,96 @@
+playbook_name: "T1055.001 - DLL Injection Detection: Investigation & Triage"
+tactic: "Defense Evasion"
+technique_id: "T1055.001"
+technique_name: "DLL Injection"
+description: >
+  Detect DLL injection techniques used by adversaries to execute malicious code within the address space of another process.
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect Suspicious DLL Load Events"
+    description: >
+      Monitor for DLLs being loaded into processes unusually or from non-standard directories.
+    checklist:
+      - "Are DLLs loaded from temp directories or user-writeable locations?"
+      - "Are unexpected processes loading DLLs?"
+    data_sources:
+      - "Process creation logs"
+      - "DLL load events"
+      - "EDR telemetry"
+
+  - step_number: 2
+    title: "Monitor API Calls Used for Injection"
+    description: >
+      Track usage of APIs commonly used for injection such as LoadLibrary, WriteProcessMemory, and CreateRemoteThread.
+    checklist:
+      - "Are suspicious API calls observed in unusual contexts?"
+      - "Are processes calling injection-related APIs without expected behavior?"
+    data_sources:
+      - "API call telemetry"
+      - "Behavioral analytics"
+
+  - step_number: 3
+    title: "Correlate with Process Behavior"
+    description: >
+      Link injected DLLs to malicious or unexpected process behavior.
+    checklist:
+      - "Does injected process exhibit malicious behavior?"
+      - "Are there persistence or lateral movement indicators?"
+    data_sources:
+      - "EDR"
+      - "SIEM"
+      - "Threat intelligence"
+
+  - step_number: 4
+    title: "Validate and Respond"
+    description: >
+      Confirm DLL injection and initiate containment.
+    checklist:
+      - "Is the injection confirmed as malicious?"
+      - "Is system containment or forensic imaging needed?"
+    data_sources:
+      - "IR response logs"
+      - "Memory analysis"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Benign DLL injections by trusted apps."
+      - "Medium: Suspicious but unconfirmed injections."
+      - "High: Confirmed malicious DLL injection."
+  - confidence_levels:
+      - "High: Known bad DLLs or behaviors."
+      - "Medium: Unusual injection API usage."
+      - "Low: Inconclusive or rare events."
+
+ioc_types:
+  - "DLL hashes"
+  - "Suspicious process names"
+  - "Injection-related API calls"
+  - "Memory indicators"
+
+queries/examples:
+  - name: "DLLs Loaded from Suspicious Paths"
+    query: >
+      dll.path:(*\\Temp\\* OR *\\AppData\\*)
+  - name: "Injection API Calls"
+    query: >
+      api.call:(WriteProcessMemory OR CreateRemoteThread OR LoadLibrary)
+  - name: "Injected Process Anomalies"
+    query: >
+      process.behavior:anomaly AND process.loaded_dlls:>X
+
+automation_hooks:
+  - "Trigger alert on DLL loads from non-standard paths."
+  - "Block known malicious DLLs."
+  - "Isolate process if injection confirmed."
+
+analyst_guidance:
+  - "Use memory analysis to validate injection."
+  - "Correlate with behavioral indicators."
+  - "Engage IR team for containment."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1055/001/"
+  - "https://docs.microsoft.com/en-us/windows/win32/dlls/dynamic-link-libraries"
+
+review_cycle: "Quarterly or post-detection event"

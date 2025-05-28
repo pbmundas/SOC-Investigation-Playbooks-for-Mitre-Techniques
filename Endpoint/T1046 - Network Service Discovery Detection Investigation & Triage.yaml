@@ -1,0 +1,82 @@
+playbook_name: "T1046 - Network Service Discovery Detection: Investigation & Triage"
+tactic: "Discovery"
+technique_id: "T1046"
+technique_name: "Network Service Discovery"
+description: >
+  Detects adversaries scanning and enumerating network services to identify open ports, protocols, and services for further exploitation.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Network Scanning and Enumeration Tools"
+    description: >
+      Identify use of tools like `nmap`, `netstat`, `ss`, or PowerShell cmdlets performing network scans.
+    checklist:
+      - "Are network scan tools executed from endpoints or servers?"
+      - "Is scanning activity abnormal in volume or timing?"
+    data_sources:
+      - "Process creation logs"
+      - "Network flow/log data"
+
+  - step_number: 2
+    title: "Detect Unusual Network Scanning Patterns"
+    description: >
+      Look for high frequency or broad range port scans originating from suspicious hosts.
+    checklist:
+      - "Are there scans against multiple IPs or subnets?"
+      - "Is scan traffic observed from non-administrative accounts?"
+    data_sources:
+      - "Firewall logs"
+      - "IDS/IPS alerts"
+      - "Network flow telemetry"
+
+  - step_number: 3
+    title: "Correlate Scanning with Other Intrusion Activities"
+    description: >
+      Determine if scanning activity precedes exploitation, lateral movement, or data access.
+    checklist:
+      - "Is scanning activity followed by suspicious connections or process creation?"
+      - "Are credential use or privilege escalation attempts detected afterward?"
+    data_sources:
+      - "Endpoint detection logs"
+      - "Authentication logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Scanning activity from authorized network tools."
+      - "Medium: Scanning by unusual users or systems."
+      - "High: Scanning linked to active intrusion or reconnaissance."
+  - confidence_levels:
+      - "High: Verified unauthorized network scanning."
+      - "Medium: Suspicious scanning behavior."
+      - "Low: Routine network diagnostics."
+
+ioc_types:
+  - "Execution of nmap, masscan, or similar tools"
+  - "PowerShell network scan cmdlets"
+  - "High volume SYN or port scan packets"
+
+queries/examples:
+  - name: "Detect nmap Command Execution"
+    query: >
+      process.name == "nmap.exe" OR process.command_line CONTAINS "nmap"
+
+  - name: "Detect PowerShell Port Scanning"
+    query: >
+      process.name == "powershell.exe" AND
+      process.command_line MATCHES "(?i)Test-NetConnection|PortScan"
+
+automation_hooks:
+  - "Alert on unauthorized network scanning."
+  - "Throttle or block scanning traffic from endpoints."
+  - "Investigate scanning hosts for compromise."
+
+analyst_guidance:
+  - "Verify source and purpose of network scanning."
+  - "Correlate with follow-up attack activity."
+  - "Implement network segmentation and monitoring."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1046/"
+  - "https://nmap.org/book/man-briefoptions.html"
+
+review_cycle: "Quarterly or after network scanning detection"

@@ -1,0 +1,88 @@
+playbook_name: "T1055.005 - TLS Injection Detection: Investigation & Triage"
+tactic: "Defense Evasion"
+technique_id: "T1055.005"
+technique_name: "Thread Local Storage (TLS) Injection"
+description: >
+  Detect TLS callback injection, a technique where adversaries use Thread Local Storage callbacks to execute malicious code during DLL load time.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor TLS Callback Sections in DLLs"
+    description: >
+      Detect presence of TLS callbacks in non-standard or unsigned DLLs.
+    checklist:
+      - "Are there unexpected TLS callbacks in loaded modules?"
+      - "Are TLS callbacks pointing to suspicious code areas?"
+    data_sources:
+      - "Static analysis tools"
+      - "DLL load events"
+
+  - step_number: 2
+    title: "Correlate with DLL Injection Techniques"
+    description: >
+      Determine if TLS callbacks are used post-DLL injection.
+    checklist:
+      - "Are DLLs loaded from user-writeable locations?"
+      - "Are callbacks executing during thread initialization?"
+    data_sources:
+      - "EDR logs"
+      - "Memory analysis"
+
+  - step_number: 3
+    title: "Track Execution from TLS Callback Regions"
+    description: >
+      Map execution flow starting from TLS sections.
+    checklist:
+      - "Are TLS callbacks linked to shellcode or unpacked malware?"
+      - "Do they lead to privilege escalation or persistence?"
+    data_sources:
+      - "Memory dump analysis"
+      - "SIEM alerts"
+
+  - step_number: 4
+    title: "Validate and Respond"
+    description: >
+      Confirm malicious TLS injection and isolate host.
+    checklist:
+      - "Is the TLS region behaving maliciously?"
+      - "Is endpoint isolation or reboot necessary?"
+    data_sources:
+      - "IR response logs"
+      - "Sandbox reports"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Debug or dev DLLs with TLS sections."
+      - "Medium: Unknown TLS regions in DLLs."
+      - "High: Confirmed malware using TLS callback."
+  - confidence_levels:
+      - "High: Callback matches known threat behavior."
+      - "Medium: Suspicious but unknown TLS use."
+      - "Low: Infrequent legitimate usage."
+
+ioc_types:
+  - "TLS callback function addresses"
+  - "DLL hashes"
+  - "Thread start context"
+
+queries/examples:
+  - name: "TLS Callback Present in DLL"
+    query: >
+      dll.contains_tls_callbacks:true AND dll.signed:false
+  - name: "Execution from TLS Callback"
+    query: >
+      thread.start_address:tls_callback_section
+
+automation_hooks:
+  - "Alert on TLS callback detection in unknown DLLs."
+  - "Auto-isolate host if malware is confirmed."
+
+analyst_guidance:
+  - "Validate callback with sandboxing or static tools."
+  - "Correlate with other injection behaviors."
+  - "Report findings to IR and threat intel teams."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1055/005/"
+
+review_cycle: "Bi-annual or post threat research updates"

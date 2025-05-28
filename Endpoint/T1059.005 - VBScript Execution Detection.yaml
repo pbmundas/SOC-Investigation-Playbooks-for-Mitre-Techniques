@@ -1,0 +1,46 @@
+playbook_name: "VBScript Execution Detection"
+tactic: "Execution"
+technique_id: "T1059.005"
+technique_name: "VBScript"
+description: >
+  Detects execution of VBScript via wscript.exe or cscript.exe, commonly abused in phishing attachments
+  and initial access.
+
+detection_sources:
+  - Sysmon EventID 1
+  - Windows Security logs
+  - PowerShell ScriptBlock logs (for dropped VBScript execution)
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect VBScript Execution"
+    checklist:
+      - "Look for cscript.exe or wscript.exe processes"
+      - "Analyze command line for .vbs or obfuscated content"
+      - "Check for unusual parent-child process relationship"
+
+  - step_number: 2
+    title: "Correlate with Email or File Activity"
+    checklist:
+      - "Was the script delivered via email?"
+      - "Check if file originated from Outlook or browser download folder"
+      - "Scan the file hash in threat intelligence platforms"
+
+  - step_number: 3
+    title: "Mitigation"
+    checklist:
+      - "Kill process if malicious"
+      - "Search across environment for similar VBScript execution"
+      - "Educate users on risky file types"
+
+triage_labels:
+  - severity: High (if externally sourced)
+  - confidence: Medium to High
+
+ioc_types:
+  - Script Name
+  - Parent Process
+  - File Hash
+
+references:
+  - https://attack.mitre.org/techniques/T1059/005/

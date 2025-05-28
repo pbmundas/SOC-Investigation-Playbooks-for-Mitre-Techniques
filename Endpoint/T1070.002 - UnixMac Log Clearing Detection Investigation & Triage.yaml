@@ -1,0 +1,90 @@
+playbook_name: "T1070.002 - Unix/Mac Log Clearing Detection: Investigation & Triage"
+tactic: "Defense Evasion"
+technique_id: "T1070.002"
+technique_name: "Unix/Mac Log Clearing"
+description: >
+  Detect deletion or clearing of logs on Unix/Linux/MacOS systems aimed at removing traces of attacker activity.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Deletion or Truncation of System Logs"
+    description: >
+      Detect removal or truncation of common log files such as /var/log/auth.log, /var/log/syslog, /var/log/messages.
+    checklist:
+      - "Are log files deleted or truncated unexpectedly?"
+      - "Are file permission or ownership changes suspicious?"
+    data_sources:
+      - "File integrity monitoring"
+      - "Auditd or Syslog events"
+      - "Filesystem change logs"
+
+  - step_number: 2
+    title: "Detect Use of Log Clearing Commands or Tools"
+    description: >
+      Identify use of commands like 'rm', 'truncate', 'logrotate' used in unusual contexts or times.
+    checklist:
+      - "Are 'rm' or 'truncate' commands executed on log files by unusual users?"
+      - "Is logrotate configuration altered to remove logs prematurely?"
+    data_sources:
+      - "Shell command history"
+      - "Process monitoring"
+
+  - step_number: 3
+    title: "Correlate with Suspicious System Activity"
+    description: >
+      Look for privilege escalation, suspicious process executions, or unauthorized access around log clearing times.
+    checklist:
+      - "Are log clearing events timed with suspicious activities?"
+      - "Are root or admin privileges involved?"
+    data_sources:
+      - "Syslog"
+      - "Auditd"
+      - "SIEM correlation"
+
+  - step_number: 4
+    title: "Response and Recovery"
+    description: >
+      Investigate compromised systems, recover logs if possible, and harden logging mechanisms.
+    checklist:
+      - "Restore logs from backups."
+      - "Implement stricter log retention policies."
+    data_sources:
+      - "Backup systems"
+      - "Security monitoring tools"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Authorized log maintenance."
+      - "Medium: Unexplained log file deletions."
+      - "High: Unauthorized log clearing linked to attacks."
+  - confidence_levels:
+      - "High: Clear evidence of malicious log clearing."
+      - "Medium: Suspicious command executions."
+      - "Low: Routine log rotation."
+
+ioc_types:
+  - "Log file deletions or truncations"
+  - "Unauthorized 'rm' or 'truncate' commands"
+  - "Modified logrotate configs"
+
+queries/examples:
+  - name: "Log Deletions with rm command"
+    query: >
+      process.name:rm AND file.path:/var/log/*
+  - name: "Truncate commands on logs"
+    query: >
+      process.command_line:truncate* AND file.path:/var/log/*
+
+automation_hooks:
+  - "Alert on deletion/truncation of critical logs."
+  - "Trigger investigation workflow on suspicious commands."
+
+analyst_guidance:
+  - "Verify authorized maintenance or log rotation schedules."
+  - "Check for privilege escalations around these events."
+  - "Coordinate with Unix/Mac system admins and IR."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1070/002/"
+
+review_cycle: "Quarterly or post-incident"

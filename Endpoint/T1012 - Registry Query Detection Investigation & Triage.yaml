@@ -1,0 +1,83 @@
+playbook_name: "T1012 - Registry Query Detection: Investigation & Triage"
+tactic: "Discovery"
+technique_id: "T1012"
+technique_name: "Registry Query"
+description: >
+  Detects adversaries querying the Windows Registry to collect system or configuration information useful for further exploitation or reconnaissance.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Registry Query Commands and API Calls"
+    description: >
+      Identify processes querying registry keys, especially those related to system, software, and security configurations.
+    checklist:
+      - "Are suspicious processes querying sensitive registry paths?"
+      - "Is reg.exe or PowerShell querying registry keys?"
+    data_sources:
+      - "Process creation logs"
+      - "Registry access monitoring"
+      - "Command-line auditing"
+
+  - step_number: 2
+    title: "Identify Unusual Registry Access Patterns"
+    description: >
+      Detect high-volume or abnormal registry query activity from unexpected users or processes.
+    checklist:
+      - "Are registry queries performed outside normal operational patterns?"
+      - "Are multiple registry keys queried in rapid succession?"
+    data_sources:
+      - "User activity logs"
+      - "Endpoint monitoring"
+
+  - step_number: 3
+    title: "Correlate Registry Queries with Other Reconnaissance or Lateral Movement"
+    description: >
+      Investigate if registry queries align with privilege escalation, persistence, or credential access activities.
+    checklist:
+      - "Are registry queries followed by suspicious process creations?"
+      - "Is there evidence of persistence mechanisms being set?"
+    data_sources:
+      - "Endpoint detection and response logs"
+      - "Security event logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Routine registry queries by authorized processes."
+      - "Medium: Multiple queries by suspicious processes or users."
+      - "High: Registry queries linked to active intrusion or persistence."
+  - confidence_levels:
+      - "High: Confirmed unauthorized registry queries."
+      - "Medium: Suspicious queries pending validation."
+      - "Low: Normal administrative activity."
+
+ioc_types:
+  - "Execution of reg.exe query commands"
+  - "PowerShell scripts accessing registry keys"
+  - "API calls querying sensitive registry paths"
+
+queries/examples:
+  - name: "Detect reg.exe Query Command"
+    query: >
+      process.name == "reg.exe" AND
+      process.command_line CONTAINS "query"
+
+  - name: "Detect PowerShell Registry Access"
+    query: >
+      process.name == "powershell.exe" AND
+      process.command_line MATCHES "(?i)Get-ItemProperty|Get-Item"
+
+automation_hooks:
+  - "Alert on suspicious registry query commands."
+  - "Restrict reg.exe usage to authorized users."
+  - "Monitor for persistence-related registry changes."
+
+analyst_guidance:
+  - "Verify legitimacy of registry queries."
+  - "Correlate with other suspicious system activity."
+  - "Recommend enhanced endpoint security and monitoring."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1012/"
+  - "https://docs.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4657"
+
+review_cycle: "Quarterly or after registry query alerts"

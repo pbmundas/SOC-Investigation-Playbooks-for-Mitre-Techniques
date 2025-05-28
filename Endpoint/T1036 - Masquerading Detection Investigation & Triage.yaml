@@ -1,0 +1,87 @@
+playbook_name: "T1036 - Masquerading Detection: Investigation & Triage"
+tactic: "Defense Evasion"
+technique_id: "T1036"
+technique_name: "Masquerading"
+description: >
+  Detect attempts to disguise malicious files, processes, or accounts by using names or paths similar to legitimate ones.
+
+investigation_steps:
+  - step_number: 1
+    title: "Identify Suspicious Names or Paths"
+    description: >
+      Detect files or processes using names similar to trusted binaries or services but located in unusual paths or with suspicious extensions.
+    checklist:
+      - "Are file names similar to system binaries but in non-standard locations?"
+      - "Are extensions misleading (e.g., .exe vs .txt)?"
+      - "Are digital signatures missing or invalid?"
+    data_sources:
+      - "File system scans"
+      - "Process creation logs"
+      - "Digital signature verification"
+
+  - step_number: 2
+    title: "Compare Hashes and Signatures"
+    description: >
+      Verify hashes and digital signatures of suspicious files against known good binaries.
+    checklist:
+      - "Does the file hash differ from the legitimate binary?"
+      - "Is the digital signature absent or untrusted?"
+    data_sources:
+      - "Threat intelligence"
+      - "Endpoint protection logs"
+
+  - step_number: 3
+    title: "Monitor Execution of Masqueraded Binaries"
+    description: >
+      Observe execution context and behavior for signs of masqueraded malware.
+    checklist:
+      - "Is the process spawning suspicious child processes?"
+      - "Are there abnormal network connections?"
+    data_sources:
+      - "Process telemetry"
+      - "Network monitoring"
+
+  - step_number: 4
+    title: "Respond and Quarantine"
+    description: >
+      Isolate or remove masqueraded binaries and reinforce file integrity monitoring.
+    checklist:
+      - "Quarantine suspicious files."
+      - "Alert on new masquerading attempts."
+    data_sources:
+      - "Endpoint management"
+      - "SIEM"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Known benign similarly named files."
+      - "Medium: Suspicious masquerading attempts."
+      - "High: Confirmed malicious masquerading."
+  - confidence_levels:
+      - "High: Verified malicious masquerading."
+      - "Medium: Suspicious but uncertain."
+      - "Low: False positives."
+
+ioc_types:
+  - "File names matching legitimate binaries"
+  - "Unsigned or invalid digital signatures"
+  - "Hashes differing from known binaries"
+
+queries/examples:
+  - name: "Detect masqueraded binaries in non-standard paths"
+    query: >
+      file.name:("svchost.exe" OR "explorer.exe") AND NOT file.path:"C:\\Windows\\System32"
+
+automation_hooks:
+  - "Alert on execution of binaries with known names but unusual paths."
+  - "Trigger hash and signature verification automatically."
+
+analyst_guidance:
+  - "Validate legitimate locations of binaries."
+  - "Use threat intel to confirm malicious files."
+  - "Review process behavior for persistence or lateral movement."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1036/"
+
+review_cycle: "Quarterly or after detection of new masquerading attempts"

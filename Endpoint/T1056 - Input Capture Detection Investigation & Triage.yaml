@@ -1,0 +1,82 @@
+playbook_name: "T1056 - Input Capture Detection: Investigation & Triage"
+tactic: "Collection"
+technique_id: "T1056"
+technique_name: "Input Capture"
+description: >
+  Detects adversaries capturing user inputs such as keystrokes, mouse movements, or clipboard data through keyloggers or screen scrapers.
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect Keylogger or Input Capture Tool Execution"
+    description: >
+      Identify processes known for input capture or keylogging capabilities.
+    checklist:
+      - "Are keylogger binaries or scripts executed unexpectedly?"
+      - "Is there suspicious hooking of input APIs?"
+    data_sources:
+      - "Process creation logs"
+      - "API call monitoring"
+
+  - step_number: 2
+    title: "Monitor for Input Capture Artifacts"
+    description: >
+      Detect files or network connections associated with input logging, such as log files or outbound transmissions.
+    checklist:
+      - "Are keylogging log files created or accessed?"
+      - "Is input data transmitted over the network?"
+    data_sources:
+      - "File system monitoring"
+      - "Network traffic analysis"
+
+  - step_number: 3
+    title: "Correlate Input Capture with Credential Access or Exfiltration"
+    description: >
+      Investigate if input capture activity is linked with attempts to steal credentials or exfiltrate data.
+    checklist:
+      - "Is there network traffic shortly after input capture events?"
+      - "Are compromised credentials detected?"
+    data_sources:
+      - "Network logs"
+      - "Credential access monitoring"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Input capture tools used with user consent."
+      - "Medium: Suspicious input capture without confirmed exfiltration."
+      - "High: Malicious input capture linked to credential theft."
+  - confidence_levels:
+      - "High: Verified keylogger or input capture activity with data exfiltration."
+      - "Medium: Detection of suspicious input capture processes."
+      - "Low: Legitimate use of input capture software."
+
+ioc_types:
+  - "Execution of keylogger or input capture binaries"
+  - "Creation or access of input log files"
+  - "Suspicious network connections following input capture"
+
+queries/examples:
+  - name: "Detect Keylogger Execution"
+    query: >
+      process.name IN ("keylogger.exe", "inputcapture.exe", "hooklogger") OR
+      process.command_line MATCHES ("--keylog|--captureinput")
+
+  - name: "Input Log File Creation"
+    query: >
+      file.name MATCHES ("*keylog*.log") OR
+      file.content MATCHES ("[a-zA-Z0-9]{8,}")
+
+automation_hooks:
+  - "Alert on execution of input capture tools by unauthorized users."
+  - "Block suspicious network transmissions of input logs."
+  - "Notify security operations for investigation."
+
+analyst_guidance:
+  - "Verify legitimacy of input capture activity."
+  - "Examine user and process behavior."
+  - "Check for related credential theft or lateral movement."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1056/"
+  - "https://www.sans.org/white-papers/398/"
+
+review_cycle: "Monthly or upon detection of suspicious input capture activity"
