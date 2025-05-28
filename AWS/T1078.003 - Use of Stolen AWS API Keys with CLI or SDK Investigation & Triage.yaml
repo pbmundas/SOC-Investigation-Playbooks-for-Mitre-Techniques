@@ -1,0 +1,85 @@
+playbook_name: "T1078.003 - Use of Stolen AWS API Keys with CLI or SDK: Investigation & Triage"
+tactic: "Credential Access"
+technique_id: "T1078.003"
+technique_name: "Use of Stolen AWS API Keys with CLI or SDK"
+description: >
+  Detect unauthorized use of stolen AWS API keys through AWS CLI or SDK to access or manipulate AWS resources.
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect API Calls Using Unrecognized or Suspicious Access Keys"
+    description: >
+      Monitor AWS CloudTrail logs for API calls originating from unknown or suspicious access key IDs.
+    checklist:
+      - "Are there API calls using AccessKeyIds not linked to known users or applications?"
+      - "Are there calls from unusual geographic locations or IP addresses?"
+      - "Are there spikes in API usage or abnormal timing?"
+    data_sources:
+      - "AWS CloudTrail"
+      - "IAM Access Logs"
+      - "Network logs and geolocation data"
+
+  - step_number: 2
+    title: "Identify Command-Line or SDK Usage Patterns"
+    description: >
+      Examine command-line arguments and SDK usage metadata to detect malicious activities.
+    checklist:
+      - "Are there commands for resource creation, deletion, or privilege escalation?"
+      - "Is the API usage pattern different from legitimate automation?"
+      - "Are there repetitive or scripted API calls?"
+    data_sources:
+      - "CloudTrail API request parameters"
+      - "Command-line monitoring (if available)"
+      - "SDK call metadata"
+
+  - step_number: 3
+    title: "Correlate with Other Anomalies or Indicators of Compromise"
+    description: >
+      Cross-reference with IAM changes, network traffic anomalies, or alerts from threat intelligence.
+    checklist:
+      - "Are there new IAM roles or users created soon after?"
+      - "Is there evidence of lateral movement or data exfiltration?"
+      - "Are monitoring or logging mechanisms being disabled?"
+    data_sources:
+      - "CloudTrail"
+      - "Network monitoring"
+      - "SIEM correlation"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Known automation using keys."
+      - "Medium: Unusual API key usage."
+      - "High: Confirmed unauthorized use of stolen keys."
+  - confidence_levels:
+      - "High: Access keys linked to breach or malicious IPs."
+      - "Medium: Anomalous usage patterns."
+      - "Low: Potential false positives from new automation."
+
+ioc_types:
+  - "API calls with unknown AccessKeyId"
+  - "Access from untrusted IPs or geolocations"
+  - "Abnormal CLI/SDK usage patterns"
+
+queries/examples:
+  - name: "Detect API calls with unknown AccessKeyId"
+    query: >
+      NOT userIdentity.accessKeyId IN (trusted_keys)
+  - name: "Detect API calls from unusual IPs"
+    query: >
+      sourceIPAddress NOT IN (trusted_IPs)
+
+automation_hooks:
+  - "Alert on suspicious API key usage."
+  - "Revoke or rotate compromised API keys."
+  - "Trigger incident response and forensic analysis."
+
+analyst_guidance:
+  - "Verify if API keys belong to legitimate applications."
+  - "Investigate command patterns and network locations."
+  - "Contain and remediate compromised credentials immediately."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1078/003/"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html"
+
+review_cycle: "Monthly or post-incident"

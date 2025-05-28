@@ -1,0 +1,103 @@
+playbook_name: "T1078 - Compromise or Misuse of IAM Users, Roles, and Access Keys: Investigation & Triage"
+tactic: "Persistence"
+technique_id: "T1078"
+technique_name: "Valid Accounts"
+description: >
+  Detect and investigate the misuse or compromise of AWS IAM users, roles, and associated access keys. Attackers may leverage stolen credentials or hijacked roles for persistence, privilege escalation, or data exfiltration.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Usage of IAM Access Keys and Roles"
+    description: >
+      Review AWS CloudTrail logs for API calls made using IAM users’ access keys or assumed roles.
+    checklist:
+      - "Are access keys being used outside normal operational hours or geolocations?"
+      - "Are there unusual or high volumes of API calls from specific users or roles?"
+      - "Is there evidence of role chaining or repeated AssumeRole usage?"
+    data_sources:
+      - "AWS CloudTrail (API calls, AssumeRole events)"
+      - "AWS IAM credential reports"
+      - "Identity provider logs for federated access"
+
+  - step_number: 2
+    title: "Detect Suspicious Activity from IAM Users or Roles"
+    description: >
+      Identify anomalous behaviors such as privilege escalation, policy changes, or access to sensitive resources.
+    checklist:
+      - "Are IAM policies or role trust relationships modified unexpectedly?"
+      - "Is there suspicious activity like creation or deletion of access keys?"
+      - "Are there access attempts to resources outside typical usage patterns?"
+    data_sources:
+      - "AWS CloudTrail (PutUserPolicy, AttachUserPolicy, UpdateAssumeRolePolicy)"
+      - "AWS Config IAM changes"
+      - "AWS S3 and data access logs"
+
+  - step_number: 3
+    title: "Identify Access Key Compromise or Misuse"
+    description: >
+      Detect usage of expired, disabled, or rotated access keys, which may indicate misuse or theft.
+    checklist:
+      - "Are access keys being used after rotation or deactivation?"
+      - "Are there multiple concurrent sessions using the same access key?"
+      - "Is usage pattern consistent with legitimate users?"
+    data_sources:
+      - "AWS IAM credential reports"
+      - "CloudTrail API usage logs"
+
+  - step_number: 4
+    title: "Correlate with Other Indicators of Compromise"
+    description: >
+      Correlate IAM user or role misuse with other suspicious activities such as network anomalies or data exfiltration.
+    checklist:
+      - "Is there lateral movement across AWS accounts or services?"
+      - "Are there unusual network connections or data transfers?"
+      - "Is there evidence of privilege escalation?"
+    data_sources:
+      - "AWS CloudTrail"
+      - "Network flow logs"
+      - "SIEM and IDS alerts"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Normal usage with minor anomalies or expected administrative changes."
+      - "Medium: Suspicious activity requiring further investigation."
+      - "High: Confirmed misuse or compromise of IAM credentials."
+  - confidence_levels:
+      - "High: Clear logs of unauthorized access and misuse."
+      - "Medium: Unusual usage patterns without confirmed malicious intent."
+      - "Low: Possible false positives due to automated jobs or cloud management tools."
+
+ioc_types:
+  - "Unexpected AssumeRole or access key usage"
+  - "Unusual API calls or IAM policy changes"
+  - "Access key usage after deactivation or rotation"
+  - "Role chaining or session anomalies"
+
+queries/examples:
+  - name: "Detect AssumeRole Usage Outside Normal Hours"
+    query: >
+      eventName="AssumeRole" AND NOT eventTime BETWEEN '08:00:00' AND '18:00:00'
+  - name: "Detect Access Key Usage After Deactivation"
+    query: >
+      eventName="*" AND userIdentity.accessKeyId IN ["<deactivated_keys>"]
+  - name: "Detect IAM Policy Changes"
+    query: >
+      eventName IN ["PutUserPolicy", "AttachUserPolicy", "UpdateAssumeRolePolicy"]
+
+automation_hooks:
+  - "Alert on anomalous AssumeRole or access key usage."
+  - "Automatically disable suspicious access keys."
+  - "Trigger incident response workflow for confirmed compromises."
+
+analyst_guidance:
+  - "Verify legitimacy of API calls and access key usage."
+  - "Check IAM policy and role trust relationship changes."
+  - "Coordinate with identity management teams for remediation."
+  - "Rotate or revoke compromised credentials immediately."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1078/"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html"
+
+review_cycle: "Quarterly or post-incident"

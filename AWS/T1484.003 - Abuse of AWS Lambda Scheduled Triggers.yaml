@@ -1,0 +1,71 @@
+playbook_name: "T1484.003 - Abuse of AWS Lambda Scheduled Triggers"
+tactic: "Persistence"
+technique_id: "T1484.003"
+technique_name: "Scheduled Task/Job: Lambda Triggers"
+description: >
+  Detect unauthorized or malicious modification of AWS Lambda scheduled triggers
+  such as CloudWatch Events, EventBridge, or Step Functions that execute Lambda functions for persistence or execution of malicious payloads.
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect Changes to Lambda Scheduled Triggers"
+    description: >
+      Monitor creation, update, or deletion of Lambda triggers tied to scheduled events.
+    checklist:
+      - "Are Lambda triggers created or modified by unexpected users or roles?"
+      - "Is trigger frequency or target Lambda unusual?"
+      - "Is the trigger associated with a known compromised resource?"
+    data_sources:
+      - "CloudTrail Logs"
+      - "AWS Config"
+      - "Lambda Function Logs"
+
+  - step_number: 2
+    title: "Analyze Triggered Lambda Execution"
+    description: >
+      Examine execution logs for unusual or suspicious activity during Lambda runs initiated by scheduled triggers.
+    checklist:
+      - "Is there execution of unusual commands or network calls?"
+      - "Are environment variables or function code modified during execution?"
+    data_sources:
+      - "CloudWatch Logs"
+      - "Lambda Execution Logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Scheduled triggers matching deployment automation."
+      - "Medium: New or unsanctioned trigger creations or updates."
+      - "High: Suspicious Lambda executions tied to scheduled triggers."
+  - confidence_levels:
+      - "High: Direct evidence of malicious payload or persistence."
+      - "Medium: Trigger change without clear malicious activity."
+      - "Low: Routine automation."
+
+ioc_types:
+  - "PutRule or PutTargets API calls for Lambda triggers"
+  - "Lambda executions outside normal schedule or baseline"
+  - "Modification of Lambda environment variables or code by unauthorized principals"
+
+queries/examples:
+  - name: "Lambda Trigger Creation"
+    query: >
+      cloudtrail: eventName=PutTargets AND resourceType=AWS::Events::Rule
+  - name: "Suspicious Lambda Executions"
+    query: >
+      cloudwatchlogs: lambda_function_name AND message CONTAINS (\"Invoke\", \"Error\", \"Exec\") 
+
+automation_hooks:
+  - "Alert on Lambda trigger creation or modification by non-admin users."
+  - "Trigger Lambda function code analysis on suspicious executions."
+  - "Initiate incident response on unauthorized Lambda environment changes."
+
+analyst_guidance:
+  - "Review Lambda trigger sources and targets."
+  - "Verify legitimacy of scheduled executions."
+  - "Correlate Lambda logs with other suspicious activity."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1484/003/"
+  - "https://docs.aws.amazon.com/lambda/latest/dg/lambda-scheduled-events.html"
+
+review_cycle: "Quarterly or post-incident"

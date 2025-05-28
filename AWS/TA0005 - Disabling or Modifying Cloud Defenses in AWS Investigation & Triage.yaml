@@ -1,0 +1,85 @@
+playbook_name: "TA0005 - Disabling or Modifying Cloud Defenses in AWS: Investigation & Triage"
+tactic: "Defense Evasion"
+technique_id: "TA0005"
+technique_name: "Defense Evasion"
+description: >
+  Detect and respond to adversaries attempting to disable or modify AWS security services such as GuardDuty, AWS Config, CloudTrail, or Security Hub to avoid detection.
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect Service Modification or Disablement Events"
+    description: >
+      Monitor CloudTrail for API calls like StopMonitoringMembers, DeleteTrail, StopLogging, or UpdateDetector.
+    checklist:
+      - "Is there an API call indicating disabling of logging or monitoring?"
+      - "Is the action taken by an unexpected user or role?"
+      - "Are there signs of privilege escalation before the action?"
+    data_sources:
+      - "CloudTrail logs"
+      - "IAM policy and role change logs"
+
+  - step_number: 2
+    title: "Correlate Events with Suspicious Activities"
+    description: >
+      Look for precursor or follow-up events like credential theft, privilege escalation, or unusual data access.
+    checklist:
+      - "Was this action preceded by suspicious login behavior or lateral movement?"
+      - "Was there new role or key creation before the event?"
+      - "Is there any exfiltration attempt following this event?"
+    data_sources:
+      - "CloudTrail"
+      - "SIEM correlation rules"
+      - "VPC Flow Logs"
+
+  - step_number: 3
+    title: "Determine Impact and Scope"
+    description: >
+      Assess which security services were impacted and whether visibility was lost.
+    checklist:
+      - "Was logging stopped or configuration deleted?"
+      - "Was detection service like GuardDuty or Security Hub disabled?"
+      - "Is there a gap in logs for the targeted services?"
+    data_sources:
+      - "CloudTrail"
+      - "Security service dashboards"
+      - "S3 bucket access logs (if applicable)"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Misconfigured automation with unintended effects."
+      - "Medium: Legitimate admin testing activity."
+      - "High: Confirmed attacker disabling defenses."
+  - confidence_levels:
+      - "High: Disabling commands from compromised or unknown identities."
+      - "Medium: Suspicious timing or access context."
+      - "Low: Administrative change with documented intent."
+
+ioc_types:
+  - "StopLogging or DeleteTrail API call"
+  - "UpdateDetector with GuardDuty set to disabled"
+  - "Disabling or detaching IAM policies"
+
+queries/examples:
+  - name: "Detect CloudTrail StopLogging Events"
+    query: >
+      eventName="StopLogging" OR eventName="DeleteTrail"
+  - name: "Detect GuardDuty Disabling"
+    query: >
+      eventName="UpdateDetector" AND requestParameters.enable=false
+
+automation_hooks:
+  - "Immediate alert for disabling of CloudTrail, GuardDuty, AWS Config."
+  - "Auto-enable CloudTrail or GuardDuty if policy permits."
+  - "Trigger containment and identity investigation runbook."
+
+analyst_guidance:
+  - "Verify actor identity and whether the change was authorized."
+  - "Restore impacted security services from backup or re-enable."
+  - "Review IAM policies and audit logs for further compromise indicators."
+
+reference_links:
+  - "https://attack.mitre.org/tactics/TA0005/"
+  - "https://docs.aws.amazon.com/awscloudtrail/latest/APIReference/API_StopLogging.html"
+  - "https://docs.aws.amazon.com/guardduty/latest/APIReference/API_UpdateDetector.html"
+
+review_cycle: "Quarterly and post-incident"

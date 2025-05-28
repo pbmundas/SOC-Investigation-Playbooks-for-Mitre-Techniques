@@ -1,0 +1,91 @@
+playbook_name: "T1486 - Data Encrypted for Impact on S3 Buckets or EBS Volumes"
+tactic: "Impact"
+technique_id: "T1486"
+technique_name: "Data Encrypted for Impact"
+description: >
+  Detect ransomware or malicious activity encrypting data stored in AWS services such as S3 buckets or
+  EBS volumes, causing disruption or denial of access.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Unusual Changes or Encryption on S3 Buckets"
+    description: >
+      Detect sudden or mass changes in S3 object encryption status, deletions, or object replacements.
+    checklist:
+      - "Are there bulk object modifications or replacements?"
+      - "Is encryption status changing unexpectedly?"
+      - "Are deletion events occurring in clusters?"
+    data_sources:
+      - "S3 Access Logs"
+      - "CloudTrail Logs"
+      - "AWS Config"
+
+  - step_number: 2
+    title: "Detect Encryption or Modification of EBS Volumes"
+    description: >
+      Review AWS CloudTrail and EBS snapshots for unexpected encryption, deletion, or snapshot creation patterns.
+    checklist:
+      - "Are EBS volumes being encrypted or deleted without change control?"
+      - "Are snapshots created in suspicious patterns or by unknown users?"
+      - "Is there evidence of mounting volumes on compromised instances?"
+    data_sources:
+      - "CloudTrail Logs"
+      - "AWS Config"
+      - "EC2 Logs"
+
+  - step_number: 3
+    title: "Correlate with Ransomware or Malicious Activity"
+    description: >
+      Investigate indicators of ransomware execution such as suspicious Lambda functions, EC2 processes,
+      or IAM changes enabling such impact.
+    checklist:
+      - "Are there signs of ransomware binaries or scripts running on EC2 or Lambda?"
+      - "Is there privilege escalation or suspicious IAM policy changes?"
+      - "Are alerting mechanisms detecting ransom notes or unusual file extensions?"
+    data_sources:
+      - "EDR Logs"
+      - "CloudTrail Logs"
+      - "IAM Logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Planned or authorized encryption activities."
+      - "Medium: Unusual encryption changes needing validation."
+      - "High: Confirmed ransomware encryption impacting data availability."
+  - confidence_levels:
+      - "High: Verified ransomware or malicious encryption event."
+      - "Medium: Suspicious encryption with incomplete confirmation."
+      - "Low: Routine encryption or backup activities."
+
+ioc_types:
+  - "Mass S3 object encryption or deletion events"
+  - "Unexpected EBS volume encryption or deletion"
+  - "Suspicious processes or scripts on EC2 or Lambda linked to encryption"
+
+queries/examples:
+  - name: "Bulk S3 Object Encryption Changes"
+    query: >
+      cloudtrail: eventName IN ("PutObject", "CopyObject") AND requestParameters.sseAlgorithm != null AND eventTime > last_24h
+  - name: "EBS Volume Encryption or Deletion"
+    query: >
+      cloudtrail: eventName IN ("EncryptVolume", "DeleteVolume") AND userIdentity.type = "IAMUser"
+  - name: "Suspicious EC2 Process Executions"
+    query: >
+      edr_logs: processName IN ("ransomware.exe", "encryptor.py")
+
+automation_hooks:
+  - "Alert on bulk S3 encryption or deletion events outside of maintenance windows."
+  - "Trigger automated snapshot backups and isolate compromised EC2 instances."
+  - "Revoke or rotate IAM keys involved in suspicious encryption activities."
+
+analyst_guidance:
+  - "Confirm if encryption activity aligns with backup or compliance processes."
+  - "Correlate with ransomware indicators or compromise evidence."
+  - "Recommend incident response steps including recovery and remediation."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1486/"
+  - "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSEncryption.html"
+  - "https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingEncryption.html"
+
+review_cycle: "Quarterly or post-incident"

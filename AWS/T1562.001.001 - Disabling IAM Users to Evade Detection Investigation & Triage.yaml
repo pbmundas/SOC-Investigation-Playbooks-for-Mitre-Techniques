@@ -1,0 +1,80 @@
+playbook_name: "T1562.001.001 - Disabling IAM Users to Evade Detection: Investigation & Triage"
+tactic: "Defense Evasion"
+technique_id: "T1562.001"
+technique_name: "Disabling IAM Users"
+description: >
+  Detect attempts to disable IAM users, such as removing login profiles or credentials, aimed at evading detection or locking out legitimate users.
+
+investigation_steps:
+  - step_number: 1
+    title: "Identify Disabling Actions on IAM Users"
+    description: >
+      Monitor CloudTrail for actions like DeleteLoginProfile or RemoveAccessKey.
+    checklist:
+      - "Are login profiles deleted or access keys removed unexpectedly?"
+      - "Is disabling activity performed outside normal maintenance windows?"
+      - "Is disabling done by authorized personnel?"
+    data_sources:
+      - "AWS CloudTrail (DeleteLoginProfile, DeleteAccessKey, UpdateLoginProfile)"
+      - "AWS IAM credential reports"
+
+  - step_number: 2
+    title: "Assess Impact of Disabling Actions"
+    description: >
+      Determine which users are disabled and if it affects legitimate access.
+    checklist:
+      - "Are critical or admin users disabled?"
+      - "Is there a pattern of disabling multiple users?"
+    data_sources:
+      - "IAM user status"
+      - "CloudTrail logs"
+
+  - step_number: 3
+    title: "Correlate Disabling Events with Suspicious Behavior"
+    description: >
+      Investigate whether disabling was used to evade detection or facilitate malicious activity.
+    checklist:
+      - "Is there follow-up unauthorized activity?"
+      - "Are affected users reporting access issues?"
+    data_sources:
+      - "Authentication logs"
+      - "Incident reports"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Authorized user disabling."
+      - "Medium: Unusual disabling activity."
+      - "High: Unauthorized disabling for evasion."
+  - confidence_levels:
+      - "High: Direct evidence of unauthorized disabling."
+      - "Medium: Anomalous disabling without clear cause."
+      - "Low: Maintenance or admin activities."
+
+ioc_types:
+  - "DeleteLoginProfile events"
+  - "RemoveAccessKey events"
+  - "UpdateLoginProfile disabling"
+
+queries/examples:
+  - name: "Detect Deletion of Login Profiles"
+    query: >
+      eventName="DeleteLoginProfile"
+  - name: "Detect Removal of Access Keys"
+    query: >
+      eventName="DeleteAccessKey"
+
+automation_hooks:
+  - "Alert on login profile deletion by non-authorized users."
+  - "Automate user access recovery if disabling is suspicious."
+  - "Block further login profile deletion attempts."
+
+analyst_guidance:
+  - "Verify with IAM admins about the purpose of disabling."
+  - "Immediately restore disabled user access if unauthorized."
+  - "Monitor for lateral movement or suspicious login attempts."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1562/"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_manage.html"
+
+review_cycle: "Monthly or after suspicious events"

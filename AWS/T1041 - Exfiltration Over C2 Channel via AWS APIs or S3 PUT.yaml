@@ -1,0 +1,91 @@
+playbook_name: "T1041 - Exfiltration Over C2 Channel via AWS APIs or S3 PUT"
+tactic: "Exfiltration"
+technique_id: "T1041"
+technique_name: "Exfiltration Over C2 Channel"
+description: >
+  Detect and investigate data exfiltration attempts using AWS APIs, AWS CLI commands, or S3 PUT operations.
+  Attackers may use these channels to covertly transfer data out of the environment, often blending with legitimate traffic.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor S3 PUT Requests for Data Uploads"
+    description: >
+      Analyze S3 PUT events for unusual or large data uploads that may indicate exfiltration.
+    checklist:
+      - "Are there uploads to uncommon or newly created buckets?"
+      - "Are large files being uploaded in short timeframes?"
+      - "Are PUT requests originating from unexpected IAM roles or IP addresses?"
+    data_sources:
+      - "S3 Access Logs"
+      - "CloudTrail Logs"
+      - "VPC Flow Logs"
+
+  - step_number: 2
+    title: "Detect Suspicious AWS API or CLI Exfiltration Commands"
+    description: >
+      Review CloudTrail and CLI logs for commands or API calls that can be used to extract data or send it outside the environment.
+    checklist:
+      - "Are there unusual or unauthorized API calls for data retrieval or transfer?"
+      - "Are CLI commands run with elevated privileges or by unexpected users?"
+      - "Is there use of automation scripts for mass data extraction?"
+    data_sources:
+      - "CloudTrail Logs"
+      - "AWS CLI Command Logs"
+      - "EDR or Endpoint Logs on EC2 instances"
+
+  - step_number: 3
+    title: "Correlate Data Exfiltration Activities with Other Indicators"
+    description: >
+      Cross-reference exfiltration signs with other suspicious behaviors such as compromised credentials or persistence mechanisms.
+    checklist:
+      - "Are data uploads preceded by privilege escalation or lateral movement?"
+      - "Is there evidence of compromised IAM roles or keys?"
+      - "Are there simultaneous network connections to external or suspicious endpoints?"
+    data_sources:
+      - "CloudTrail Logs"
+      - "IAM Access Logs"
+      - "Network Logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Authorized data uploads by known applications."
+      - "Medium: Unusual data transfer activity needing review."
+      - "High: Confirmed malicious data exfiltration attempt."
+  - confidence_levels:
+      - "High: Clear unauthorized data upload with attacker context."
+      - "Medium: Suspicious activity with some indicators of compromise."
+      - "Low: Routine uploads with minor anomalies."
+
+ioc_types:
+  - "S3 PUT requests to unknown or newly created buckets"
+  - "Unusual or unauthorized AWS API calls for data extraction"
+  - "CLI commands running mass data export or upload scripts"
+
+queries/examples:
+  - name: "Large S3 PUT Uploads"
+    query: >
+      s3_access_logs: eventName="PutObject" AND objectSize > 100000000
+  - name: "Suspicious AWS CLI Data Extraction"
+    query: >
+      cloudtrail: eventName IN ("GetObject", "ListObjects") AND userAgent LIKE "%aws-cli%"
+  - name: "Unusual Data Transfer API Calls"
+    query: >
+      cloudtrail: eventName IN ("PutObject", "UploadPart") AND sourceIPAddress NOT IN trusted_ips
+
+automation_hooks:
+  - "Trigger alerts on large or frequent S3 PUT operations by unknown entities."
+  - "Automatically revoke or rotate IAM keys used in suspicious data transfers."
+  - "Initiate network isolation or session termination on compromised EC2 instances."
+
+analyst_guidance:
+  - "Verify whether the data transfers align with business processes or known workflows."
+  - "Correlate exfiltration attempts with other attacker activity such as credential theft."
+  - "Recommend tightening IAM policies and implementing encryption for sensitive data."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1041/"
+  - "https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObject.html"
+  - "https://docs.aws.amazon.com/cli/latest/reference/s3/put-object.html"
+  - "https://aws.amazon.com/blogs/security/how-to-detect-and-respond-to-aws-api-abuse/"
+
+review_cycle: "Quarterly or post-incident"

@@ -1,0 +1,77 @@
+playbook_name: "T1068 - Privilege Escalation via Lambda or IAM Misconfiguration"
+tactic: "Privilege Escalation"
+technique_id: "T1068"
+technique_name: "Exploitation for Privilege Escalation"
+description: >
+  Detect privilege escalation through misuse of overly permissive IAM roles
+  assigned to Lambda functions or through IAM policy misconfigurations enabling role chaining or privilege elevation.
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect Over-Permissive Lambda Role Assignments"
+    description: >
+      Review IAM roles used in Lambda functions for excessive permissions such as `iam:PassRole`, `sts:AssumeRole`, or full administrative access.
+    checklist:
+      - "Does the function role include wildcard actions or full admin access?"
+      - "Is `iam:PassRole` used without a resource condition?"
+      - "Is `sts:AssumeRole` allowed from unexpected principals?"
+    data_sources:
+      - "CloudTrail"
+      - "IAM Access Analyzer"
+      - "AWS Config Rules"
+
+  - step_number: 2
+    title: "Detect Cross-Account or Role Chaining for Escalation"
+    description: >
+      Monitor role assumptions and privilege chaining across multiple sessions or accounts.
+    checklist:
+      - "Are Lambda functions triggering downstream escalated roles?"
+      - "Do IAM logs show chaining from low-priv to admin via AssumeRole?"
+      - "Any suspicious patterns of session tagging or policy updates?"
+    data_sources:
+      - "CloudTrail AssumeRole events"
+      - "GuardDuty findings"
+      - "IAM Role trust relationships"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Misconfigured but unused roles."
+      - "Medium: Escalated privilege path detected but unused."
+      - "High: Confirmed active privilege abuse via Lambda."
+  - confidence_levels:
+      - "High: Confirmed role escalation with IAM actions."
+      - "Medium: Unusual Lambda IAM role mapping."
+      - "Low: Detected over-permissive roles in config scans."
+
+ioc_types:
+  - "iam:PassRole with wildcard"
+  - "Lambda with inline policies containing `*`"
+  - "Multiple AssumeRole events within same session chain"
+
+queries/examples:
+  - name: "IAM Privilege Escalation Detection"
+    query: >
+      cloudtrail: eventName=PassRole AND requestParameters.roleArn=* AND sourceIPAddress NOT IN expected_admin_sources
+  - name: "Suspicious Lambda Policy"
+    query: >
+      AWS Config: resourceType=Lambda AND policyDocument INCLUDES Action: "*"
+  - name: "Role Chaining Pattern"
+    query: >
+      cloudtrail: eventName=AssumeRole AND sessionName REPEATS WITHIN 5 mins
+
+automation_hooks:
+  - "Auto-flag over-permissive roles for review."
+  - "Trigger GuardDuty escalation alert to SOC."
+  - "Initiate IAM least privilege remediation script."
+
+analyst_guidance:
+  - "Check IAM policy diff and historical use."
+  - "Identify any EC2 or Lambda asset tied to privilege escalation."
+  - "Correlate with any past STS token abuse incidents."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1068/"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_passrole.html"
+  - "https://github.com/RhinoSecurityLabs/cloudgoat"
+
+review_cycle: "Every 45 days or IAM policy audit window"

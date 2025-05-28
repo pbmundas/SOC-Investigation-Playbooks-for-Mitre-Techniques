@@ -1,0 +1,90 @@
+playbook_name: "T1499 - Endpoint Denial of Service (Resource Exhaustion Attacks on AWS Services)"
+tactic: "Impact"
+technique_id: "T1499"
+technique_name: "Endpoint Denial of Service"
+description: >
+  Detect and investigate denial-of-service attacks targeting AWS services by exhausting resources,
+  causing service disruption or degradation.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor AWS Service Metrics for Resource Exhaustion"
+    description: >
+      Review CloudWatch metrics for unusual spikes in CPU, memory, network, or API request rates on EC2, Lambda, and other services.
+    checklist:
+      - "Are there sudden spikes in CPU or memory utilization on EC2 instances?"
+      - "Are Lambda invocation errors or throttling increasing abnormally?"
+      - "Are API request rates unusually high or spiking?"
+    data_sources:
+      - "CloudWatch Metrics"
+      - "CloudTrail Logs"
+      - "VPC Flow Logs"
+
+  - step_number: 2
+    title: "Identify Unusual Traffic or API Patterns"
+    description: >
+      Detect repeated or malformed API calls or network traffic intended to exhaust service limits or cause degradation.
+    checklist:
+      - "Are there high volumes of identical API calls or requests?"
+      - "Are there repeated requests from single or distributed IPs?"
+      - "Are requests triggering rate limiting or throttling?"
+    data_sources:
+      - "CloudTrail Logs"
+      - "VPC Flow Logs"
+      - "API Gateway Logs"
+
+  - step_number: 3
+    title: "Correlate with Potential Attack Vectors"
+    description: >
+      Investigate if the resource exhaustion is linked to compromised accounts, unusual user activity, or lateral movement.
+    checklist:
+      - "Are there suspicious IAM user or role activities preceding the attack?"
+      - "Is the traffic originating from known malicious IPs or regions?"
+      - "Is there evidence of prior reconnaissance or persistence?"
+    data_sources:
+      - "IAM Logs"
+      - "Threat Intelligence Feeds"
+      - "CloudTrail Logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Transient or authorized high resource usage."
+      - "Medium: Repeated spikes requiring validation."
+      - "High: Confirmed DoS or resource exhaustion attack."
+  - confidence_levels:
+      - "High: Verified malicious resource exhaustion."
+      - "Medium: Suspicious activity with inconclusive evidence."
+      - "Low: Legitimate but unusual resource usage."
+
+ioc_types:
+  - "Sudden spikes in CloudWatch metrics"
+  - "High frequency or repetitive API calls"
+  - "Increased Lambda throttling or errors"
+
+queries/examples:
+  - name: "Spike in EC2 CPU Usage"
+    query: >
+      cloudwatch: namespace="AWS/EC2" metricName="CPUUtilization" statistic="Average" period=300 > 80
+  - name: "High API Request Rate"
+    query: >
+      cloudtrail: eventSource="ec2.amazonaws.com" AND eventName IN ("DescribeInstances", "RunInstances") AND eventTime > last_1h | stats count() by sourceIPAddress
+  - name: "Lambda Invocation Errors"
+    query: >
+      cloudwatch: namespace="AWS/Lambda" metricName="Errors" > 100
+
+automation_hooks:
+  - "Trigger auto-scaling or throttling policies on resource exhaustion."
+  - "Alert on repeated or malformed API request patterns."
+  - "Throttle or block IPs exceeding request thresholds."
+
+analyst_guidance:
+  - "Validate if the high resource usage is business-related."
+  - "Investigate source and context of traffic or API calls."
+  - "Recommend implementing WAF, rate limiting, and resource quotas."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1499/"
+  - "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/WhatIsCloudWatch.html"
+  - "https://docs.aws.amazon.com/lambda/latest/dg/monitoring-metrics.html"
+
+review_cycle: "Quarterly or post-incident"

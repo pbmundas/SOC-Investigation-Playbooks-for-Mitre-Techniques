@@ -1,0 +1,80 @@
+playbook_name: "T1078.002.001 - New IAM User Creation: Investigation & Triage"
+tactic: "Persistence"
+technique_id: "T1078.002"
+technique_name: "New IAM User Creation"
+description: >
+  Detect creation of new IAM users which may be leveraged by attackers to gain or maintain access to AWS environments.
+
+investigation_steps:
+  - step_number: 1
+    title: "Identify New IAM User Creation"
+    description: >
+      Monitor AWS CloudTrail for CreateUser API calls.
+    checklist:
+      - "Is the new user created by an authorized administrator?"
+      - "Is creation time within a known maintenance or change window?"
+      - "Does the username follow organizational conventions?"
+    data_sources:
+      - "AWS CloudTrail (CreateUser)"
+      - "AWS Config IAM resource history"
+
+  - step_number: 2
+    title: "Review New User Permissions"
+    description: >
+      Analyze attached permissions to ensure no excessive privilege is granted.
+    checklist:
+      - "Are permissions aligned with the principle of least privilege?"
+      - "Are administrator policies attached?"
+    data_sources:
+      - "CloudTrail (PutUserPolicy, AttachUserPolicy)"
+      - "IAM Access Advisor"
+
+  - step_number: 3
+    title: "Detect Usage of New IAM Users"
+    description: >
+      Check for console logins or API usage by new users.
+    checklist:
+      - "Are new users logging in or calling APIs soon after creation?"
+      - "Is access occurring from expected IPs or geographies?"
+    data_sources:
+      - "CloudTrail (ConsoleLogin, API calls)"
+      - "CloudWatch Logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Authorized new user creation."
+      - "Medium: Unusual creation with no immediate suspicious use."
+      - "High: Unauthorized user creation with suspicious activity."
+  - confidence_levels:
+      - "High: Clear evidence of unauthorized creation and usage."
+      - "Medium: Anomalous creation requiring review."
+      - "Low: False positive due to automated provisioning."
+
+ioc_types:
+  - "CreateUser API events"
+  - "New IAM users with administrator or broad permissions"
+  - "Console login or API calls from new users"
+
+queries/examples:
+  - name: "Detect New IAM User Creation"
+    query: >
+      eventName="CreateUser"
+  - name: "Detect New User Console Login"
+    query: >
+      eventName="ConsoleLogin" AND userIdentity.userName IN ["<new_users>"]
+
+automation_hooks:
+  - "Alert on unexpected new IAM user creation."
+  - "Trigger review and validation of new users."
+  - "Disable suspicious new accounts pending investigation."
+
+analyst_guidance:
+  - "Validate new user creation with IAM and security teams."
+  - "Review permissions and usage patterns."
+  - "Revoke or remediate unauthorized users immediately."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1078/"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users.html"
+
+review_cycle: "Quarterly or post-incident"

@@ -1,0 +1,75 @@
+playbook_name: "T1087.004 - AWS IAM Enumeration: Users, Roles, and Policies"
+tactic: "Discovery"
+technique_id: "T1087.004"
+technique_name: "Account Discovery: Cloud Account"
+description: >
+  Detect enumeration of AWS IAM users, roles, and inline/attached policies using API calls 
+  like `ListUsers`, `ListRoles`, `GetUser`, and `ListPolicies`. This is often an early-stage step 
+  by attackers to understand privilege boundaries or identify targets for privilege escalation.
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect Burst of IAM Enumeration API Calls"
+    description: >
+      Monitor for patterns of multiple IAM list and get operations in a short window by a single identity or access key.
+    checklist:
+      - "Are `ListUsers`, `ListRoles`, `ListAttachedUserPolicies` called in quick succession?"
+      - "Is this identity part of a known automation/script?"
+      - "Has the user/account shown enumeration behavior before?"
+    data_sources:
+      - "CloudTrail"
+      - "IAM Access Analyzer"
+      - "GuardDuty (Policy: Credential Access via Enumeration)"
+
+  - step_number: 2
+    title: "Correlate Enumeration to New/Unknown Principals"
+    description: >
+      Identify if this behavior is tied to compromised credentials, external actors, or rogue automation.
+    checklist:
+      - "Was the activity from an unexpected IP or new device?"
+      - "Was this access pattern seen on newly created credentials?"
+      - "Are there IAM permission changes shortly after enumeration?"
+    data_sources:
+      - "VPC Flow Logs"
+      - "AWS Config"
+      - "IAM Credential Reports"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Admin script usage for inventory."
+      - "Medium: Unusual enumeration from developer role."
+      - "High: Enumeration followed by privilege escalation."
+  - confidence_levels:
+      - "High: Access from external/untrusted location."
+      - "Medium: Burst pattern from internal identity."
+      - "Low: Background enumeration noise from known tool."
+
+ioc_types:
+  - "IAM ListUsers, ListRoles, GetUser API usage"
+  - "Burst API calls within seconds by same principal"
+  - "IP address not previously used by IAM principal"
+
+queries/examples:
+  - name: "IAM Enumeration Activity"
+    query: >
+      cloudtrail: eventName IN (ListUsers, ListRoles, GetUser, ListPolicies) AND userAgent != "AWSConsole"
+  - name: "IAM Enumeration Burst Detection"
+    query: >
+      cloudtrail: eventSource="iam.amazonaws.com" AND count(eventName) > 5 IN 1min BY accessKeyId
+
+automation_hooks:
+  - "Alert on IAM enumeration from new region or IP."
+  - "Trigger automated tagging of suspicious access keys."
+  - "Send IAM diff report to SOC with permissions granted."
+
+analyst_guidance:
+  - "Correlate enumeration with follow-on privilege or persistence actions."
+  - "Evaluate context—was the user recently onboarded or part of a pentest?"
+  - "Look for new roles, attached policies, or tokens post-enumeration."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1087/004/"
+  - "https://docs.aws.amazon.com/IAM/latest/APIReference/API_ListUsers.html"
+  - "https://rhinosecuritylabs.com/cloud-security/aws-iam-enumeration-techniques/"
+
+review_cycle: "Monthly or on new IAM policy deployments"

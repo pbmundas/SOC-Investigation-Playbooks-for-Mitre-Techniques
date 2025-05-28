@@ -1,0 +1,85 @@
+playbook_name: "T1562.001 - Disabling, Enabling, or Modifying IAM User/Role Settings: Investigation & Triage"
+tactic: "Defense Evasion"
+technique_id: "T1562.001"
+technique_name: "Disable or Modify IAM User/Role Settings"
+description: >
+  Detect attempts to disable, enable, or modify IAM user or role configurations, which attackers may perform to evade detection or maintain access.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor IAM User/Role Modification Events"
+    description: >
+      Track API calls related to updating, enabling, or disabling IAM users or roles.
+    checklist:
+      - "Are IAM users or roles disabled or enabled unexpectedly?"
+      - "Are permissions or policies modified unusually?"
+      - "Is modification performed by authorized users?"
+    data_sources:
+      - "AWS CloudTrail (UpdateUser, UpdateRole, DeleteLoginProfile, Enable/Disable MFA)"
+      - "AWS Config"
+
+  - step_number: 2
+    title: "Review Changes to IAM Permissions and Status"
+    description: >
+      Examine what settings were changed and their security impact.
+    checklist:
+      - "Are login profiles removed or disabled?"
+      - "Are MFA settings disabled or modified?"
+      - "Are policies changed to elevate or restrict access?"
+    data_sources:
+      - "CloudTrail logs"
+      - "IAM Access Advisor"
+
+  - step_number: 3
+    title: "Correlate with Other Suspicious Activity"
+    description: >
+      Check for suspicious logins, policy changes, or anomalous activity around the time of modifications.
+    checklist:
+      - "Is there suspicious activity following disabling/enabling?"
+      - "Are modifications correlated with lateral movement or data access?"
+    data_sources:
+      - "CloudTrail"
+      - "Authentication logs"
+      - "Network logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Authorized user/role modifications."
+      - "Medium: Unusual modifications requiring review."
+      - "High: Unauthorized disabling/enabling or privilege changes."
+  - confidence_levels:
+      - "High: Direct evidence of malicious modifications."
+      - "Medium: Anomalous but unclear intent."
+      - "Low: Potential false positive from admin activity."
+
+ioc_types:
+  - "UpdateUser, UpdateRole API calls"
+  - "DeleteLoginProfile or Remove MFA calls"
+  - "Policy modifications"
+
+queries/examples:
+  - name: "Detect IAM User Disabled (Login Profile Deleted)"
+    query: >
+      eventName="DeleteLoginProfile"
+  - name: "Detect IAM Role or User Update"
+    query: >
+      eventName IN ["UpdateUser", "UpdateRole"]
+  - name: "Detect Removal or Disabling of MFA"
+    query: >
+      eventName IN ["DeactivateMFADevice", "DeleteVirtualMFADevice"]
+
+automation_hooks:
+  - "Alert on disabling or enabling IAM users or roles by non-administrators."
+  - "Block suspicious policy or status changes."
+  - "Trigger investigation and rollback if needed."
+
+analyst_guidance:
+  - "Confirm legitimacy of modifications with IAM team."
+  - "Audit impacted accounts for abuse."
+  - "Reinstate secure settings immediately if malicious."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1562/"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_manage.html"
+
+review_cycle: "Monthly or post-incident"

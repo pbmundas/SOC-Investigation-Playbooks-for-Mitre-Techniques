@@ -1,0 +1,88 @@
+playbook_name: "T1561 - Disk Wipe (Deleting EBS Volumes, Snapshots, or S3 Buckets)"
+tactic: "Impact"
+technique_id: "T1561"
+technique_name: "Disk Wipe"
+description: >
+  Detect malicious deletion or wiping of AWS data storage resources such as EBS volumes,
+  snapshots, or S3 buckets intended to cause data loss or disruption.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Deletion Events in CloudTrail Logs"
+    description: >
+      Identify deletion or modification events involving EBS volumes, snapshots, or S3 buckets.
+    checklist:
+      - "Are there deleteVolume, deleteSnapshot, or deleteBucket events logged?"
+      - "Are deletions occurring in bulk or during unusual hours?"
+      - "Are deletions initiated by unexpected IAM users or roles?"
+    data_sources:
+      - "CloudTrail Logs"
+      - "AWS Config"
+      - "S3 Access Logs"
+
+  - step_number: 2
+    title: "Review Changes in AWS Config for Resource Compliance"
+    description: >
+      Detect configuration changes or compliance violations related to storage resources.
+    checklist:
+      - "Are resources removed violating compliance rules?"
+      - "Are deletion or retention policies changed unexpectedly?"
+    data_sources:
+      - "AWS Config"
+      - "CloudTrail Logs"
+
+  - step_number: 3
+    title: "Correlate Deletion Events with Malicious Activities"
+    description: >
+      Investigate whether deletion is linked to compromised credentials, privilege escalation, or ransomware behavior.
+    checklist:
+      - "Are IAM changes or privilege escalations preceding deletion?"
+      - "Is there evidence of ransomware activity or extortion demands?"
+      - "Are alerts triggered for unusual resource deletion?"
+    data_sources:
+      - "IAM Logs"
+      - "EDR or Endpoint Security Logs"
+      - "CloudTrail Logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Authorized deletions with change control."
+      - "Medium: Unusual deletions requiring investigation."
+      - "High: Confirmed malicious or unauthorized disk wipe."
+  - confidence_levels:
+      - "High: Verified malicious deletion or data wiping."
+      - "Medium: Suspicious deletions with incomplete context."
+      - "Low: Routine maintenance or clean-up."
+
+ioc_types:
+  - "DeleteVolume, DeleteSnapshot, DeleteBucket API calls"
+  - "Bulk or unusual deletion patterns"
+  - "Deletion events from untrusted users or IPs"
+
+queries/examples:
+  - name: "EBS Volume Deletion"
+    query: >
+      cloudtrail: eventName="DeleteVolume" AND eventTime > last_24h
+  - name: "Snapshot Deletion"
+    query: >
+      cloudtrail: eventName="DeleteSnapshot" AND userIdentity.type="IAMUser"
+  - name: "S3 Bucket Deletion"
+    query: >
+      cloudtrail: eventName="DeleteBucket" AND eventTime > last_7d
+
+automation_hooks:
+  - "Alert immediately on bulk or critical storage deletions."
+  - "Initiate automatic snapshot creation before deletions where possible."
+  - "Block or suspend accounts performing unauthorized deletions."
+
+analyst_guidance:
+  - "Verify change control records for deletions."
+  - "Assess impact and scope of data loss."
+  - "Coordinate incident response for recovery and remediation."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1561/"
+  - "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSEncryption.html"
+  - "https://docs.aws.amazon.com/AmazonS3/latest/userguide/deleting-buckets.html"
+
+review_cycle: "Quarterly or post-incident"

@@ -1,0 +1,74 @@
+playbook_name: "T1087.004 - Enumeration of Federated Identities and SSO Users"
+tactic: "Discovery"
+technique_id: "T1087.004"
+technique_name: "Account Discovery: Cloud Account"
+description: >
+  Detect attempts to enumerate AWS SSO users, AzureAD/SAML federated identities, and trust relationships 
+  configured for federated access. Attackers may use this to identify indirect privilege escalation paths.
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect Use of ListAccounts and ListUsers (SSO)"
+    description: >
+      Monitor API calls from identities listing AWS SSO or Identity Center accounts and users.
+    checklist:
+      - "Are ListUsers/ListAccounts called by a non-SSO admin?"
+      - "Are calls made using new/unknown identity providers?"
+      - "Are login attempts seen for newly listed users?"
+    data_sources:
+      - "CloudTrail"
+      - "AWS Identity Center (SSO) logs"
+      - "IAM Access Analyzer"
+
+  - step_number: 2
+    title: "Investigate Trust Relationships with External IdPs"
+    description: >
+      Identify newly added or altered identity providers and associated trust policies.
+    checklist:
+      - "Are new SAML providers or OpenID Connect providers added?"
+      - "Did any role trust policies change recently?"
+      - "Any federated user assumed roles from unusual locations?"
+    data_sources:
+      - "IAM Policy changes (CloudTrail)"
+      - "STS AssumeRoleWithSAML or AssumeRoleWithWebIdentity events"
+      - "GuardDuty for federated access anomalies"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Admin listing for audit or sync."
+      - "Medium: External identity listing federated users."
+      - "High: Trust policy change followed by unexpected AssumeRole."
+  - confidence_levels:
+      - "High: Enumeration confirmed with follow-up abuse."
+      - "Medium: Unknown IP performing trust changes."
+      - "Low: Normal activity from provisioning script."
+
+ioc_types:
+  - "ListUsers in identitystore.amazonaws.com"
+  - "IAM CreateIdentityProvider or UpdateTrustPolicy API events"
+  - "AssumeRoleWithSAML from unfamiliar SAML issuer"
+
+queries/examples:
+  - name: "SSO Enumeration Detection"
+    query: >
+      cloudtrail: eventSource=identitystore.amazonaws.com AND eventName=ListUsers
+  - name: "Federation Trust Policy Changes"
+    query: >
+      cloudtrail: eventName IN (CreateIdentityProvider, UpdateTrustPolicy, UpdateRoleTrustPolicy)
+
+automation_hooks:
+  - "Flag and review all external SAML/OIDC providers."
+  - "Auto-alert when new identity provider is created."
+  - "Initiate trust boundary review upon identity listing."
+
+analyst_guidance:
+  - "Determine if SSO or federated identity enumeration was authorized."
+  - "Check if federated role was used for lateral movement."
+  - "Use IP, device, and geo-location to detect external actor access."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1087/004/"
+  - "https://docs.aws.amazon.com/singlesignon/latest/userguide/logging.html"
+  - "https://unit42.paloaltonetworks.com/aws-federated-identity-trust-abuse/"
+
+review_cycle: "Monthly or after SSO/federation configuration change"

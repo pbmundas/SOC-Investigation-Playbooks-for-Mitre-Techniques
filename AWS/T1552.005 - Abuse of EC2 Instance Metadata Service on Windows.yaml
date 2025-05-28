@@ -1,0 +1,73 @@
+playbook_name: "T1552.005 - Abuse of EC2 Instance Metadata Service on Windows"
+tactic: "Credential Access"
+technique_id: "T1552.005"
+technique_name: "Unsecured Credentials: Cloud Instance Metadata API"
+description: >
+  Detect and investigate the abuse of the EC2 instance metadata service from Windows EC2 instances,
+  where attackers query the metadata endpoint to retrieve temporary credentials for lateral movement or privilege escalation.
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect Access to EC2 Metadata Service from Windows Instances"
+    description: >
+      Monitor HTTP requests to the metadata endpoint (169.254.169.254) originating from Windows EC2 instances.
+    checklist:
+      - "Are there PowerShell, CMD, or other Windows shell commands accessing the metadata endpoint?"
+      - "Are unexpected or suspicious processes making network requests to 169.254.169.254?"
+      - "Is metadata access correlated with unusual user activity or logins?"
+    data_sources:
+      - "Windows Event Logs (Process Creation, Network Connections)"
+      - "VPC Flow Logs"
+      - "CloudTrail Logs"
+
+  - step_number: 2
+    title: "Correlate Metadata Access with IAM API Calls"
+    description: >
+      Confirm whether temporary credentials retrieved from metadata are used to call AWS APIs.
+    checklist:
+      - "Is there increased STS AssumeRole or other IAM actions following metadata access?"
+      - "Are API calls from Windows instance IPs unusual in volume or type?"
+    data_sources:
+      - "CloudTrail"
+      - "GuardDuty"
+      - "Windows Security Logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Routine or expected metadata service access."
+      - "Medium: Metadata access by unexpected processes or users."
+      - "High: Confirmed credential theft and suspicious API activity."
+  - confidence_levels:
+      - "High: Metadata access followed by privilege escalation."
+      - "Medium: Metadata access without confirmed follow-on abuse."
+      - "Low: Known automation or monitoring tool behavior."
+
+ioc_types:
+  - "HTTP GET requests to 169.254.169.254 from Windows processes"
+  - "Temporary credential use in AWS API calls from EC2 Windows instance IP"
+  - "Suspicious PowerShell or CMD scripts accessing metadata"
+
+queries/examples:
+  - name: "Metadata Access via PowerShell"
+    query: >
+      windows_event_logs: EventID=4688 AND ProcessName IN ("powershell.exe", "cmd.exe") AND CommandLine CONTAINS "169.254.169.254"
+  - name: "VPC Flow Log Requests to Metadata Service"
+    query: >
+      vpcflowlogs: dstAddr=169.254.169.254 AND action=ACCEPT AND srcInstanceType=Windows
+
+automation_hooks:
+  - "Auto-alert on metadata access from unknown Windows processes."
+  - "Trigger session snapshot on suspicious PowerShell execution."
+  - "Initiate IAM role usage audit post metadata access."
+
+analyst_guidance:
+  - "Validate if metadata access aligns with baseline admin or monitoring activity."
+  - "Investigate processes and users executing commands to metadata endpoint."
+  - "Correlate with any detected suspicious AWS API calls or IAM role assumptions."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1552/005/"
+  - "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instancedata-data-categories.html"
+  - "https://docs.microsoft.com/en-us/powershell/"
+
+review_cycle: "Quarterly or post-incident audit"

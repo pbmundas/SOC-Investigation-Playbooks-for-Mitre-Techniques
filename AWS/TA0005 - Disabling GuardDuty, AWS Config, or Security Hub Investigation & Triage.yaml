@@ -1,0 +1,86 @@
+playbook_name: "TA0005 - Disabling GuardDuty, AWS Config, or Security Hub: Investigation & Triage"
+tactic: "Defense Evasion"
+technique_id: "TA0005"
+technique_name: "Defense Evasion"
+description: >
+  Detect and investigate disabling of core AWS security services which monitor configuration changes, threat activity, and compliance posture.
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect Disable or Deregister API Events"
+    description: >
+      Monitor for API calls like `DeleteDetector`, `PutConfigurationRecorder` with recording set to false, or `DisableSecurityHub`.
+    checklist:
+      - "Are security services like GuardDuty or AWS Config being disabled?"
+      - "Is the actor identity unexpected or compromised?"
+      - "Are there changes across multiple regions simultaneously?"
+    data_sources:
+      - "CloudTrail logs"
+      - "IAM activity logs"
+      - "Service health dashboards"
+
+  - step_number: 2
+    title: "Validate Activity and Cross-Reference with Other Alerts"
+    description: >
+      Look for related IAM, network, or data exfiltration indicators.
+    checklist:
+      - "Were these services disabled following suspicious activity?"
+      - "Is there evidence of compromised sessions or tokens?"
+      - "Are other AWS services or resources being modified or accessed?"
+    data_sources:
+      - "SIEM"
+      - "IAM access reviews"
+      - "VPC flow logs"
+
+  - step_number: 3
+    title: "Assess Business Impact and Remediate"
+    description: >
+      Restore services and prevent recurrence.
+    checklist:
+      - "Is auto-remediation available to re-enable?"
+      - "Do backup policies exist to reconfigure settings?"
+      - "Can IAM be hardened to restrict access to critical service controls?"
+    data_sources:
+      - "AWS Config timeline"
+      - "Service state snapshots"
+      - "IAM policy audits"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Known admin or automation in test/staging."
+      - "Medium: Suspicious pattern or unexpected region."
+      - "High: Confirmed malicious disablement of defenses."
+  - confidence_levels:
+      - "High: Linked to prior IOCs or credential misuse."
+      - "Medium: Role access anomaly or unusual IPs."
+      - "Low: Authorized change but poorly documented."
+
+ioc_types:
+  - "API calls: DeleteDetector, DisableSecurityHub, PutConfigurationRecorder"
+  - "IAM anomalies around security services"
+  - "Timing correlation with privilege escalation or persistence events"
+
+queries/examples:
+  - name: "GuardDuty Disabled"
+    query: >
+      eventName="UpdateDetector" AND requestParameters.enable=false
+  - name: "Security Hub Disabled"
+    query: >
+      eventName="DisableSecurityHub"
+
+automation_hooks:
+  - "Auto-reenable GuardDuty and AWS Config if disabled."
+  - "Notify security team and restrict IAM permissions for offending identity."
+  - "Trigger incident workflow for threat investigation."
+
+analyst_guidance:
+  - "Verify if service change was expected or documented."
+  - "Re-enable services and confirm configuration integrity."
+  - "Audit all users with permissions to disable security services."
+
+reference_links:
+  - "https://docs.aws.amazon.com/guardduty/latest/APIReference/API_UpdateDetector.html"
+  - "https://docs.aws.amazon.com/config/latest/APIReference/API_PutConfigurationRecorder.html"
+  - "https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-api-actions.html"
+
+review_cycle: "Monthly and after critical alerts"

@@ -1,0 +1,82 @@
+playbook_name: "T1078.004 - Federated User/Role Creation: Investigation & Triage"
+tactic: "Persistence"
+technique_id: "T1078.004"
+technique_name: "Valid Accounts - Federated User/Role Creation"
+description: >
+  Detect creation or modification of federated users or roles that enable external identity providers to access AWS resources, potentially used by attackers for persistence or privilege escalation.
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect Creation or Modification of Federated Roles"
+    description: >
+      Monitor CloudTrail for CreateRole, UpdateAssumeRolePolicy, or similar events involving federated roles.
+    checklist:
+      - "Are new roles created with trust policies allowing external IdPs?"
+      - "Are existing roles' trust policies modified to add federated entities?"
+      - "Is creation/modification activity performed by authorized administrators?"
+    data_sources:
+      - "AWS CloudTrail (CreateRole, UpdateAssumeRolePolicy)"
+      - "AWS IAM role trust policy logs"
+      - "AWS Config"
+
+  - step_number: 2
+    title: "Review Federated Role Permissions"
+    description: >
+      Evaluate the permissions granted to federated roles.
+    checklist:
+      - "Do federated roles have excessive or administrator-level permissions?"
+      - "Are policies inline or attached managed policies?"
+    data_sources:
+      - "AWS IAM policies"
+      - "CloudTrail policy-related API calls"
+
+  - step_number: 3
+    title: "Monitor Usage of Federated Roles"
+    description: >
+      Investigate the usage of federated roles for suspicious activity.
+    checklist:
+      - "Are federated roles assumed from unusual IPs or geographies?"
+      - "Is there unusual frequency or timing of role assumption?"
+      - "Is role assumption followed by privilege escalation or data access?"
+    data_sources:
+      - "CloudTrail (AssumeRole, AssumeRoleWithSAML, AssumeRoleWithWebIdentity)"
+      - "AWS CloudWatch Logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Authorized federated role creation/modification."
+      - "Medium: Suspicious changes requiring validation."
+      - "High: Unauthorized creation or modification with suspicious usage."
+  - confidence_levels:
+      - "High: Federated role created/modified by unknown user and suspicious usage."
+      - "Medium: Unexpected modifications from known users."
+      - "Low: Possible false positives from routine changes."
+
+ioc_types:
+  - "CreateRole with federated trust policy"
+  - "UpdateAssumeRolePolicy adding federated principals"
+  - "AssumeRoleWithSAML or AssumeRoleWithWebIdentity calls"
+
+queries/examples:
+  - name: "Detect Creation of Federated Roles"
+    query: >
+      eventName="CreateRole" AND requestParameters.role.trustPolicy.Statement.Principal.Federated EXISTS
+  - name: "Detect Updates to Federated Role Trust Policy"
+    query: >
+      eventName="UpdateAssumeRolePolicy" AND requestParameters.policyDocument.Statement.Principal.Federated EXISTS
+
+automation_hooks:
+  - "Alert on creation or modification of federated roles outside approved processes."
+  - "Trigger access review of federated roles."
+  - "Block suspicious federated role assumption attempts."
+
+analyst_guidance:
+  - "Validate federated role creation/modification with IAM admins."
+  - "Review trust policies carefully for external IdPs."
+  - "Monitor subsequent activity for abuse."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1078/"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers.html"
+
+review_cycle: "Quarterly or post-incident"

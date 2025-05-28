@@ -1,0 +1,96 @@
+playbook_name: "T1213 - Data from Information Repositories (S3, DynamoDB, RDS)"
+tactic: "Collection"
+technique_id: "T1213"
+technique_name: "Data from Information Repositories"
+description: >
+  Detect and investigate unauthorized or suspicious access to cloud-based
+  information repositories such as AWS S3 buckets, DynamoDB tables, and RDS
+  databases that could indicate data theft, reconnaissance, or exfiltration attempts.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Access to S3 Buckets"
+    description: >
+      Track API calls and access patterns to S3 buckets, focusing on unusual
+      reads, writes, and permission changes.
+    checklist:
+      - "Are there any access attempts from unexpected IP addresses or identities?"
+      - "Have there been recent changes to bucket policies or ACLs?"
+      - "Are there bulk data download or listing operations that deviate from normal?"
+    data_sources:
+      - "CloudTrail Logs"
+      - "S3 Server Access Logs"
+      - "AWS Config"
+
+  - step_number: 2
+    title: "Monitor Access to DynamoDB Tables"
+    description: >
+      Investigate query, scan, and data modification operations on DynamoDB
+      tables, paying attention to abnormal access.
+    checklist:
+      - "Are there unauthorized or anomalous scans or queries?"
+      - "Are IAM roles accessing DynamoDB recently changed or escalated?"
+      - "Are large-scale data access operations observed?"
+    data_sources:
+      - "CloudTrail Logs"
+      - "DynamoDB Streams"
+      - "AWS Config"
+
+  - step_number: 3
+    title: "Monitor Access to RDS Databases"
+    description: >
+      Review connection logs and query executions on RDS instances to identify
+      unauthorized access or abnormal activity.
+    checklist:
+      - "Are there unexpected connection attempts from unknown IP addresses?"
+      - "Are privileged queries executed by unauthorized users?"
+      - "Is there evidence of bulk data extraction or export?"
+    data_sources:
+      - "CloudTrail Logs"
+      - "RDS Audit Logs"
+      - "VPC Flow Logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Normal access with authorized identities."
+      - "Medium: Suspicious access patterns without full proof."
+      - "High: Confirmed unauthorized access or data exfiltration."
+  - confidence_levels:
+      - "High: Clear evidence of unauthorized access."
+      - "Medium: Indicators of anomalous behavior."
+      - "Low: Access consistent with routine business operations."
+
+ioc_types:
+  - "Access from unrecognized or unauthorized IPs"
+  - "Unexpected permission modifications on repositories"
+  - "Large data retrieval or export events"
+
+queries/examples:
+  - name: "S3 Bucket Access Outside Normal IP Range"
+    query: >
+      cloudtrail: eventSource="s3.amazonaws.com" AND (eventName="GetObject" OR eventName="ListBucket") AND sourceIPAddress NOT IN trusted_ip_list
+  - name: "Anomalous DynamoDB Table Scans"
+    query: >
+      cloudtrail: eventSource="dynamodb.amazonaws.com" AND eventName IN ("Scan", "Query") AND userIdentity.sessionContext.sessionIssuer.userName NOT IN trusted_users
+  - name: "RDS Unusual Database Connections"
+    query: >
+      cloudtrail: eventSource="rds.amazonaws.com" AND eventName="Connect" AND sourceIPAddress NOT IN trusted_ip_list
+
+automation_hooks:
+  - "Trigger alerts on suspicious repository access from unknown sources."
+  - "Initiate IAM role and policy audits after anomalous activity."
+  - "Throttle large or suspicious data transfers pending investigation."
+
+analyst_guidance:
+  - "Confirm the identity and intent of the accessing user or role."
+  - "Review recent changes in IAM permissions or policies."
+  - "Correlate access events with business workflows."
+  - "Investigate possible data exfiltration or abuse."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1213/"
+  - "https://docs.aws.amazon.com/AmazonS3/latest/userguide/Logging.html"
+  - "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html"
+  - "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Overview.html"
+
+review_cycle: "Quarterly or post-incident"

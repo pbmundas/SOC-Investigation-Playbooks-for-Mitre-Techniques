@@ -1,0 +1,95 @@
+playbook_name: "T1204 - User Execution via Social Engineering on Lambda Functions"
+tactic: "Execution"
+technique_id: "T1204"
+technique_name: "User Execution"
+description: >
+  Detect and investigate social engineering attempts aimed at tricking users or administrators
+  into executing malicious AWS Lambda functions, potentially leading to privilege escalation,
+  data compromise, or persistent access.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Creation and Invocation of Lambda Functions"
+    description: >
+      Track unusual creation or invocation of Lambda functions, especially those initiated
+      by IAM users or roles not typically involved in Lambda management.
+    checklist:
+      - "Are there newly created Lambda functions with suspicious code or permissions?"
+      - "Are Lambda functions being invoked by users outside of normal patterns?"
+      - "Is there any evidence of phishing or social engineering campaigns targeting AWS credentials?"
+    data_sources:
+      - "CloudTrail Logs"
+      - "AWS Lambda CloudWatch Logs"
+      - "IAM Access Logs"
+
+  - step_number: 2
+    title: "Review Communication Channels for Social Engineering Indicators"
+    description: >
+      Analyze email, chat, or ticketing systems for evidence of phishing or manipulation attempts
+      targeting AWS administrators or developers.
+    checklist:
+      - "Are there reports or logs of suspicious emails containing Lambda execution requests?"
+      - "Is there any unusual access to support or internal communication systems?"
+      - "Have credentials been requested or shared unusually?"
+    data_sources:
+      - "Email Security Logs"
+      - "SIEM Alerts"
+      - "Internal Communication Tools"
+
+  - step_number: 3
+    title: "Validate Lambda Function Permissions and Code Integrity"
+    description: >
+      Check Lambda function configurations for over-permissive IAM roles and verify code
+      integrity to detect inserted malicious payloads.
+    checklist:
+      - "Do Lambda execution roles have least privilege?"
+      - "Is there any recent modification to Lambda function code without proper authorization?"
+      - "Are environment variables or function triggers altered suspiciously?"
+    data_sources:
+      - "AWS Config"
+      - "CloudTrail Logs"
+      - "Lambda Function Versioning"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Reported social engineering attempts without execution."
+      - "Medium: Suspicious Lambda execution linked to social engineering."
+      - "High: Confirmed execution of malicious Lambda functions due to social engineering."
+  - confidence_levels:
+      - "High: Verified social engineering campaign causing Lambda misuse."
+      - "Medium: Indicators of social engineering with inconclusive execution data."
+      - "Low: Potential phishing with no confirmed impact."
+
+ioc_types:
+  - "Phishing emails targeting AWS credentials"
+  - "Unexpected Lambda function creation or invocation"
+  - "Altered Lambda permissions or environment variables"
+
+queries/examples:
+  - name: "Unusual Lambda Function Creation"
+    query: >
+      cloudtrail: eventSource="lambda.amazonaws.com" AND eventName="CreateFunction" AND userIdentity.userName NOT IN trusted_admins
+  - name: "Lambda Invocation by Non-Standard Users"
+    query: >
+      cloudtrail: eventSource="lambda.amazonaws.com" AND eventName="Invoke" AND userIdentity.userName NOT IN typical_users
+  - name: "IAM Role Changes on Lambda Functions"
+    query: >
+      cloudtrail: eventSource="iam.amazonaws.com" AND eventName IN ("AttachRolePolicy", "PutRolePolicy") AND resourceName LIKE "lambda%"
+
+automation_hooks:
+  - "Alert on Lambda creation or invocation from unusual users."
+  - "Initiate MFA revalidation for accounts involved in suspicious Lambda activity."
+  - "Trigger phishing awareness campaigns upon detection."
+
+analyst_guidance:
+  - "Correlate Lambda function events with known phishing or social engineering reports."
+  - "Engage user education and password reset if compromise is suspected."
+  - "Review and tighten IAM policies and Lambda execution roles."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1204/"
+  - "https://docs.aws.amazon.com/lambda/latest/dg/welcome.html"
+  - "https://aws.amazon.com/blogs/security/how-to-use-aws-cloudtrail-to-detect-unauthorized-lambda-function-invocations/"
+  - "https://aws.amazon.com/premiumsupport/knowledge-center/security-aws-phishing-email/"
+
+review_cycle: "Quarterly or post-incident"

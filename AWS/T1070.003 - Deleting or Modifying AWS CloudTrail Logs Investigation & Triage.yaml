@@ -1,0 +1,86 @@
+playbook_name: "T1070.003 - Deleting or Modifying AWS CloudTrail Logs: Investigation & Triage"
+tactic: "Defense Evasion"
+technique_id: "T1070.003"
+technique_name: "Clear Command History / Modify Logs"
+description: >
+  Detect deletion or tampering with AWS CloudTrail logs to cover attacker tracks or reduce visibility.
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect Log Deletion Events in S3 or CloudTrail"
+    description: >
+      Investigate `DeleteObject`, `DeleteBucket`, `StopLogging`, and `DeleteTrail` actions in CloudTrail and S3 logs.
+    checklist:
+      - "Is CloudTrail logging disabled or stopped?"
+      - "Are log files deleted from S3 by unusual users?"
+      - "Are there repeated `DeleteObject` calls targeting CloudTrail paths?"
+    data_sources:
+      - "CloudTrail logs"
+      - "S3 access logs"
+      - "VPC flow logs (for source context)"
+
+  - step_number: 2
+    title: "Correlate with Other Defense Evasion or Credential Access"
+    description: >
+      Cross-check for evidence of credential compromise, lateral movement, or privilege escalation.
+    checklist:
+      - "Did the user or role recently gain new privileges?"
+      - "Was there suspicious IAM activity shortly before the deletion?"
+      - "Were alarms or monitoring suppressed?"
+    data_sources:
+      - "IAM logs"
+      - "SIEM detection rules"
+      - "CloudTrail event correlation"
+
+  - step_number: 3
+    title: "Validate Impact and Restore Log Visibility"
+    description: >
+      Determine if logs were permanently deleted or if versions exist.
+    checklist:
+      - "Are object versions or backups available?"
+      - "Was versioning or MFA delete enabled for the log buckets?"
+      - "Can deleted logs be restored from S3 Glacier or other retention tools?"
+    data_sources:
+      - "S3 bucket versioning metadata"
+      - "Cloud backup tools"
+      - "Retention and audit policies"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Authorized log cleanup per lifecycle policy."
+      - "Medium: Unusual IAM user action with unclear purpose."
+      - "High: Malicious log deletion linked to compromise."
+  - confidence_levels:
+      - "High: Known malicious actor or compromise context."
+      - "Medium: Suspected but not confirmed identity misuse."
+      - "Low: Routine or test environment change."
+
+ioc_types:
+  - "DeleteTrail API activity"
+  - "DeleteObject targeting CloudTrail S3 paths"
+  - "StopLogging events"
+
+queries/examples:
+  - name: "Detect Deletion of CloudTrail Logs"
+    query: >
+      eventName="DeleteObject" AND requestParameters.bucketName CONTAINS "cloudtrail"
+  - name: "Detect CloudTrail Disabling"
+    query: >
+      eventName="StopLogging" OR eventName="DeleteTrail"
+
+automation_hooks:
+  - "Auto-alert and optionally auto-restart CloudTrail service."
+  - "Flag or block identities attempting to delete audit logs."
+  - "Trigger incident response for audit trail integrity loss."
+
+analyst_guidance:
+  - "Identify affected logs and determine if gaps exist in timeline."
+  - "Re-enable CloudTrail with tamper-resistant settings."
+  - "Investigate identities and revoke access where needed."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1070/003/"
+  - "https://docs.aws.amazon.com/awscloudtrail/latest/APIReference/API_DeleteTrail.html"
+  - "https://docs.aws.amazon.com/AmazonS3/latest/userguide/Versioning.html"
+
+review_cycle: "Post-incident and quarterly audit"

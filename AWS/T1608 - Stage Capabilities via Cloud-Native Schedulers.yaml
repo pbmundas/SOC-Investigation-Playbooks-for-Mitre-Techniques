@@ -1,0 +1,94 @@
+playbook_name: "T1608 - Stage Capabilities via Cloud-Native Schedulers"
+tactic: "Execution"
+technique_id: "T1608"
+technique_name: "Stage Capabilities"
+description: >
+  Detect and investigate the use of cloud-native schedulers such as AWS CloudWatch Events
+  or Lambda triggers for staging and automating attack capabilities, persistence,
+  or operational tasks within the AWS environment.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Creation and Modification of CloudWatch Event Rules and Lambda Triggers"
+    description: >
+      Identify the creation or modification of scheduled event rules and Lambda triggers that
+      may be used to stage malicious payloads or automate attacker actions.
+    checklist:
+      - "Are new CloudWatch Event rules or Lambda triggers created outside of normal maintenance windows?"
+      - "Are scheduled jobs configured to invoke suspicious Lambda functions or workflows?"
+      - "Are the creators or modifiers authorized and following internal policies?"
+    data_sources:
+      - "AWS CloudTrail Logs"
+      - "AWS Config"
+      - "CloudWatch Events Logs"
+
+  - step_number: 2
+    title: "Analyze Execution Patterns of Scheduled Events and Lambda Invocations"
+    description: >
+      Review execution logs to detect unusual frequency or timing of scheduled events that
+      might indicate attacker automation or persistence mechanisms.
+    checklist:
+      - "Is there an abnormal increase in scheduled Lambda function executions?"
+      - "Are scheduled events invoking functions that access sensitive resources?"
+      - "Do execution times or intervals deviate from documented business processes?"
+    data_sources:
+      - "CloudWatch Logs"
+      - "Lambda Execution Logs"
+      - "CloudTrail Logs"
+
+  - step_number: 3
+    title: "Validate Permissions and Configurations for Scheduled Jobs"
+    description: >
+      Check the permissions and configurations associated with scheduled jobs to ensure they adhere to
+      least privilege principles and have not been altered maliciously.
+    checklist:
+      - "Are IAM roles associated with scheduled events configured with least privilege?"
+      - "Have targets or inputs of scheduled jobs been modified unexpectedly?"
+      - "Is there evidence of role misuse or privilege escalation through scheduled jobs?"
+    data_sources:
+      - "AWS Config"
+      - "IAM Access Analyzer"
+      - "CloudTrail Logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Scheduled jobs created and maintained by authorized personnel."
+      - "Medium: Suspicious scheduled jobs with incomplete validation."
+      - "High: Unauthorized or malicious scheduled jobs detected."
+  - confidence_levels:
+      - "High: Confirmed malicious use of scheduled events for attacker persistence."
+      - "Medium: Indicators of suspicious scheduling activity."
+      - "Low: Routine scheduling with minor anomalies."
+
+ioc_types:
+  - "Creation/modification of CloudWatch Event rules by unauthorized users"
+  - "Lambda triggers set for suspicious automated execution"
+  - "Unusual scheduling and execution frequency or timing"
+
+queries/examples:
+  - name: "New CloudWatch Event Rule Creation"
+    query: >
+      cloudtrail: eventSource="events.amazonaws.com" AND eventName="PutRule" AND userIdentity.userName NOT IN trusted_admins
+  - name: "Scheduled Lambda Invocation"
+    query: >
+      cloudtrail: eventSource="lambda.amazonaws.com" AND eventName="Invoke" AND userIdentity.userName NOT IN typical_users AND requestParameters.source == "CloudWatchEvents"
+  - name: "Modification of Scheduled Job Targets"
+    query: >
+      cloudtrail: eventSource="events.amazonaws.com" AND eventName="PutTargets" AND userIdentity.userName NOT IN trusted_admins
+
+automation_hooks:
+  - "Alert on unauthorized creation or modification of scheduled events."
+  - "Trigger reviews for suspicious scheduled Lambda invocations."
+  - "Enforce IAM policy audits for scheduled job permissions."
+
+analyst_guidance:
+  - "Confirm scheduling actions align with documented operational processes."
+  - "Correlate scheduled jobs with other suspicious activity indicators."
+  - "Recommend tightening of scheduling permissions and continuous monitoring."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1608/"
+  - "https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-run-lambda-schedule.html"
+  - "https://docs.aws.amazon.com/lambda/latest/dg/tutorial-scheduled-events-schedule-expressions.html"
+
+review_cycle: "Quarterly or post-incident"

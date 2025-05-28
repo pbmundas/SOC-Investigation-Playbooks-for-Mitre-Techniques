@@ -1,0 +1,86 @@
+playbook_name: "T1078.004 - Use of Stolen Session Tokens, API Keys, or AssumeRole Tokens: Investigation & Triage"
+tactic: "Credential Access"
+technique_id: "T1078.004"
+technique_name: "Use of Stolen Session Tokens, API Keys, or AssumeRole Tokens"
+description: >
+  Detect use of compromised or stolen AWS session tokens, API keys, or AssumeRole tokens, which attackers use to gain unauthorized access and persist within AWS environments.
+
+investigation_steps:
+  - step_number: 1
+    title: "Identify Use of Suspicious or Unrecognized Credentials"
+    description: >
+      Monitor CloudTrail and logs for API calls using unusual or new access keys, session tokens, or assumed roles.
+    checklist:
+      - "Are API calls made using keys or tokens not associated with known users?"
+      - "Is there use of temporary credentials via AssumeRole with suspicious timing?"
+      - "Are there multiple sessions from different geographic locations or IPs?"
+    data_sources:
+      - "CloudTrail"
+      - "AWS IAM Access Analyzer"
+      - "Network logs"
+
+  - step_number: 2
+    title: "Correlate with Anomalous Behavior or Resource Usage"
+    description: >
+      Review activity patterns following use of these credentials.
+    checklist:
+      - "Is there privilege escalation or unusual resource creation?"
+      - "Are logs or monitoring configurations altered?"
+      - "Is there data exfiltration or lateral movement?"
+    data_sources:
+      - "CloudTrail"
+      - "AWS Config"
+      - "SIEM logs"
+
+  - step_number: 3
+    title: "Investigate Credential Origin and Access Context"
+    description: >
+      Trace back to determine how the credentials were obtained or stolen.
+    checklist:
+      - "Are these credentials linked to previous breaches or leaked secrets?"
+      - "Is there evidence of credential dumping or extraction?"
+      - "Are IAM policies or roles overly permissive?"
+    data_sources:
+      - "CloudTrail"
+      - "AWS Config"
+      - "Threat intelligence sources"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Authorized temporary credential usage."
+      - "Medium: Unusual or unexpected credential use."
+      - "High: Confirmed use of stolen or compromised credentials."
+  - confidence_levels:
+      - "High: Credential usage from known malicious IP or tied to breach."
+      - "Medium: Suspicious usage pattern without full proof."
+      - "Low: False positives due to automation or multi-region usage."
+
+ioc_types:
+  - "API calls using unknown or anomalous AccessKeyId or SessionToken"
+  - "AssumeRole API calls from suspicious IPs"
+  - "Use of temporary credentials inconsistent with normal behavior"
+
+queries/examples:
+  - name: "Detect AssumeRole Usage from Suspicious IPs"
+    query: >
+      eventName="AssumeRole" AND sourceIPAddress NOT IN (trusted IPs)
+  - name: "Detect API Calls with Unknown Access Keys"
+    query: >
+      NOT userIdentity.accessKeyId IN (known valid keys)
+
+automation_hooks:
+  - "Alert on suspicious AssumeRole or API key usage."
+  - "Revoke suspected compromised tokens immediately."
+  - "Trigger comprehensive incident response."
+
+analyst_guidance:
+  - "Validate credential usage with security and IAM teams."
+  - "Rotate affected credentials immediately."
+  - "Audit IAM roles and policies for least privilege enforcement."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1078/004/"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp.html"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html"
+
+review_cycle: "Monthly or after incidents"

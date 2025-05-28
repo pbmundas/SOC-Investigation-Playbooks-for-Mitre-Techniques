@@ -1,0 +1,84 @@
+playbook_name: "T1078.002 - Creation of New IAM Users or Roles for Persistence: Investigation & Triage"
+tactic: "Persistence"
+technique_id: "T1078.002"
+technique_name: "Valid Accounts - New IAM Users or Roles Creation"
+description: >
+  Detect and investigate the creation of new IAM users or roles that may be used by attackers to maintain persistence or escalate privileges.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Creation of IAM Users and Roles"
+    description: >
+      Review AWS CloudTrail for CreateUser and CreateRole events.
+    checklist:
+      - "Are new users or roles created outside of change management windows?"
+      - "Are they created by unexpected principals?"
+      - "Are naming conventions unusual or suspicious?"
+    data_sources:
+      - "AWS CloudTrail (CreateUser, CreateRole)"
+      - "AWS Config IAM history"
+
+  - step_number: 2
+    title: "Assess Permissions of Newly Created Users or Roles"
+    description: >
+      Evaluate attached policies and permissions for potential overprivilege.
+    checklist:
+      - "Are administrator or highly privileged policies attached?"
+      - "Are inline or managed policies suspicious or overly permissive?"
+    data_sources:
+      - "CloudTrail (PutUserPolicy, AttachUserPolicy, PutRolePolicy, AttachRolePolicy)"
+      - "IAM Access Advisor"
+
+  - step_number: 3
+    title: "Detect Usage of Newly Created Users or Roles"
+    description: >
+      Look for logins, API calls, or AssumeRole usage involving the new accounts.
+    checklist:
+      - "Are new accounts used soon after creation?"
+      - "Is usage from unusual IPs or times?"
+    data_sources:
+      - "CloudTrail (ConsoleLogin, API calls, AssumeRole)"
+      - "CloudWatch Logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Legitimate user or role creation."
+      - "Medium: Suspicious creation needing validation."
+      - "High: Unauthorized creation with active suspicious use."
+  - confidence_levels:
+      - "High: Direct evidence of unauthorized creation and misuse."
+      - "Medium: Unusual creation activity."
+      - "Low: Potential false positives."
+
+ioc_types:
+  - "CreateUser and CreateRole API events"
+  - "New IAM user or role with admin privileges"
+  - "Login or API usage by new IAM entities"
+
+queries/examples:
+  - name: "Detect IAM User Creation"
+    query: >
+      eventName="CreateUser"
+  - name: "Detect IAM Role Creation"
+    query: >
+      eventName="CreateRole"
+  - name: "Detect Policy Attachment to New Users or Roles"
+    query: >
+      eventName IN ["PutUserPolicy", "AttachUserPolicy", "PutRolePolicy", "AttachRolePolicy"]
+
+automation_hooks:
+  - "Alert on new user or role creation by unapproved principals."
+  - "Initiate access review for new IAM identities."
+  - "Block or quarantine suspicious accounts pending investigation."
+
+analyst_guidance:
+  - "Confirm legitimacy with IAM administrators."
+  - "Review permissions for adherence to least privilege."
+  - "Monitor usage of newly created accounts closely."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1078/"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users.html"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html"
+
+review_cycle: "Quarterly or post-incident"

@@ -1,0 +1,85 @@
+playbook_name: "T1021.005 - Abuse of AWS Systems Manager Session Manager (SSM): Investigation & Triage"
+tactic: "Lateral Movement"
+technique_id: "T1021.005"
+technique_name: "AWS Systems Manager Session Manager Abuse"
+description: >
+  Detect misuse of AWS Systems Manager Session Manager to gain interactive shell access or execute commands on managed instances, which may indicate lateral movement or persistence.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Session Manager API Calls and Session Activity"
+    description: >
+      Track StartSession, SendCommand, and other SSM-related API calls.
+    checklist:
+      - "Are there unexpected or excessive StartSession or SendCommand API calls?"
+      - "Are sessions initiated by unusual users, roles, or from unusual IPs?"
+      - "Is there evidence of command execution inconsistent with normal operations?"
+    data_sources:
+      - "CloudTrail (StartSession, SendCommand)"
+      - "SSM Session logs"
+      - "IAM and access logs"
+
+  - step_number: 2
+    title: "Identify Command Execution Patterns and Persistence Attempts"
+    description: >
+      Analyze commands run via SSM to detect potential malicious activity or persistence techniques.
+    checklist:
+      - "Are commands creating new users, installing backdoors, or disabling monitoring?"
+      - "Is there evidence of lateral movement or data exfiltration?"
+      - "Are there attempts to escalate privileges?"
+    data_sources:
+      - "SSM command logs"
+      - "CloudTrail"
+      - "Endpoint monitoring"
+
+  - step_number: 3
+    title: "Correlate SSM Activity with Other Indicators"
+    description: >
+      Cross-check with IAM changes, network anomalies, or alerts from threat intel.
+    checklist:
+      - "Are new IAM roles/users created or modified around SSM abuse?"
+      - "Is there evidence of suspicious network connections or data transfers?"
+      - "Are monitoring/logging tools being disabled?"
+    data_sources:
+      - "CloudTrail"
+      - "Network logs"
+      - "SIEM"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Routine use of SSM by authorized admins."
+      - "Medium: Suspicious command execution or session initiation."
+      - "High: Confirmed abuse for lateral movement or persistence."
+  - confidence_levels:
+      - "High: Known malicious commands or IPs."
+      - "Medium: Anomalous session patterns."
+      - "Low: Possible false positives due to legitimate automation."
+
+ioc_types:
+  - "StartSession or SendCommand API calls from suspicious users or IPs"
+  - "Malicious commands executed via SSM"
+  - "Unusual session durations or frequencies"
+
+queries/examples:
+  - name: "Detect StartSession from Unusual IPs"
+    query: >
+      eventName="StartSession" AND sourceIPAddress NOT IN (trusted_IPs)
+  - name: "Detect Suspicious Commands via SendCommand"
+    query: >
+      eventName="SendCommand" AND commandString IN ("net user", "powershell -EncodedCommand", "curl", "wget")
+
+automation_hooks:
+  - "Alert on suspicious SSM session starts or commands."
+  - "Terminate suspicious SSM sessions immediately."
+  - "Trigger incident response for potential lateral movement."
+
+analyst_guidance:
+  - "Validate if sessions align with authorized maintenance."
+  - "Investigate commands for potential compromise."
+  - "Contain affected hosts and review IAM permissions."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1021/005/"
+  - "https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager.html"
+
+review_cycle: "Monthly or after suspicious activity"

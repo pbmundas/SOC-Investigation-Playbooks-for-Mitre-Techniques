@@ -1,0 +1,71 @@
+playbook_name: "T1601 - Modify Function Code or Deployment Templates"
+tactic: "Persistence"
+technique_id: "T1601"
+technique_name: "Modify System Image"
+description: >
+  Detect unauthorized changes to AWS Lambda function code or CloudFormation stacks which may be used by
+  attackers to maintain persistence, backdoor functions, or deploy malicious infrastructure.
+
+investigation_steps:
+  - step_number: 1
+    title: "Identify Unauthorized Lambda or Stack Changes"
+    description: >
+      Monitor for UpdateFunctionCode, CreateChangeSet, or ExecuteChangeSet API calls.
+    checklist:
+      - "Was code updated by an unexpected principal?"
+      - "Is the updated code base64-encoded or obfuscated?"
+      - "Was a stack change applied silently or outside CI/CD schedule?"
+    data_sources:
+      - "CloudTrail"
+      - "AWS Config"
+      - "CloudWatch Events"
+
+  - step_number: 2
+    title: "Validate Integrity and Ownership"
+    description: >
+      Verify new code signature, source repository, or whether it includes malicious payloads.
+    checklist:
+      - "Was version control bypassed (manual upload)?"
+      - "Does code connect to external IPs or APIs?"
+    data_sources:
+      - "Lambda Execution Logs"
+      - "CloudFormation Change History"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Valid deployment with complete change records."
+      - "Medium: Unscheduled update from internal IP."
+      - "High: Update with obfuscated payload."
+  - confidence_levels:
+      - "High: Backdoor or malware in Lambda."
+      - "Medium: Manual update via console."
+      - "Low: Routine scheduled deployment."
+
+ioc_types:
+  - "Unexpected UpdateFunctionCode API calls"
+  - "Manual CreateChangeSet or ExecuteChangeSet"
+  - "New function code referencing external hosts"
+
+queries/examples:
+  - name: "Lambda Code Change"
+    query: >
+      cloudtrail: eventName = UpdateFunctionCode AND userIdentity.type != Root
+
+  - name: "Stack Modification"
+    query: >
+      cloudtrail: eventName IN (CreateChangeSet, ExecuteChangeSet) AND sourceIPAddress != known pipeline
+
+automation_hooks:
+  - "Auto alert on out-of-band Lambda update."
+  - "Diff stack change sets with prior baselines."
+
+analyst_guidance:
+  - "Verify code upload source and actor."
+  - "Check Lambda logs for post-update anomalies."
+  - "Review associated IAM roles for overprivilege."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1601/"
+  - "https://docs.aws.amazon.com/lambda/latest/dg/monitoring-cloudwatchlogs.html"
+
+review_cycle: "With each Lambda/stack deployment or quarterly"

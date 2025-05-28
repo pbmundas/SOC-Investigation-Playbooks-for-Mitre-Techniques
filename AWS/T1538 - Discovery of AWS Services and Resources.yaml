@@ -1,0 +1,69 @@
+playbook_name: "T1538 - Discovery of AWS Services and Resources"
+tactic: "Discovery"
+technique_id: "T1538"
+technique_name: "Cloud Service Discovery"
+description: >
+  Detect enumeration of available AWS services and regional resource presence using APIs like
+  DescribeInstances, DescribeBuckets, or ListFunctions. Adversaries may use these to plan lateral movement,
+  privilege escalation, or data exfiltration paths.
+
+investigation_steps:
+  - step_number: 1
+    title: "Identify Broad Enumeration Patterns"
+    description: >
+      Detect high-volume usage of Describe/List API calls targeting various AWS services.
+    checklist:
+      - "Check for enumeration across multiple regions in short succession."
+      - "Correlate principal identity and IP to known automation or unusual activity."
+      - "Review historical usage pattern of the access key or role."
+    data_sources:
+      - "CloudTrail"
+      - "GuardDuty (API Anomaly, Credential Discovery)"
+      - "AWS Config"
+
+  - step_number: 2
+    title: "Determine Intent and Follow-on Actions"
+    description: >
+      Investigate if the enumeration preceded privilege escalation or data exfiltration attempts.
+    checklist:
+      - "Were any new roles assumed or policies attached?"
+      - "Was a data store or Lambda modified or accessed?"
+      - "Was access done from an unfamiliar network location?"
+    data_sources:
+      - "CloudTrail"
+      - "IAM Access Analyzer"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Legitimate inventory audit or automation."
+      - "Medium: Unusual enumeration across services."
+      - "High: Enumeration followed by credential or data access."
+  - confidence_levels:
+      - "High: Enumeration from unknown device/IP."
+      - "Medium: Unusual sequence of API calls."
+      - "Low: Background AWS inventory tools."
+
+ioc_types:
+  - "Describe*, List* API patterns across services"
+  - "Cross-region enumeration"
+  - "Multiple AWS service queries in <5 minutes"
+
+queries/examples:
+  - name: "Service Enumeration Detection"
+    query: >
+      cloudtrail: eventName STARTS WITH ("Describe", "List") AND userAgent != "AWSConsole"
+
+automation_hooks:
+  - "Alert when unknown identity queries 5+ services in <5min."
+  - "Trigger anomaly review on multi-region DescribeX calls"
+
+analyst_guidance:
+  - "Compare activity against baseline of known service usage."
+  - "Review whether role or user is new or modified recently."
+  - "Investigate correlating alerts indicating follow-on access."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1538/"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies.html"
+
+review_cycle: "Quarterly or post-security assessment"

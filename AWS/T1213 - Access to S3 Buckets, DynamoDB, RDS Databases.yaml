@@ -1,0 +1,95 @@
+playbook_name: "T1213 - Access to S3 Buckets, DynamoDB, RDS Databases"
+tactic: "Collection"
+technique_id: "T1213"
+technique_name: "Data from Information Repositories"
+description: >
+  Detect and investigate unauthorized or suspicious access to AWS information repositories such as
+  S3 buckets, DynamoDB tables, and RDS databases. Attackers often target these repositories to collect
+  sensitive data for exfiltration or further exploitation.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Access to S3 Buckets"
+    description: >
+      Analyze S3 bucket access logs and CloudTrail events for unusual or unauthorized GetObject, ListBucket,
+      or PutObject actions.
+    checklist:
+      - "Are there requests from unexpected IP addresses or regions?"
+      - "Are there excessive or bulk data downloads?"
+      - "Is access granted to users or roles with overly broad permissions?"
+    data_sources:
+      - "S3 Access Logs"
+      - "CloudTrail Logs"
+      - "AWS Config"
+
+  - step_number: 2
+    title: "Detect Suspicious Access to DynamoDB Tables"
+    description: >
+      Review DynamoDB access patterns, focusing on Scan, Query, and BatchGetItem operations that may indicate
+      bulk data retrieval.
+    checklist:
+      - "Are there frequent or large scans across tables?"
+      - "Are queries issued from unauthorized or unusual identities?"
+      - "Is there an abnormal increase in DynamoDB read capacity usage?"
+    data_sources:
+      - "CloudTrail Logs"
+      - "DynamoDB Metrics and Logs"
+      - "AWS CloudWatch"
+
+  - step_number: 3
+    title: "Investigate RDS Database Access"
+    description: >
+      Examine RDS logs and CloudTrail events for suspicious connection attempts, data exports,
+      or unusual query patterns.
+    checklist:
+      - "Are there logins from unknown IP addresses or unusual times?"
+      - "Are there queries accessing sensitive tables or large data dumps?"
+      - "Is there evidence of privilege escalation in database users?"
+    data_sources:
+      - "RDS Logs (Audit, General, Slow Query)"
+      - "CloudTrail Logs"
+      - "VPC Flow Logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Authorized access with proper monitoring."
+      - "Medium: Suspicious access patterns requiring investigation."
+      - "High: Confirmed unauthorized or malicious data access."
+  - confidence_levels:
+      - "High: Clear evidence of unauthorized data retrieval."
+      - "Medium: Anomalous access with contextual concerns."
+      - "Low: Routine operations with slight anomalies."
+
+ioc_types:
+  - "Unusual S3 GetObject or ListBucket requests"
+  - "Bulk scans or queries on DynamoDB tables"
+  - "Suspicious RDS connection attempts or data exports"
+
+queries/examples:
+  - name: "Suspicious S3 Bucket Access"
+    query: >
+      s3_access_logs: eventName IN ("GetObject", "ListBucket") AND sourceIPAddress NOT IN trusted_ips
+  - name: "DynamoDB Large Scan Activity"
+    query: >
+      cloudtrail: eventSource="dynamodb.amazonaws.com" AND eventName="Scan" AND requestParameters.limit > 1000
+  - name: "RDS Unusual Login or Query Patterns"
+    query: >
+      rds_logs: login_failure_count > 5 OR query_duration > 1000ms
+
+automation_hooks:
+  - "Alert on excessive or unusual access to S3 buckets, DynamoDB, or RDS."
+  - "Trigger IAM policy review for identities accessing sensitive repositories."
+  - "Initiate network block or session termination for suspicious RDS connections."
+
+analyst_guidance:
+  - "Validate access requests against business needs and user roles."
+  - "Correlate with other suspicious activities such as data exfiltration or privilege escalation."
+  - "Recommend implementing encryption, logging, and least privilege policies."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1213/"
+  - "https://docs.aws.amazon.com/AmazonS3/latest/userguide/Logging.html"
+  - "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/MonitoringDynamoDB.html"
+  - "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_LogAccess.html"
+
+review_cycle: "Quarterly or post-incident"

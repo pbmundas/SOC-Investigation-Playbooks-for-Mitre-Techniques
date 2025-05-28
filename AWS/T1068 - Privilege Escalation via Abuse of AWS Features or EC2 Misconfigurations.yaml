@@ -1,0 +1,90 @@
+playbook_name: "T1068 - Privilege Escalation via Abuse of AWS Features or EC2 Misconfigurations"
+tactic: "Privilege Escalation"
+technique_id: "T1068"
+technique_name: "Exploitation for Privilege Escalation"
+description: >
+  Detect and investigate the abuse of AWS features or misconfigurations that lead to privilege escalation,
+  including misuse of EC2 instance sudo privileges, container breakout to host, and setuid/setgid binary abuse.
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect Unusual Use of IAM Privileges or EC2 Metadata Access"
+    description: >
+      Monitor access to instance metadata (`http://169.254.169.254`) and suspicious IAM actions performed from EC2 workloads.
+    checklist:
+      - "Are credentials being retrieved via metadata from unexpected sources?"
+      - "Are IAM privileges being assumed or misused within EC2 sessions?"
+      - "Are roles being escalated from within workloads?"
+    data_sources:
+      - "VPC Flow Logs"
+      - "CloudTrail Logs"
+      - "Instance Metadata Access Logs (if enabled)"
+
+  - step_number: 2
+    title: "Detect Container or EC2 Sudo Misuse"
+    description: >
+      Monitor for misuse of root-level access within EC2 or containerized workloads, such as running privileged containers or using `sudo` to execute unintended commands.
+    checklist:
+      - "Are there unusual uses of `sudo` by application users?"
+      - "Are Docker containers launched with `--privileged` flag?"
+      - "Are users accessing `/etc/sudoers` or modifying user groups?"
+    data_sources:
+      - "CloudTrail (SSM Session Manager command logs)"
+      - "EC2 audit logs"
+      - "Container runtime audit logs (e.g., Docker or containerd logs)"
+
+  - step_number: 3
+    title: "Detect Abuse of Setuid/Setgid Binaries Inside EC2 or Containers"
+    description: >
+      Monitor for execution of binaries with setuid/setgid permissions and attempts to escalate via legacy Linux misconfigurations.
+    checklist:
+      - "Are binaries with setuid bit being accessed by non-root users?"
+      - "Are unusual binaries with elevated privileges appearing in containers?"
+      - "Are scripts being launched from temp directories with root privileges?"
+    data_sources:
+      - "CloudWatch Logs (custom EC2 file integrity monitors)"
+      - "Falco/OSSEC logs for setuid access patterns"
+      - "Linux auditd (for execve of setuid binaries)"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Expected admin task with correct auditing."
+      - "Medium: Misconfiguration identified in EC2 IAM or container runtime."
+      - "High: Confirmed escalation attempt with privilege abuse."
+  - confidence_levels:
+      - "High: Root-level action tied to non-admin identity."
+      - "Medium: Unusual escalation behavior detected without full compromise."
+      - "Low: Routine activity with slight deviations."
+
+ioc_types:
+  - "Execution of setuid binaries by non-root users"
+  - "Docker run with `--privileged` or host PID/IPC access"
+  - "SSM command usage that modifies IAM, sudoers, or escalates via shell access"
+
+queries/examples:
+  - name: "Setuid Binary Execution Detected"
+    query: >
+      auditd logs: syscall=execve AND uid!=0 AND path IN (known setuid binaries)
+  - name: "Privileged Container Launch"
+    query: >
+      docker logs: docker run --privileged OR --cap-add=ALL
+  - name: "Access to Instance Metadata"
+    query: >
+      vpcflowlogs: dstAddr=169.254.169.254 AND action=ACCEPT
+
+automation_hooks:
+  - "Auto-alert on setuid binary execution from non-root users."
+  - "Trigger EDR snapshot on EC2 instance or container with root escalation events."
+  - "Initiate IAM role permission diff audit for active session."
+
+analyst_guidance:
+  - "Validate whether the elevated action was authorized and documented."
+  - "Correlate escalation actions with identity context (IAM user/role)."
+  - "Review instance or container baseline hardening and patching."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1068/"
+  - "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instancedata-data-categories.html"
+  - "https://www.kernel.org/doc/html/latest/userspace-api/audit/index.html"
+
+review_cycle: "Quarterly or post-incident audit"

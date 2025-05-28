@@ -1,0 +1,90 @@
+playbook_name: "T1078 - Use of AWS SSO or Federated Identities: Investigation & Triage"
+tactic: "Persistence"
+technique_id: "T1078"
+technique_name: "Valid Accounts"
+description: >
+  Detect and investigate the use of AWS Single Sign-On (SSO) or federated identity providers (IdPs) to access AWS resources, which attackers may abuse for persistence or lateral movement.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor AWS SSO Login and Role Assumption Events"
+    description: >
+      Review AWS CloudTrail logs for console login events and role assumptions initiated via AWS SSO.
+    checklist:
+      - "Are there unexpected or unusual AWS SSO login events?"
+      - "Is SSO access occurring outside normal business hours or from unfamiliar IP addresses or geolocations?"
+      - "Are there failed or denied login attempts indicating brute force or reconnaissance?"
+    data_sources:
+      - "AWS CloudTrail (ConsoleLogin events)"
+      - "AWS SSO Audit Logs"
+      - "Identity Provider (IdP) logs (e.g., Okta, Azure AD)"
+
+  - step_number: 2
+    title: "Detect Federation via SAML or Web Identity Providers"
+    description: >
+      Identify AssumeRoleWithSAML or AssumeRoleWithWebIdentity events which indicate federated access to AWS roles.
+    checklist:
+      - "Are federated roles assumed by unexpected users or at unusual times?"
+      - "Is there evidence of role chaining or privilege escalation after federation?"
+      - "Are federated sessions unusually long or using atypical user agents?"
+    data_sources:
+      - "AWS CloudTrail (AssumeRoleWithSAML, AssumeRoleWithWebIdentity events)"
+      - "IdP logs"
+
+  - step_number: 3
+    title: "Correlate with Other Suspicious Activity"
+    description: >
+      Look for lateral movement, privilege escalation, or data exfiltration following federated access.
+    checklist:
+      - "Is there unusual API activity by federated roles?"
+      - "Are there changes to IAM policies or role trust relationships after federation?"
+      - "Is there suspicious data access or network connections?"
+    data_sources:
+      - "AWS CloudTrail"
+      - "IAM policy change logs"
+      - "Network flow logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Expected and legitimate AWS SSO/federated access consistent with business operations."
+      - "Medium: Suspicious timing, location, or pattern of federated login."
+      - "High: Confirmed unauthorized or malicious use of AWS SSO or federated identities."
+  - confidence_levels:
+      - "High: Clear logs showing unexpected federated role assumptions with suspicious activity."
+      - "Medium: Unusual login patterns without confirmed malicious action."
+      - "Low: Possible false positives due to legitimate automation or cloud management tools."
+
+ioc_types:
+  - "AWS SSO ConsoleLogin events from unusual IPs"
+  - "AssumeRoleWithSAML or AssumeRoleWithWebIdentity events from unexpected users"
+  - "Long or repeated federated sessions"
+  - "Suspicious API calls post-federation"
+
+queries/examples:
+  - name: "Detect AWS SSO Console Login From Unfamiliar IPs"
+    query: >
+      eventName="ConsoleLogin" AND userIdentity.type="AssumedRole" AND sourceIPAddress NOT IN ["<trusted IP list>"]
+  - name: "Detect Federated Role Assumption via SAML"
+    query: >
+      eventName="AssumeRoleWithSAML" AND userIdentity.sessionContext.sessionIssuer.userName NOT IN ["<expected users>"]
+  - name: "Detect Federated Role Assumption via Web Identity"
+    query: >
+      eventName="AssumeRoleWithWebIdentity"
+
+automation_hooks:
+  - "Alert on AWS SSO login from unusual IP or geolocation."
+  - "Trigger investigation on unexpected federated role assumptions."
+  - "Automatically revoke suspicious federated sessions."
+
+analyst_guidance:
+  - "Validate federated login attempts with identity provider teams."
+  - "Check for any privilege escalation or unusual activity following federated access."
+  - "Review trust relationships and IAM role permissions for federated roles."
+  - "Contain and remediate compromised federated sessions or credentials promptly."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1078/"
+  - "https://docs.aws.amazon.com/singlesignon/latest/userguide/what-is.html"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers.html"
+
+review_cycle: "Quarterly or after security incidents"

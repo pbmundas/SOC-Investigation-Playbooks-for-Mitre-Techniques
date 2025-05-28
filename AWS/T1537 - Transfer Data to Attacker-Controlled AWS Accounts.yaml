@@ -1,0 +1,94 @@
+playbook_name: "T1537 - Transfer Data to Attacker-Controlled AWS Accounts"
+tactic: "Exfiltration"
+technique_id: "T1537"
+technique_name: "Transfer Data to Cloud Account"
+description: >
+  Detect and investigate attempts where attackers copy or transfer data from the victim AWS environment
+  to attacker-controlled AWS accounts, often using cross-account permissions or compromised credentials.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Cross-Account Data Transfers"
+    description: >
+      Review CloudTrail logs for cross-account S3 replication, bucket policies, or IAM role assumptions
+      enabling data transfer to external AWS accounts.
+    checklist:
+      - "Are there newly created or modified bucket policies allowing external account access?"
+      - "Are there IAM role assumptions from unknown or untrusted accounts?"
+      - "Is there evidence of cross-account S3 replication configured?"
+    data_sources:
+      - "CloudTrail Logs"
+      - "S3 Bucket Policies"
+      - "IAM Role Assumption Logs"
+
+  - step_number: 2
+    title: "Detect Large or Unusual Data Copy Operations"
+    description: >
+      Identify large S3 data copy or replication jobs to external accounts, unusual AWS CLI commands,
+      or SDK usage targeting external buckets.
+    checklist:
+      - "Are there large or bulk S3 copy operations to buckets owned by other accounts?"
+      - "Are AWS CLI or SDK commands issuing cross-account copy or upload operations?"
+      - "Are data transfer patterns outside normal operational hours?"
+    data_sources:
+      - "CloudTrail Logs"
+      - "S3 Access Logs"
+      - "AWS CLI Command Logs"
+
+  - step_number: 3
+    title: "Correlate Data Transfer with Identity and Access Changes"
+    description: >
+      Review whether the data transfer is preceded by privilege escalation, new key creation,
+      or suspicious access to IAM policies.
+    checklist:
+      - "Are there recent IAM changes or key creations linked to the transfer?"
+      - "Is the transfer initiated by service accounts or unusual user identities?"
+      - "Is there correlation with other suspicious activities like persistence or reconnaissance?"
+    data_sources:
+      - "IAM Access Logs"
+      - "CloudTrail Logs"
+      - "Security Config Change Logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Authorized cross-account replication with audit logs."
+      - "Medium: Unusual cross-account access requiring validation."
+      - "High: Confirmed unauthorized data transfer to attacker accounts."
+  - confidence_levels:
+      - "High: Verified transfer to known attacker account."
+      - "Medium: Suspicious access with incomplete confirmation."
+      - "Low: Routine replication with minor anomalies."
+
+ioc_types:
+  - "Cross-account S3 replication or copy events"
+  - "IAM role assumption by unknown external accounts"
+  - "New or modified bucket policies allowing external access"
+
+queries/examples:
+  - name: "Cross-Account Bucket Policy Changes"
+    query: >
+      cloudtrail: eventName="PutBucketPolicy" AND requestParameters.policyDocument.statement.resource LIKE "%arn:aws:s3:::external-bucket%"
+  - name: "S3 Copy to External Account"
+    query: >
+      s3_access_logs: eventName IN ("CopyObject", "PutObject") AND destinationAccountId != sourceAccountId
+  - name: "IAM Role Assumption from Unknown Account"
+    query: >
+      cloudtrail: eventName="AssumeRole" AND sourceIPAddress NOT IN trusted_ips
+
+automation_hooks:
+  - "Alert on new or modified bucket policies granting cross-account access."
+  - "Trigger IAM key rotation or suspension on suspicious role assumptions."
+  - "Initiate network or API session blocks on suspected compromised accounts."
+
+analyst_guidance:
+  - "Confirm business justification for cross-account data transfers."
+  - "Review permissions and audit logs for unauthorized access."
+  - "Recommend tightening cross-account trust policies and monitoring."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1537/"
+  - "https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingBucket.html"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html"
+  - "https://docs.aws.amazon.com/AmazonS3/latest/dev/replication.html"
+
+review_cycle: "Quarterly or post-incident"

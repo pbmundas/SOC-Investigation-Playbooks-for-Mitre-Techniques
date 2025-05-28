@@ -1,0 +1,93 @@
+playbook_name: "T1608.001 - Local Job Scheduling via Lambda Triggers or EventBridge Schedules"
+tactic: "Execution"
+technique_id: "T1608.001"
+technique_name: "Local Job Scheduling"
+description: >
+  Detect and investigate the creation and abuse of AWS Lambda triggers or EventBridge (formerly CloudWatch Events)
+  scheduled rules that automate execution of tasks, potentially for malicious persistence, automation of attacks,
+  or data collection.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Creation of Lambda Triggers and EventBridge Rules"
+    description: >
+      Identify creation or modification of Lambda function triggers and EventBridge scheduled rules that
+      may indicate attacker persistence or automation.
+    checklist:
+      - "Are new EventBridge rules or Lambda triggers created outside of maintenance windows?"
+      - "Do schedules trigger suspicious Lambda functions or workflows?"
+      - "Are trigger creators or modifiers authorized and following policy?"
+    data_sources:
+      - "CloudTrail Logs"
+      - "AWS Config"
+      - "CloudWatch Events Logs"
+
+  - step_number: 2
+    title: "Review Execution Patterns of Scheduled Lambda Functions"
+    description: >
+      Analyze Lambda invocations linked to scheduled events to detect unusual timing or frequency indicative of malicious activity.
+    checklist:
+      - "Is there an unusual increase in Lambda execution frequency?"
+      - "Do scheduled events invoke functions accessing sensitive resources?"
+      - "Are any functions triggered that are not part of documented business processes?"
+    data_sources:
+      - "CloudWatch Logs"
+      - "Lambda Execution Logs"
+      - "CloudTrail Logs"
+
+  - step_number: 3
+    title: "Validate Permissions and Rule Configurations"
+    description: >
+      Ensure that IAM roles and permissions attached to EventBridge rules and Lambda functions follow least privilege principles and that rule configurations have not been tampered with.
+    checklist:
+      - "Are EventBridge rules configured with proper authorization?"
+      - "Do Lambda execution roles have excessive permissions?"
+      - "Have rule targets or inputs been modified unexpectedly?"
+    data_sources:
+      - "AWS Config"
+      - "IAM Access Analyzer"
+      - "CloudTrail Logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Scheduled jobs created by authorized users for business operations."
+      - "Medium: Unusual or undocumented scheduled jobs detected."
+      - "High: Malicious or unauthorized scheduled jobs detected."
+  - confidence_levels:
+      - "High: Clear evidence of unauthorized scheduling and malicious intent."
+      - "Medium: Suspicious scheduling with incomplete confirmation."
+      - "Low: Legitimate scheduled tasks with minor anomalies."
+
+ioc_types:
+  - "Creation/modification of EventBridge scheduled rules"
+  - "Lambda triggers linked to suspicious events"
+  - "Unusual execution patterns of scheduled Lambda functions"
+
+queries/examples:
+  - name: "New EventBridge Rule Creation"
+    query: >
+      cloudtrail: eventSource="events.amazonaws.com" AND eventName="PutRule" AND userIdentity.userName NOT IN trusted_admins
+  - name: "Lambda Invocation from Scheduled Event"
+    query: >
+      cloudtrail: eventSource="lambda.amazonaws.com" AND eventName="Invoke" AND userIdentity.userName NOT IN typical_users AND requestParameters.source == "EventBridge"
+  - name: "Modification of EventBridge Rule Targets"
+    query: >
+      cloudtrail: eventSource="events.amazonaws.com" AND eventName="PutTargets" AND userIdentity.userName NOT IN trusted_admins
+
+automation_hooks:
+  - "Alert on creation or modification of EventBridge rules by non-admin users."
+  - "Trigger immediate review of newly scheduled Lambda triggers."
+  - "Block or quarantine suspicious scheduled executions pending investigation."
+
+analyst_guidance:
+  - "Verify business justification and authorization for all scheduled jobs."
+  - "Correlate scheduled Lambda activity with other suspicious behaviors."
+  - "Recommend tightening IAM policies to limit scheduling permissions."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1608/001/"
+  - "https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-run-lambda-schedule.html"
+  - "https://docs.aws.amazon.com/lambda/latest/dg/tutorial-scheduled-events-schedule-expressions.html"
+  - "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/monitoring-system-logs.html"
+
+review_cycle: "Quarterly or post-incident"

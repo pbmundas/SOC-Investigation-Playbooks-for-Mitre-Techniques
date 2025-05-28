@@ -1,0 +1,82 @@
+playbook_name: "T1562.002 - Enabling Dormant or Disabled IAM Users: Investigation & Triage"
+tactic: "Defense Evasion"
+technique_id: "T1562.002"
+technique_name: "Enabling Dormant or Disabled IAM Users"
+description: >
+  Detect attempts to enable previously disabled or dormant IAM users, which may be used by attackers to regain access or evade detection.
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect Enabling or Reactivation of IAM Users"
+    description: >
+      Monitor CloudTrail for API calls that reactivate or enable IAM users, such as UpdateLoginProfile or EnableUser.
+    checklist:
+      - "Are login profiles re-created or updated for dormant/disabled users?"
+      - "Are access keys reactivated or created for these users?"
+      - "Is the activity performed by authorized personnel?"
+    data_sources:
+      - "AWS CloudTrail (UpdateLoginProfile, CreateAccessKey, ActivateMFADevice)"
+      - "AWS IAM Credential Reports"
+      - "AWS Config"
+
+  - step_number: 2
+    title: "Review User Activity Before and After Enabling"
+    description: >
+      Analyze recent activity of the user prior to enabling and subsequent usage.
+    checklist:
+      - "Was the user inactive for an extended period before enabling?"
+      - "Is there sudden unusual activity after reactivation?"
+      - "Are access patterns consistent with legitimate use?"
+    data_sources:
+      - "AWS CloudTrail"
+      - "Authentication and access logs"
+
+  - step_number: 3
+    title: "Correlate with Other Suspicious Actions"
+    description: >
+      Look for related suspicious behavior around the time of enabling, such as privilege escalation or data access.
+    checklist:
+      - "Is there creation of new roles or policies soon after enabling?"
+      - "Are there attempts to disable logging or monitoring?"
+    data_sources:
+      - "CloudTrail"
+      - "AWS Config"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Authorized user reactivation."
+      - "Medium: Unexpected enabling of dormant users."
+      - "High: Unauthorized enabling with suspicious activity."
+  - confidence_levels:
+      - "High: Known attacker or unusual IP enabling user."
+      - "Medium: Unusual timing or IP, unclear intent."
+      - "Low: Routine maintenance or support actions."
+
+ioc_types:
+  - "UpdateLoginProfile API calls on dormant users"
+  - "CreateAccessKey or ActivateMFADevice for disabled users"
+  - "IAM user reactivation patterns"
+
+queries/examples:
+  - name: "Detect Reactivation of IAM Users"
+    query: >
+      eventName="UpdateLoginProfile" AND userIdentity.sessionContext.sessionIssuer.type="Root" OR userIdentity.type="IAMUser"
+  - name: "Detect Creation of Access Keys for Dormant Users"
+    query: >
+      eventName="CreateAccessKey" AND userIdentity.principalId NOT IN (recent active users list)
+
+automation_hooks:
+  - "Alert on reactivation of dormant or disabled IAM users."
+  - "Require manual approval for user reactivation."
+  - "Trigger investigation for unexpected enabling."
+
+analyst_guidance:
+  - "Confirm legitimacy of user enabling with IAM team."
+  - "Monitor enabled user for anomalous behavior."
+  - "Immediately disable user if unauthorized."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1562/"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_manage.html"
+
+review_cycle: "Monthly or after incidents"

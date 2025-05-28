@@ -1,0 +1,89 @@
+playbook_name: "T1567 - Exfiltration Over Web Service (AWS API Gateway, S3)"
+tactic: "Exfiltration"
+technique_id: "T1567"
+technique_name: "Exfiltration Over Web Service"
+description: >
+  Detect and investigate data exfiltration over web services such as AWS API Gateway, S3 buckets,
+  or other cloud-hosted endpoints that attackers may abuse for covert data transfer.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor AWS API Gateway Logs for Unusual Requests"
+    description: >
+      Analyze API Gateway access logs and CloudTrail for anomalous or high-volume requests indicative of exfiltration.
+    checklist:
+      - "Are there API requests from suspicious IPs or geolocations?"
+      - "Are there unusually large payloads or repeated request patterns?"
+      - "Is there use of uncommon or custom APIs not aligned with business needs?"
+    data_sources:
+      - "API Gateway Access Logs"
+      - "CloudTrail Logs"
+      - "VPC Flow Logs"
+
+  - step_number: 2
+    title: "Analyze S3 Access Logs for Large or Frequent PUT Requests"
+    description: >
+      Identify high-volume or anomalous uploads to S3 buckets possibly used as exfiltration drop points.
+    checklist:
+      - "Are there bulk data uploads to rarely accessed buckets?"
+      - "Are uploads coming from compromised or unexpected identities?"
+      - "Are there repeated uploads of similar data patterns?"
+    data_sources:
+      - "S3 Access Logs"
+      - "CloudTrail Logs"
+
+  - step_number: 3
+    title: "Correlate API and S3 Activity with Other Attack Indicators"
+    description: >
+      Cross-check API Gateway and S3 activity with credential misuse, privilege escalation, or persistence indicators.
+    checklist:
+      - "Is exfiltration activity preceded by privilege escalation?"
+      - "Are compromised IAM keys or roles involved?"
+      - "Is there lateral movement or command execution activity in parallel?"
+    data_sources:
+      - "CloudTrail Logs"
+      - "IAM Logs"
+      - "EDR or Endpoint Logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Authorized API or S3 activity with proper context."
+      - "Medium: Suspicious exfiltration patterns needing review."
+      - "High: Confirmed malicious data exfiltration over web services."
+  - confidence_levels:
+      - "High: Strong evidence of unauthorized data transfer."
+      - "Medium: Anomalous usage with partial indicators."
+      - "Low: Routine activity with minor irregularities."
+
+ioc_types:
+  - "High-volume or repeated API Gateway calls with large payloads"
+  - "Bulk S3 PUT operations to uncommon buckets"
+  - "Unauthorized API calls or role use in API Gateway"
+
+queries/examples:
+  - name: "API Gateway Large Payload Requests"
+    query: >
+      api_gateway_logs: payloadSize > 1000000 AND sourceIPAddress NOT IN trusted_ips
+  - name: "Suspicious S3 PUT Upload Patterns"
+    query: >
+      s3_access_logs: eventName="PutObject" AND bucketName NOT IN known_buckets AND objectSize > 10000000
+  - name: "Unauthorized API Gateway Usage"
+    query: >
+      cloudtrail: eventSource="apigateway.amazonaws.com" AND userIdentity.sessionContext.attributes.mfaAuthenticated = false
+
+automation_hooks:
+  - "Alert on large or repeated API Gateway requests from untrusted sources."
+  - "Trigger IAM role or key revocation upon suspicious exfiltration detection."
+  - "Automatically isolate compromised EC2 or Lambda instances."
+
+analyst_guidance:
+  - "Validate whether API or S3 usage aligns with business functions."
+  - "Correlate with other suspicious behaviors like credential compromise."
+  - "Recommend API Gateway throttling, logging, and tighter access controls."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1567/"
+  - "https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-metrics-and-logging.html"
+  - "https://docs.aws.amazon.com/AmazonS3/latest/userguide/LoggingRequests.html"
+
+review_cycle: "Quarterly or post-incident"

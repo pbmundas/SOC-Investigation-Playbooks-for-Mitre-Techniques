@@ -1,0 +1,93 @@
+playbook_name: "T1119 - Use of Lambda or EC2 Scripts to Collect Data"
+tactic: "Collection"
+technique_id: "T1119"
+technique_name: "Automated Collection"
+description: >
+  Detect and investigate automated data collection activities using AWS Lambda functions or EC2 instance scripts.
+  Attackers may leverage these to gather sensitive data from cloud resources, databases, or file systems for exfiltration or further exploitation.
+
+investigation_steps:
+  - step_number: 1
+    title: "Identify Lambda Functions or EC2 Scripts Accessing Sensitive Data"
+    description: >
+      Monitor Lambda executions and EC2 script activities that interact with sensitive AWS resources such as S3 buckets, DynamoDB tables, or RDS databases.
+    checklist:
+      - "Are there Lambda functions accessing sensitive data outside normal business logic?"
+      - "Are EC2 scripts performing unexpected data reads or exports?"
+      - "Is there unusual timing or frequency of data access operations?"
+    data_sources:
+      - "Lambda Execution Logs"
+      - "CloudTrail Logs"
+      - "EC2 System and Application Logs"
+      - "S3 Access Logs"
+      - "Database Access Logs (DynamoDB, RDS)"
+
+  - step_number: 2
+    title: "Detect Suspicious Data Collection Patterns"
+    description: >
+      Look for anomalous or bulk data collection behaviors such as large data transfers, repetitive queries, or access to sensitive information by unauthorized roles.
+    checklist:
+      - "Are data queries unusually large or frequent?"
+      - "Are there bulk exports or transfers to unknown destinations?"
+      - "Are unauthorized IAM roles or users performing data access?"
+    data_sources:
+      - "CloudTrail Logs"
+      - "Network Flow Logs"
+      - "AWS Config"
+
+  - step_number: 3
+    title: "Correlate Data Collection Activities with Other Threat Indicators"
+    description: >
+      Cross-reference data collection events with other suspicious activities like privilege escalation or unusual login patterns.
+    checklist:
+      - "Is data collection preceded or followed by suspicious API calls or CLI executions?"
+      - "Are credentials used for data access recently obtained or escalated?"
+      - "Are multiple resources accessed in a short time frame?"
+    data_sources:
+      - "CloudTrail Logs"
+      - "IAM Access Logs"
+      - "Process Monitoring Logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Authorized data collection by known services or applications."
+      - "Medium: Anomalous data collection requiring further investigation."
+      - "High: Confirmed malicious automated data collection."
+  - confidence_levels:
+      - "High: Clear evidence of unauthorized automated data collection."
+      - "Medium: Suspicious behavior with contextual indicators."
+      - "Low: Routine operations with slight deviations."
+
+ioc_types:
+  - "Lambda functions or EC2 scripts accessing large amounts of sensitive data"
+  - "Unusual data queries or bulk data exports"
+  - "Unauthorized IAM role or user access during data collection"
+
+queries/examples:
+  - name: "Lambda Accessing Sensitive Data"
+    query: >
+      cloudtrail: eventSource="lambda.amazonaws.com" AND eventName IN ("Invoke", "GetObject", "Scan", "Query")
+  - name: "EC2 Scripts Performing Data Reads"
+    query: >
+      ec2_logs: process_name IN ("python", "bash", "sh") AND file_access IN ("/var/data", "/mnt/data", "/tmp") AND user NOT IN authorized_users
+  - name: "Bulk Data Transfers from S3"
+    query: >
+      s3_access_logs: eventName="GetObject" AND bytesTransferred > 100000000
+
+automation_hooks:
+  - "Alert on large or unusual data access by Lambda or EC2 scripts."
+  - "Trigger IAM role and permission reviews for data access."
+  - "Block or throttle suspicious bulk data transfers."
+
+analyst_guidance:
+  - "Confirm legitimacy of automated data collection workflows."
+  - "Correlate with other attack indicators such as credential misuse or privilege escalation."
+  - "Recommend applying least privilege and monitoring on Lambda and EC2 access."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1119/"
+  - "https://docs.aws.amazon.com/lambda/latest/dg/welcome.html"
+  - "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html"
+  - "https://docs.aws.amazon.com/AmazonS3/latest/userguide/Logging.html"
+
+review_cycle: "Quarterly or post-incident"

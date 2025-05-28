@@ -1,0 +1,100 @@
+playbook_name: "T1078.002 - IAM Users Created Directly: Investigation & Triage"
+tactic: "Persistence"
+technique_id: "T1078.002"
+technique_name: "IAM Users Created Directly"
+description: >
+  Detect and investigate the creation and use of IAM users directly within AWS accounts, which may be employed by attackers to maintain persistence or escalate privileges.
+
+investigation_steps:
+  - step_number: 1
+    title: "Identify New IAM User Creation Events"
+    description: >
+      Monitor AWS CloudTrail for CreateUser API calls indicating new IAM user creation.
+    checklist:
+      - "Are new IAM users created outside approved change windows or by unauthorized principals?"
+      - "Is the creation activity initiated by unexpected users or roles?"
+    data_sources:
+      - "AWS CloudTrail (CreateUser, CreateLoginProfile)"
+      - "AWS Config IAM user change history"
+
+  - step_number: 2
+    title: "Review Newly Created IAM Users’ Permissions"
+    description: >
+      Analyze the permissions and policies attached to newly created IAM users for excessive or suspicious privileges.
+    checklist:
+      - "Do the new users have administrator or overly permissive policies?"
+      - "Are the attached policies inline or managed?"
+      - "Are permissions aligned with least privilege principles?"
+    data_sources:
+      - "AWS IAM Access Advisor"
+      - "AWS CloudTrail (PutUserPolicy, AttachUserPolicy)"
+
+  - step_number: 3
+    title: "Detect Usage of Newly Created IAM Users"
+    description: >
+      Look for console logins, API calls, or key usage from newly created IAM users.
+    checklist:
+      - "Are new users performing API calls or console logins shortly after creation?"
+      - "Is usage coming from suspicious IPs or unusual geolocations?"
+      - "Is there evidence of automation or scripting using these credentials?"
+    data_sources:
+      - "AWS CloudTrail (ConsoleLogin, API calls)"
+      - "AWS CloudWatch logs"
+      - "VPC Flow Logs"
+
+  - step_number: 4
+    title: "Correlate with Other Anomalies or Indicators"
+    description: >
+      Investigate related suspicious activities such as policy changes, role creation, or data access linked to new IAM users.
+    checklist:
+      - "Are IAM policies or roles modified after new user creation?"
+      - "Is there data exfiltration or unusual network traffic following user activity?"
+    data_sources:
+      - "AWS CloudTrail"
+      - "IAM policy change logs"
+      - "Network and S3 access logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: IAM user creation during authorized administrative changes."
+      - "Medium: Unexpected IAM user creation without immediate suspicious activity."
+      - "High: Unauthorized IAM user creation with active suspicious usage or privilege escalation."
+  - confidence_levels:
+      - "High: Direct evidence of unauthorized user creation and malicious activity."
+      - "Medium: Unusual user creation requiring further validation."
+      - "Low: Possible false positives from automation or delegated admin users."
+
+ioc_types:
+  - "CreateUser API events"
+  - "New IAM user with administrator or unusual permissions"
+  - "Console login or API calls from recently created users"
+  - "Usage from anomalous IP addresses or geolocations"
+
+queries/examples:
+  - name: "Detect IAM User Creation"
+    query: >
+      eventName="CreateUser"
+  - name: "Detect IAM User Console Login"
+    query: >
+      eventName="ConsoleLogin" AND userIdentity.userName IN ["<new IAM user list>"]
+  - name: "Detect Excessive Permissions Assigned"
+    query: >
+      eventName IN ["PutUserPolicy", "AttachUserPolicy"] AND userIdentity.userName IN ["<new IAM user list>"]
+
+automation_hooks:
+  - "Alert on new IAM user creation by unexpected principals."
+  - "Trigger review workflow for permissions attached to new users."
+  - "Block or disable newly created users pending investigation if suspicious."
+
+analyst_guidance:
+  - "Verify new user creation with identity and access management teams."
+  - "Assess necessity and appropriateness of permissions granted."
+  - "Check for any abnormal usage patterns or privilege escalations."
+  - "Revoke or remediate unauthorized IAM users immediately."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1078/"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users.html"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies.html"
+
+review_cycle: "Quarterly or post-incident"

@@ -1,0 +1,77 @@
+playbook_name: "T1548.002 - Setuid/Setgid Binary Abuse in EC2 or Containers"
+tactic: "Privilege Escalation"
+technique_id: "T1548.002"
+technique_name: "Abuse Elevation Control Mechanism: Setuid/Setgid"
+description: >
+  Detect abuse of Linux setuid/setgid binaries which can allow privilege escalation
+  inside EC2 instances or container environments when misconfigured or unmonitored.
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect Execution of Setuid Binaries by Non-Root Users"
+    description: >
+      Monitor audit logs and file access for usage of binaries with setuid/setgid bits.
+    checklist:
+      - "Is a non-root user executing a binary with setuid enabled?"
+      - "Are unknown setuid binaries appearing in system paths or temp directories?"
+      - "Is file integrity being altered for privileged binaries?"
+    data_sources:
+      - "auditd (execve with uid!=0)"
+      - "EC2 file monitoring (CloudWatch + FIM)"
+      - "Falco/OSSEC setuid/shell execution rules"
+
+  - step_number: 2
+    title: "Scan for Dangerous Custom Setuid Binaries"
+    description: >
+      Proactively detect suspicious binaries uploaded or compiled with setuid permissions.
+    checklist:
+      - "Are new binaries appearing in /tmp, /dev/shm, or user home directories?"
+      - "Do any files have unexpected 4000 or 2000 permission bits?"
+      - "Do setuid binaries include shells or interpreters?"
+    data_sources:
+      - "Tripwire/FIM tools"
+      - "Linux audit subsystem"
+      - "Custom cron jobs or lambda FIM scripts"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Legitimate binary executed by expected user."
+      - "Medium: Unusual binary found with setuid outside standard path."
+      - "High: Setuid binary leads to confirmed root shell."
+  - confidence_levels:
+      - "High: Execution of `bash`/`sh` with root via setuid confirmed."
+      - "Medium: Unknown binary launched with privilege."
+      - "Low: Static system binary seen in audit logs."
+
+ioc_types:
+  - "Execution of known or unknown setuid binaries"
+  - "Files with permission 4000 or 2000 outside standard directories"
+  - "Shells spawned with elevated privilege unexpectedly"
+
+queries/examples:
+  - name: "Setuid Binary Execution"
+    query: >
+      auditd: syscall=execve AND uid!=0 AND path IN ("/usr/bin/passwd", "/usr/bin/su", ...)
+  - name: "Shell Access via Setuid"
+    query: >
+      auditd: exec="/bin/bash" OR exec="/bin/sh" AND euid=0 AND uid!=0
+  - name: "Unexpected Setuid Files"
+    query: >
+      find / -perm -4000 -type f -not -path "/usr/*"
+
+automation_hooks:
+  - "Alert on any execution of custom setuid binaries."
+  - "Trigger auto-quarantine of modified binary paths in EC2/container."
+  - "Run automated integrity scan of `/bin`, `/usr/bin`, and `/tmp`."
+
+analyst_guidance:
+  - "Check file origin and user ownership."
+  - "Validate via `stat`, `ls -l`, and `getcap` on the binary."
+  - "Correlate with any known container breakout patterns."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1548/002/"
+  - "https://wiki.debian.org/SetUID"
+  - "https://linux-audit.com/auditing-setuid-root-binaries/"
+
+review_cycle: "Every 30 days or on container hardening review"

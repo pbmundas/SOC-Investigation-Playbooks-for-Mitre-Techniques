@@ -1,0 +1,94 @@
+playbook_name: "T1119 - Automated Collection via Lambda or EC2 Scripts"
+tactic: "Collection"
+technique_id: "T1119"
+technique_name: "Automated Collection"
+description: >
+  Detect and investigate use of automated scripts or functions running on AWS Lambda
+  or EC2 instances that collect data for malicious purposes, including information
+  gathering or exfiltration preparation.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Lambda Function Executions"
+    description: >
+      Track Lambda invocations and changes to function code or configurations
+      that may indicate unauthorized data collection.
+    checklist:
+      - "Are new or modified Lambda functions executing data collection tasks?"
+      - "Is function execution volume or timing unusual?"
+      - "Are environment variables or IAM roles attached to Lambda overly permissive?"
+    data_sources:
+      - "CloudTrail Logs"
+      - "AWS Lambda Logs (CloudWatch)"
+      - "AWS Config"
+
+  - step_number: 2
+    title: "Monitor EC2 Script Execution"
+    description: >
+      Review execution of scripts on EC2 instances, particularly those accessing
+      sensitive data or communicating externally.
+    checklist:
+      - "Are there scheduled or triggered scripts accessing data repositories?"
+      - "Is there evidence of script execution outside normal maintenance windows?"
+      - "Are EC2 IAM roles or instance profiles configured with excessive permissions?"
+    data_sources:
+      - "CloudTrail Logs"
+      - "EC2 System Logs"
+      - "CloudWatch Logs"
+
+  - step_number: 3
+    title: "Detect Data Collection Behavior"
+    description: >
+      Identify patterns consistent with data aggregation or staging prior to exfiltration.
+    checklist:
+      - "Is data from multiple sources aggregated in temporary storage?"
+      - "Are scripts or functions accessing multiple AWS services (S3, DynamoDB, RDS)?"
+      - "Is there suspicious network activity from EC2 or Lambda to external endpoints?"
+    data_sources:
+      - "VPC Flow Logs"
+      - "CloudTrail Logs"
+      - "CloudWatch Logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Authorized automated data collection for business needs."
+      - "Medium: Unusual or unapproved data collection detected."
+      - "High: Confirmed malicious data collection or exfiltration."
+  - confidence_levels:
+      - "High: Clear evidence of unauthorized data gathering."
+      - "Medium: Suspicious automation without full confirmation."
+      - "Low: Routine automation with minor deviations."
+
+ioc_types:
+  - "Execution of Lambda functions with data access"
+  - "Scripts on EC2 accessing sensitive data stores"
+  - "Unusual network connections from automated functions"
+
+queries/examples:
+  - name: "Lambda Function Data Access"
+    query: >
+      cloudtrail: eventSource="lambda.amazonaws.com" AND eventName="Invoke" AND userIdentity.sessionContext.sessionIssuer.userName NOT IN trusted_users
+  - name: "EC2 Script Execution Outside Schedule"
+    query: >
+      ec2_system_logs: process_name IN ("bash", "powershell") AND execution_time NOT IN normal_window
+  - name: "Suspicious Outbound Network Activity"
+    query: >
+      vpcflowlogs: srcInstanceId IN (lambda, ec2) AND dstAddr NOT IN aws_ip_ranges
+
+automation_hooks:
+  - "Alert on new or modified Lambda functions accessing data."
+  - "Trigger EDR snapshot on EC2 instances running suspicious scripts."
+  - "Throttle suspicious outbound network traffic pending review."
+
+analyst_guidance:
+  - "Validate the purpose and authorization of automated data collection."
+  - "Review function and script code for malicious intent."
+  - "Correlate automated collection with downstream exfiltration attempts."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1119/"
+  - "https://docs.aws.amazon.com/lambda/latest/dg/welcome.html"
+  - "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/monitoring-system-logs.html"
+  - "https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs.html"
+
+review_cycle: "Quarterly or post-incident"

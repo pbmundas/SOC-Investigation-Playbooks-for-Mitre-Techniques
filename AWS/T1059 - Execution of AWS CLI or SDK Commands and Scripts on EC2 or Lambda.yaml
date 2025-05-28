@@ -1,0 +1,94 @@
+playbook_name: "T1059 - Execution of AWS CLI or SDK Commands and Scripts on EC2 or Lambda"
+tactic: "Execution"
+technique_id: "T1059"
+technique_name: "Command and Scripting Interpreter"
+description: >
+  Detect and investigate the execution of AWS CLI or SDK commands, scripts, or automated jobs
+  running on EC2 instances or Lambda functions, especially those used to collect data or perform unauthorized access.
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect Execution of AWS CLI or SDK Commands on EC2 or Lambda"
+    description: >
+      Monitor command execution on EC2 instances and Lambda function invocations that utilize AWS CLI or SDK calls.
+    checklist:
+      - "Are there unusual AWS CLI commands or SDK invocations from EC2 or Lambda?"
+      - "Is command execution occurring outside of scheduled or approved automation?"
+      - "Are credentials or tokens being used unusually during these executions?"
+    data_sources:
+      - "CloudTrail Logs"
+      - "EC2 System and Application Logs"
+      - "Lambda Execution Logs"
+      - "CloudWatch Logs"
+
+  - step_number: 2
+    title: "Detect Use of Scripts in Lambda or EC2 for Data Collection"
+    description: >
+      Investigate scripts running within Lambda or EC2 designed to collect sensitive data or perform reconnaissance.
+    checklist:
+      - "Are scripts accessing or exporting data from AWS resources?"
+      - "Are Lambda functions or EC2 scripts querying S3, DynamoDB, or RDS beyond normal usage?"
+      - "Is there evidence of data exfiltration or unusual data movement?"
+    data_sources:
+      - "CloudTrail Logs"
+      - "S3 Access Logs"
+      - "DynamoDB and RDS Audit Logs"
+      - "Lambda and EC2 Application Logs"
+
+  - step_number: 3
+    title: "Investigate Access Patterns to S3, DynamoDB, and RDS"
+    description: >
+      Monitor access to critical AWS data stores for unusual or unauthorized read/write operations initiated by EC2 or Lambda.
+    checklist:
+      - "Are there access attempts to S3 buckets or DynamoDB tables from unexpected EC2 or Lambda resources?"
+      - "Are permissions escalated or modified to enable data access?"
+      - "Is there unusual volume or pattern of database queries?"
+    data_sources:
+      - "CloudTrail Logs"
+      - "S3 Server Access Logs"
+      - "DynamoDB Streams and Logs"
+      - "RDS Audit Logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Normal scripted automation with proper authorization."
+      - "Medium: Unusual command or data access patterns."
+      - "High: Confirmed unauthorized data collection or exfiltration."
+  - confidence_levels:
+      - "High: Correlated events showing malicious execution and data access."
+      - "Medium: Suspicious but incomplete evidence."
+      - "Low: Routine operational activity."
+
+ioc_types:
+  - "Execution of AWS CLI or SDK commands from EC2 or Lambda"
+  - "Scripts accessing sensitive AWS data services"
+  - "Unusual access to S3, DynamoDB, or RDS resources"
+
+queries/examples:
+  - name: "AWS CLI Commands from EC2 or Lambda"
+    query: >
+      cloudtrail: eventSource="ec2.amazonaws.com" OR eventSource="lambda.amazonaws.com" AND eventName IN ("RunInstances", "Invoke", "PutObject", "GetItem")
+  - name: "Suspicious Data Access Patterns"
+    query: >
+      s3accesslogs: requestor NOT IN (approved_users) AND operation IN ("GetObject", "PutObject")
+  - name: "Database Query Anomalies"
+    query: >
+      rdslogs: unusual query patterns or high volume access
+
+automation_hooks:
+  - "Alert on execution of unexpected AWS CLI or SDK commands."
+  - "Trigger data access audit when sensitive resources are queried."
+  - "Automate blocking of EC2 or Lambda resources exhibiting suspicious behavior."
+
+analyst_guidance:
+  - "Verify script purpose and ownership."
+  - "Correlate access with business operations or scheduled tasks."
+  - "Investigate any signs of data exfiltration or privilege abuse."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1059/"
+  - "https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-welcome.html"
+  - "https://docs.aws.amazon.com/lambda/latest/dg/welcome.html"
+  - "https://docs.aws.amazon.com/AmazonS3/latest/userguide/Logging.html"
+
+review_cycle: "Quarterly or post-incident"

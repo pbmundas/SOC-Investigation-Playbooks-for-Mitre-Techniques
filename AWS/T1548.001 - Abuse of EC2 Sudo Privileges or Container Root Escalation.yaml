@@ -1,0 +1,77 @@
+playbook_name: "T1548.001 - Abuse of EC2 Sudo Privileges or Container Root Escalation"
+tactic: "Privilege Escalation"
+technique_id: "T1548.001"
+technique_name: "Abuse Elevation Control Mechanism: Sudo and Root Access Abuse"
+description: >
+  Detect and investigate abuse of sudo or root privileges within EC2 instances or containers,
+  often used for lateral movement or persistence once initial access is gained.
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect Unusual Sudo Access by Non-Admin Identities"
+    description: >
+      Investigate commands executed with `sudo`, particularly those run by users who are not part of typical admin groups.
+    checklist:
+      - "Is the user a member of the 'sudo' or 'admin' group?"
+      - "Are commands like `chmod`, `chown`, `adduser`, or `apt` used with sudo?"
+      - "Are there audit entries for `sudo` not tied to known maintenance events?"
+    data_sources:
+      - "CloudTrail (SSM Session Manager command logs)"
+      - "EC2 CloudWatch Logs"
+      - "Linux auditd (execve and user commands)"
+
+  - step_number: 2
+    title: "Monitor Root-Level Container Escalations"
+    description: >
+      Track the execution of privileged containers, host mounts, and attempts to escalate within containerized environments.
+    checklist:
+      - "Are containers launched with `--privileged` or `--cap-add=ALL`?"
+      - "Are host volumes mounted (`/etc`, `/var/run/docker.sock`)?"
+      - "Are user IDs inside containers mapping to root (uid 0)?"
+    data_sources:
+      - "Docker daemon logs"
+      - "Kubernetes audit logs (if applicable)"
+      - "Falco/OSSEC container rules"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Normal sudo use during patch cycles."
+      - "Medium: Unexpected sudo by dev user or root container instantiation."
+      - "High: Confirmed root escalation used to modify IAM or persistence methods."
+  - confidence_levels:
+      - "High: Escalation confirmed with root-level audit logs."
+      - "Medium: Privileged command run by unknown session."
+      - "Low: Sudo usage with no obvious escalation."
+
+ioc_types:
+  - "Use of `sudo` with non-admin accounts"
+  - "`docker run --privileged` or `--cap-add=ALL` executions"
+  - "Host volume mounts in containers"
+
+queries/examples:
+  - name: "Suspicious Sudo Commands"
+    query: >
+      auditd: uid!=0 AND exe="/usr/bin/sudo" AND cmdline IN ("chmod", "chown", "adduser", "bash")
+  - name: "Privileged Container Detection"
+    query: >
+      docker logs: docker run --privileged OR --cap-add=ALL
+  - name: "Root Container Access"
+    query: >
+      container logs: uid=0 AND container_user != root_expected_user
+
+automation_hooks:
+  - "Auto-alert on non-admin sudo usage."
+  - "Trigger EDR or forensic snapshot of EC2/container on root escalation."
+  - "Initiate IAM permission change detection if root session persists."
+
+analyst_guidance:
+  - "Validate user role/group and justify elevated command."
+  - "Cross-reference EC2 or container image and user baseline."
+  - "Review cloud hardening and sudoers policy for drift."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1548/001/"
+  - "https://docs.docker.com/engine/security/rootless/"
+  - "https://linux.die.net/man/8/sudo"
+
+review_cycle: "Quarterly or post-privileged incident"

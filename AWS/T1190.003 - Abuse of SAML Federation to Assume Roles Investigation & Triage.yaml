@@ -1,0 +1,83 @@
+playbook_name: "T1190.003 - Abuse of SAML Federation to Assume Roles: Investigation & Triage"
+tactic: "Credential Access"
+technique_id: "T1190.003"
+technique_name: "Abuse of SAML Federation to Assume Roles"
+description: >
+  Detect unauthorized or suspicious use of SAML federation to assume AWS IAM roles, potentially indicating credential compromise or privilege escalation.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor AssumeRoleWithSAML API Calls"
+    description: >
+      Track AssumeRoleWithSAML calls indicating SAML federation usage.
+    checklist:
+      - "Are there AssumeRoleWithSAML API calls from unusual users or IP addresses?"
+      - "Is the frequency of SAML federation logins abnormally high?"
+      - "Are roles assumed different from the user's normal permissions?"
+    data_sources:
+      - "CloudTrail logs (AssumeRoleWithSAML)"
+      - "Identity provider logs"
+      - "IAM logs"
+
+  - step_number: 2
+    title: "Analyze Federation and Role Usage Patterns"
+    description: >
+      Identify anomalies in SAML assertion usage or role assumptions.
+    checklist:
+      - "Are there multiple or rapid role assumptions by the same user?"
+      - "Is there use of roles with excessive privileges?"
+      - "Are federated sessions longer than normal or spanning unusual times?"
+    data_sources:
+      - "CloudTrail"
+      - "IdP (Identity Provider) logs"
+      - "Session duration metadata"
+
+  - step_number: 3
+    title: "Correlate with Other Suspicious Activities"
+    description: >
+      Look for related IAM changes, resource modifications, or exfiltration.
+    checklist:
+      - "Are there new IAM policies or roles created after federation?"
+      - "Is there evidence of lateral movement or data access?"
+      - "Are logs or monitoring systems tampered with?"
+    data_sources:
+      - "CloudTrail"
+      - "IAM logs"
+      - "Network monitoring"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Normal SAML federation usage."
+      - "Medium: Unusual SAML federation patterns."
+      - "High: Confirmed abuse or compromise via SAML federation."
+  - confidence_levels:
+      - "High: Federation from suspicious IPs or linked to breach."
+      - "Medium: Anomalous role assumption frequency or permissions."
+      - "Low: Possible false positives due to legitimate changes."
+
+ioc_types:
+  - "AssumeRoleWithSAML API calls from untrusted sources"
+  - "Rapid or multiple role assumptions"
+  - "Federated sessions with unusual privileges or durations"
+
+queries/examples:
+  - name: "Detect AssumeRoleWithSAML from Unusual IPs"
+    query: >
+      eventName="AssumeRoleWithSAML" AND sourceIPAddress NOT IN (trusted_IPs)
+  - name: "Detect Multiple Rapid Role Assumptions"
+    query: >
+      eventName="AssumeRoleWithSAML" | stats count() by userIdentity.userName, bin(5m) | where count > 3
+
+automation_hooks:
+  - "Alert on suspicious SAML federation usage."
+  - "Revoke or disable federated sessions if compromise suspected."
+  - "Trigger investigation and access reviews."
+
+analyst_guidance:
+  - "Validate federated users and roles with IAM and IdP teams."
+  - "Audit federation configuration and permissions."
+  - "Contain compromised sessions and review related accounts."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1190/003/"
+  - "https://docs.aws.amazon.com/IAM/latest

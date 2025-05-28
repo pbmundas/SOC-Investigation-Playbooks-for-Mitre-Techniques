@@ -1,0 +1,95 @@
+playbook_name: "T1574.008 - Abuse of EC2 Instance Metadata Service"
+tactic: "Defense Evasion"
+technique_id: "T1574.008"
+technique_name: "Cloud Instance Metadata"
+description: >
+  Detect and investigate abuse of the AWS EC2 instance metadata service (IMDS) to
+  obtain temporary credentials or sensitive information, which can be used for privilege escalation,
+  lateral movement, or persistent access.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Access to EC2 Instance Metadata Endpoint"
+    description: >
+      Track all access to the IMDS endpoint (`http://169.254.169.254`) from EC2 instances,
+      looking for unusual or unauthorized requests, including from unexpected sources or by unexpected users.
+    checklist:
+      - "Are there requests to the metadata endpoint from unexpected or unauthorized sources?"
+      - "Is there excessive or unusual frequency of metadata queries?"
+      - "Are metadata requests accessing sensitive token or IAM role information?"
+    data_sources:
+      - "VPC Flow Logs"
+      - "CloudTrail Logs"
+      - "Instance Metadata Access Logs (if enabled)"
+      - "Network Traffic Logs"
+
+  - step_number: 2
+    title: "Detect Attempts to Harvest Temporary Credentials"
+    description: >
+      Look for suspicious activities that indicate extraction of temporary IAM credentials via the metadata service,
+      such as retrieval of security tokens or role credentials.
+    checklist:
+      - "Are IAM security tokens or temporary credentials being requested?"
+      - "Are extracted credentials used immediately in suspicious API calls?"
+      - "Is there evidence of scripts or tools querying IMDS for credentials?"
+    data_sources:
+      - "CloudTrail Logs"
+      - "AWS API Call Logs"
+      - "Network Traffic Analysis"
+
+  - step_number: 3
+    title: "Investigate Unusual Use of Retrieved Credentials"
+    description: >
+      Track the use of credentials obtained via IMDS for unauthorized actions or privilege escalation.
+    checklist:
+      - "Are credentials from IMDS used to access unauthorized AWS resources?"
+      - "Is there a pattern of privilege escalation or lateral movement following credential use?"
+      - "Are there API calls made by unusual or unexpected IAM roles or users?"
+    data_sources:
+      - "CloudTrail Logs"
+      - "IAM Access Logs"
+      - "AWS Config"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Metadata accessed by authorized system processes."
+      - "Medium: Suspicious or anomalous access to metadata service."
+      - "High: Confirmed abuse of metadata service to extract credentials."
+  - confidence_levels:
+      - "High: Clear evidence of unauthorized credential extraction."
+      - "Medium: Suspicious activity without full confirmation."
+      - "Low: Routine metadata access consistent with normal operations."
+
+ioc_types:
+  - "HTTP requests to 169.254.169.254 for security tokens or IAM role info"
+  - "Unusual API calls immediately following metadata credential retrieval"
+  - "Scripts or automation tools accessing instance metadata service"
+
+queries/examples:
+  - name: "Metadata Service Access Detection"
+    query: >
+      vpcflowlogs: dstAddr=169.254.169.254 AND action=ACCEPT
+  - name: "CloudTrail API Calls After Metadata Access"
+    query: >
+      cloudtrail: eventName IN (AssumeRole, GetCallerIdentity) AND sourceIPAddress IN (list of EC2 IPs)
+  - name: "Unusual Credential Usage"
+    query: >
+      cloudtrail: eventSource="sts.amazonaws.com" AND userAgent NOT IN known_services
+
+automation_hooks:
+  - "Alert on excessive or anomalous metadata service access."
+  - "Trigger IAM credential usage review following metadata access."
+  - "Block suspicious API calls using credentials derived from IMDS."
+
+analyst_guidance:
+  - "Validate the legitimacy of metadata access based on instance role and workload."
+  - "Correlate metadata access with downstream AWS API calls."
+  - "Recommend disabling or restricting IMDS access where possible (IMDSv2)."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1574/008/"
+  - "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html"
+  - "https://aws.amazon.com/blogs/security/a-new-and-secure-way-to-access-ec2-instance-metadata/"
+  - "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-service.html"
+
+review_cycle: "Quarterly or post-incident"
