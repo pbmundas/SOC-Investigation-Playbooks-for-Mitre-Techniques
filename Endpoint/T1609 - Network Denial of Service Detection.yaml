@@ -1,0 +1,78 @@
+playbook_name: "T1609 - Network Denial of Service Detection"
+tactic: "Impact"
+technique_id: "T1609"
+technique_name: "Network Denial of Service"
+description: >
+  Detect adversaries performing attacks to degrade or interrupt network-based services and resources.
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect Abnormal Network Traffic Volumes"
+    description: >
+      Identify spikes in network usage potentially indicative of DoS attacks.
+    checklist:
+      - "Is there a sudden and sustained spike in inbound traffic?"
+      - "Are there large volumes of SYN, UDP, ICMP, or DNS requests?"
+      - "Are known DoS patterns (e.g., SYN flood, Smurf) observed?"
+    data_sources:
+      - "NetFlow logs"
+      - "Firewall and IDS/IPS logs"
+      - "Load balancer metrics"
+
+  - step_number: 2
+    title: "Determine Source and Type of Attack"
+    description: >
+      Examine if traffic originates from a single source or distributed (DDoS).
+    checklist:
+      - "Are many IPs targeting the same service or system?"
+      - "Are spoofed IPs involved?"
+    data_sources:
+      - "Firewall and WAF logs"
+      - "NDR tools"
+
+  - step_number: 3
+    title: "Assess Impact on Services and Availability"
+    description: >
+      Validate service degradation or unavailability.
+    checklist:
+      - "Are services (e.g., web, DNS, VPN) responding as expected?"
+      - "Are legitimate users reporting access issues?"
+    data_sources:
+      - "Service monitoring tools"
+      - "User complaints/tickets"
+
+triage_labels:
+  - severity_levels:
+      - "Medium: Detected abnormal traffic, no outage."
+      - "High: Confirmed service disruption."
+  - confidence_levels:
+      - "High: Validated attack with impact."
+      - "Medium: Strong indicators."
+      - "Low: Traffic anomaly, unconfirmed."
+
+ioc_types:
+  - "Massive inbound SYN/UDP/ICMP traffic"
+  - "Same port targeted across systems"
+  - "High connection failure rates"
+
+queries/examples:
+  - name: "Spike in SYN Packets (Firewall)"
+    query: >
+      event.type = "network" AND protocol = "TCP" AND flags = "SYN" AND
+      count(src_ip) > threshold_value
+
+automation_hooks:
+  - "Trigger rate-limiting rules on firewall/load balancer"
+  - "Notify network team"
+  - "Enable DDoS protection mechanisms"
+
+analyst_guidance:
+  - "Validate affected systems/services."
+  - "Engage with ISP or cloud provider if necessary."
+  - "Update IPS signatures and block offending IPs."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1609/"
+  - "https://www.cloudflare.com/learning/ddos/what-is-a-ddos-attack/"
+
+review_cycle: "Quarterly or after major attacks"

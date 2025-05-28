@@ -1,0 +1,79 @@
+playbook_name: "T1566.003 - Spearphishing via Service Detection"
+tactic: "Initial Access"
+technique_id: "T1566.003"
+technique_name: "Spearphishing via Service"
+description: >
+  Guides SOC analysts through detecting spearphishing attempts that exploit services (e.g., chat,
+  collaboration, or social media platforms) to deliver malicious links or files for initial access.
+
+detection_sources:
+  - Collaboration platform logs (Slack, Teams, Discord)
+  - Email gateway logs (for related emails)
+  - Endpoint Detection and Response (EDR)
+  - SIEM alerts on suspicious file or link sharing
+  - Threat intelligence platforms
+
+investigation_steps:
+  - step_number: 1
+    title: "Identify Suspicious Messages or Files"
+    description: >
+      Review logs for messages or files shared on collaboration platforms that contain suspicious links or attachments.
+    checklist:
+      - "Check sender reputation and account history"
+      - "Extract and analyze URLs or file hashes"
+      - "Look for known malicious indicators or unusual sharing patterns"
+    data_sources:
+      - "Collaboration platform audit logs"
+      - "Threat intelligence feeds"
+
+  - step_number: 2
+    title: "Analyze Endpoint Activity"
+    description: >
+      Investigate if recipients have interacted with suspicious links/files and check for compromise.
+    checklist:
+      - "Correlate with endpoint process creation and network activity"
+      - "Review EDR alerts for suspicious execution or persistence"
+    data_sources:
+      - "EDR telemetry"
+      - "Network logs"
+
+  - step_number: 3
+    title: "Containment"
+    description: >
+      Block malicious content and isolate affected systems.
+    checklist:
+      - "Restrict or disable compromised accounts"
+      - "Block malicious URLs or file hashes in endpoint and network security"
+      - "Notify impacted users"
+    data_sources:
+      - "Collaboration platform management console"
+      - "Endpoint management tools"
+
+  - step_number: 4
+    title: "User Awareness"
+    description: >
+      Communicate with users about the spearphishing attempt and educate on spotting suspicious messages.
+    checklist:
+      - "Send awareness notifications"
+      - "Encourage reporting of suspicious messages"
+    data_sources:
+      - "Security awareness platform"
+
+triage_labels:
+  - severity:
+      - "Low: Suspicious message detected, no interaction"
+      - "Medium: User interaction without further compromise"
+      - "High: Confirmed compromise or execution"
+  - confidence:
+      - "High: Known malicious indicators found"
+      - "Medium: Suspicious but inconclusive"
+      - "Low: Possible false positive"
+
+ioc_types:
+  - User Account
+  - URL
+  - File Hash
+  - IP Address
+
+reference_links:
+  - https://attack.mitre.org/techniques/T1566/003/

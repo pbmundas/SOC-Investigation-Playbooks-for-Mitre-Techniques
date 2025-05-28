@@ -1,0 +1,131 @@
+playbook_name: "T1566 - Phishing Detection"
+tactic: "Initial Access"
+technique_id: "T1566"
+technique_name: "Phishing"
+description: >
+  This playbook guides SOC analysts through detecting, investigating, and responding to phishing attempts.
+  It covers email analysis, user interaction verification, payload inspection, and containment measures.
+
+detection_sources:
+  - Email Gateway Logs (e.g., Microsoft Defender ATP, Proofpoint, Mimecast)
+  - Email Security Solutions (ATP Sandboxing)
+  - Endpoint Detection and Response (EDR)
+  - SIEM Alerting on Suspicious Email Events
+  - User Behavior Analytics (UBA/UEBA)
+  - Network Proxy and DNS Logs
+
+investigation_steps:
+  - step_number: 1
+    title: "Identify Potential Phishing Email"
+    description: >
+      Examine email headers, sender reputation, and message characteristics.
+    checklist:
+      - "Check for spoofed or suspicious sender domain"
+      - "Review SPF, DKIM, and DMARC validation results"
+      - "Look for known phishing indicators in subject or body"
+      - "Analyze embedded URLs and attachments"
+    data_sources:
+      - "Email gateway logs"
+      - "Email headers and metadata"
+      - "Threat intelligence feeds"
+
+  - step_number: 2
+    title: "Analyze Attachments and URLs"
+    description: >
+      Investigate any links or files for malicious payloads or redirection.
+    checklist:
+      - "Submit attachments to sandbox or antivirus for analysis"
+      - "Check URLs against threat intelligence or URL reputation services"
+      - "Determine if attachments have macros or executables"
+    data_sources:
+      - "Sandbox reports"
+      - "VirusTotal or similar"
+      - "Threat intel platforms"
+
+  - step_number: 3
+    title: "Assess User Interaction"
+    description: >
+      Determine if users clicked links, downloaded attachments, or provided credentials.
+    checklist:
+      - "Review email client logs or proxy logs for clicks"
+      - "Check EDR for any execution triggered by email"
+      - "Correlate with UEBA for abnormal user behavior"
+    data_sources:
+      - "EDR telemetry"
+      - "Proxy/web logs"
+      - "UEBA reports"
+
+  - step_number: 4
+    title: "Containment and Mitigation"
+    description: >
+      Act to limit the phishing campaign impact and prevent lateral movement.
+    checklist:
+      - "Block sender and URLs at email gateway and proxy"
+      - "Quarantine or delete suspicious emails"
+      - "Isolate compromised hosts"
+      - "Force password resets if credential compromise suspected"
+    data_sources:
+      - "Email gateway controls"
+      - "Network firewalls/proxy"
+      - "Identity management systems"
+
+  - step_number: 5
+    title: "User Awareness and Reporting"
+    description: >
+      Notify and educate impacted users and stakeholders.
+    checklist:
+      - "Send phishing alert notifications to users"
+      - "Provide guidance on spotting phishing"
+      - "Collect additional user feedback or reports"
+    data_sources:
+      - "Security awareness platform"
+      - "Internal communication channels"
+
+triage_labels:
+  - severity:
+      - "Low: Email flagged but no user interaction"
+      - "Medium: User clicked link but no malicious execution"
+      - "High: Payload executed or credential compromise suspected"
+  - confidence:
+      - "High: Confirmed phishing indicators and payload"
+      - "Medium: Suspicious indicators, but unclear impact"
+      - "Low: Potential false positive or user error"
+
+ioc_types:
+  - Email Address
+  - Sender Domain
+  - IP Address
+  - URL
+  - File Hash
+  - Attachment Filename
+
+example_queries:
+  - name: "Suspicious Email Sender Detection"
+    query: >
+      email_sender_domain IN ("phishingsite.com", "malicious.com") OR
+      email_subject CONTAINS ("urgent", "password reset", "invoice")
+
+  - name: "Attachment Execution After Email"
+    query: >
+      event_type=process_creation AND
+      parent_process_name="outlook.exe" AND
+      (process_name="powershell.exe" OR process_name="cmd.exe")
+
+automation_hooks:
+  - "Auto quarantine emails with high-confidence phishing indicators"
+  - "Trigger sandbox analysis for unknown attachments"
+  - "Generate tickets for analyst review"
+  - "Notify users in impacted departments"
+
+analyst_guidance:
+  - "Focus first on emails with links or attachments flagged by sandbox or AV"
+  - "Correlate email activity with endpoint events to detect payload execution"
+  - "Verify sender authenticity via email headers"
+  - "Engage users for additional context and awareness"
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1566/"
+  - "https://docs.microsoft.com/en-us/microsoft-365/security/office-365-security/office-365-atp"
+  - "https://www.sans.org/white-papers/401/"
+  
+review_cycle: "Quarterly or after major phishing campaigns"

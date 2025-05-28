@@ -1,0 +1,65 @@
+playbook_name: "T1620 - Reflective Code Loading Detection"
+tactic: "Defense Evasion"
+technique_id: "T1620"
+technique_name: "Reflective Code Loading"
+description: >
+  Detects malware and adversaries loading code reflectively into process memory to evade detection.
+
+detection_sources:
+  - Endpoint Detection and Response (EDR)
+  - Windows Sysmon (EventID 8 - CreateRemoteThread)
+  - Memory analysis tools
+  - API call monitoring (e.g., VirtualAlloc, WriteProcessMemory)
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect Reflective Code Injection Events"
+    description: >
+      Identify suspicious use of reflective loading techniques.
+    checklist:
+      - "Monitor API calls related to reflective loading (e.g., VirtualAlloc, NtMapViewOfSection)"
+      - "Detect abnormal process/thread creation events"
+      - "Look for in-memory execution without corresponding files on disk"
+    data_sources:
+      - "EDR"
+      - "Sysmon"
+      - "Memory forensics"
+
+  - step_number: 2
+    title: "Analyze Suspicious Processes"
+    description: >
+      Investigate processes involved in reflective loading.
+    checklist:
+      - "Check parent/child process relationships"
+      - "Identify unsigned or anomalous modules loaded"
+      - "Check for network connections or C2 activity"
+    data_sources:
+      - "Process monitoring"
+      - "Network logs"
+
+  - step_number: 3
+    title: "Response"
+    description: >
+      Contain and remediate compromised systems.
+    checklist:
+      - "Isolate affected endpoints"
+      - "Run deep malware scans"
+      - "Collect memory dumps for forensic analysis"
+    data_sources:
+      - "Endpoint management"
+      - "Forensics tools"
+
+triage_labels:
+  - severity:
+      - "High: Confirmed reflective code loading"
+  - confidence:
+      - "High: API monitoring or EDR alerts"
+      - "Medium: Anomalous process/thread creation"
+
+ioc_types:
+  - Process Name
+  - User Account
+  - File Hash
+
+reference_links:
+  - https://attack.mitre.org/techniques/T1620/

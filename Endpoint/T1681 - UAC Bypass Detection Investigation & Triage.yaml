@@ -1,0 +1,82 @@
+playbook_name: "T1681 - UAC Bypass Detection: Investigation & Triage"
+tactic: "Defense Evasion"
+technique_id: "T1681"
+technique_name: "Bypass User Account Control"
+description: >
+  Detects attempts to bypass User Account Control (UAC) to escalate privileges without prompting for consent.
+
+investigation_steps:
+  - step_number: 1
+    title: "Identify Known UAC Bypass Techniques"
+    description: >
+      Monitor for suspicious execution of known UAC bypass methods such as eventvwr.exe, fodhelper.exe, or silent cleanup.
+    checklist:
+      - "Are processes like eventvwr.exe or fodhelper.exe launched unexpectedly?"
+      - "Is there a parent-child process chain consistent with UAC bypass?"
+    data_sources:
+      - "Process creation logs"
+      - "Command line auditing"
+
+  - step_number: 2
+    title: "Detect Execution of Malicious Scripts or Payloads"
+    description: >
+      Look for script executions or payloads triggered via elevated COM interfaces or registry hijacks.
+    checklist:
+      - "Are there registry modifications under HKCU\Software\Classes\...\shell\open\command?"
+      - "Are elevated COM objects being invoked unexpectedly?"
+    data_sources:
+      - "Registry monitoring"
+      - "Script execution logs"
+
+  - step_number: 3
+    title: "Correlate with Privilege Escalation and Anomalous Behavior"
+    description: >
+      Confirm if UAC bypass attempts result in elevated privileges or suspicious activity.
+    checklist:
+      - "Is there evidence of privilege escalation post bypass?"
+      - "Are there abnormal administrative actions performed?"
+    data_sources:
+      - "Security event logs"
+      - "User activity monitoring"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Single process execution without follow-up suspicious activity."
+      - "Medium: Multiple UAC bypass attempts detected."
+      - "High: Confirmed privilege escalation via UAC bypass."
+  - confidence_levels:
+      - "High: Known UAC bypass technique detected and confirmed."
+      - "Medium: Suspicious process chains indicative of bypass."
+      - "Low: Potential benign use of these utilities."
+
+ioc_types:
+  - "Execution of eventvwr.exe, fodhelper.exe with suspicious parameters"
+  - "Registry keys hijacked for UAC bypass"
+  - "Elevated COM object usage outside normal behavior"
+
+queries/examples:
+  - name: "Detect UAC Bypass via fodhelper.exe"
+    query: >
+      process.name == "fodhelper.exe" AND
+      parent_process.name NOT IN ("explorer.exe", "trusted_uac_launcher.exe")
+
+  - name: "Detect Registry Hijack for UAC Bypass"
+    query: >
+      registry.path CONTAINS "HKCU\\Software\\Classes\\ms-settings\\shell\\open\\command" AND
+      registry.value MATCHES ("powershell|cmd.exe")
+
+automation_hooks:
+  - "Alert on UAC bypass attempts."
+  - "Block or quarantine involved processes."
+  - "Initiate privilege review and password resets if needed."
+
+analyst_guidance:
+  - "Review process trees for suspicious parent-child chains."
+  - "Validate if UAC prompts were suppressed or bypassed."
+  - "Recommend patching and restricting known UAC bypass vectors."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1681/"
+  - "https://labs.f-secure.com/blog/uac-bypass-techniques/"
+
+review_cycle: "Monthly or after any detected UAC bypass attempt"

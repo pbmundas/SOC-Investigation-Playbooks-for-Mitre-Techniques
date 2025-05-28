@@ -1,0 +1,132 @@
+playbook_name: "T1566.002 - Spearphishing via Link Detection"
+tactic: "Initial Access"
+technique_id: "T1566.002"
+technique_name: "Spearphishing via Link"
+description: >
+  This playbook guides SOC analysts through detecting and investigating spearphishing attempts
+  using malicious or compromised links in emails. It covers email analysis, URL inspection,
+  user activity correlation, and containment procedures.
+
+detection_sources:
+  - Email Gateway Logs (e.g., Microsoft Defender ATP, Proofpoint, Mimecast)
+  - Web Proxy and DNS Logs
+  - Endpoint Detection and Response (EDR)
+  - SIEM Alerts on suspicious URL clicks
+  - Threat Intelligence Platforms
+
+investigation_steps:
+  - step_number: 1
+    title: "Identify Suspicious Links in Email"
+    description: >
+      Analyze email metadata and contents to identify suspicious or known malicious URLs.
+    checklist:
+      - "Verify sender's email domain and reputation"
+      - "Extract URLs from email body and headers"
+      - "Check URLs against threat intelligence and URL reputation services"
+      - "Identify obfuscated or shortened URLs"
+    data_sources:
+      - "Email logs"
+      - "Threat intelligence feeds"
+      - "Email content scanning tools"
+
+  - step_number: 2
+    title: "Analyze Web Proxy and DNS Logs"
+    description: >
+      Review proxy and DNS logs for user clicks on suspicious URLs and domain lookups.
+    checklist:
+      - "Identify access to malicious or suspicious domains"
+      - "Correlate URL clicks with user and endpoint"
+      - "Look for repeated or lateral access attempts"
+    data_sources:
+      - "Web proxy logs"
+      - "DNS query logs"
+      - "User behavior analytics (UBA/UEBA)"
+
+  - step_number: 3
+    title: "Endpoint Activity Correlation"
+    description: >
+      Check for any follow-up malicious activity on endpoints after link clicks.
+    checklist:
+      - "Review process creation logs for abnormal processes"
+      - "Check for downloaded payloads or scripts"
+      - "Monitor network connections to suspicious IPs"
+      - "Correlate with EDR alerts"
+    data_sources:
+      - "EDR telemetry"
+      - "Endpoint logs"
+      - "Network flow data"
+
+  - step_number: 4
+    title: "Containment and Mitigation"
+    description: >
+      Act to prevent further access or exploitation via the malicious link.
+    checklist:
+      - "Block malicious URLs and domains at proxy and email gateway"
+      - "Quarantine affected emails"
+      - "Isolate infected hosts"
+      - "Reset user credentials if compromise is suspected"
+    data_sources:
+      - "Network security controls"
+      - "Email gateway management"
+      - "Endpoint management systems"
+
+  - step_number: 5
+    title: "User Awareness and Reporting"
+    description: >
+      Notify and educate users about the spearphishing attempt.
+    checklist:
+      - "Send awareness communications to impacted users"
+      - "Provide guidance on identifying suspicious links"
+      - "Encourage reporting of suspicious emails or clicks"
+    data_sources:
+      - "Security awareness platforms"
+      - "Internal communication tools"
+
+triage_labels:
+  - severity:
+      - "Low: Suspicious URL identified, no user interaction"
+      - "Medium: User clicked link, no malicious payload detected"
+      - "High: Confirmed payload download or endpoint compromise"
+  - confidence:
+      - "High: Known malicious URL or confirmed exploitation"
+      - "Medium: Suspicious URL or behavior"
+      - "Low: Potential false positive"
+
+ioc_types:
+  - Email Address
+  - Sender Domain
+  - URL
+  - Domain Name
+  - IP Address
+
+example_queries:
+  - name: "Suspicious URLs in Emails"
+    query: >
+      email_body_urls: ("phishingsite.com" OR "maliciousdomain.net" OR "short.url")
+  - name: "User Clicks on Malicious URLs"
+    query: >
+      proxy_logs.url: ("phishingsite.com" OR "maliciousdomain.net") AND user_id: *
+  - name: "Endpoint Execution After URL Click"
+    query: >
+      event_type=process_creation AND
+      (process_name="powershell.exe" OR process_name="cmd.exe") AND
+      user IN (SELECT user FROM proxy_logs WHERE url IN ("phishingsite.com", "maliciousdomain.net"))
+
+automation_hooks:
+  - "Block malicious URLs in proxy and email gateways"
+  - "Generate alerts for suspicious URL clicks"
+  - "Trigger endpoint scans and isolate compromised hosts"
+  - "Create tickets for analyst review"
+
+analyst_guidance:
+  - "Focus on URLs with poor reputation or those flagged by threat intelligence"
+  - "Correlate email, network, and endpoint logs to confirm impact"
+  - "Prioritize rapid containment for high-severity incidents"
+  - "Engage users to gather context and report suspicious activity"
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1566/002/"
+  - "https://docs.microsoft.com/en-us/microsoft-365/security/office-365-security/office-365-atp"
+  - "https://www.sans.org/white-papers/401/"
+
+review_cycle: "Quarterly or after new phishing campaigns"

@@ -1,0 +1,83 @@
+playbook_name: "T1563 - Service Session Hijacking Detection: Investigation & Triage"
+tactic: "Credential Access"
+technique_id: "T1563"
+technique_name: "Service Session Hijacking"
+description: >
+  Detects adversaries hijacking active service sessions to maintain access or escalate privileges without credentials.
+
+investigation_steps:
+  - step_number: 1
+    title: "Identify Unusual Service Session Activity"
+    description: >
+      Monitor active service sessions for anomalies such as unexpected disconnections, reconnections, or hijack attempts.
+    checklist:
+      - "Are service sessions ending or restarting unexpectedly?"
+      - "Is there activity from unexpected user accounts within service contexts?"
+    data_sources:
+      - "Service logs"
+      - "Session tracking logs"
+      - "Windows event logs"
+
+  - step_number: 2
+    title: "Detect Process Injection or Handle Duplication"
+    description: >
+      Identify attempts to inject into or hijack service processes or sessions.
+    checklist:
+      - "Are there suspicious DLL injections or remote thread creations in service processes?"
+      - "Is there evidence of duplicated handles or token impersonation?"
+    data_sources:
+      - "Endpoint detection logs"
+      - "Process monitoring logs"
+
+  - step_number: 3
+    title: "Correlate Session Hijacking with Malicious Activity"
+    description: >
+      Review further malicious actions like privilege escalation or lateral movement following session hijacking.
+    checklist:
+      - "Are there new processes or network connections from hijacked services?"
+      - "Is there unexpected credential usage?"
+    data_sources:
+      - "Process creation logs"
+      - "Network logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Normal service restarts or administrative changes."
+      - "Medium: Suspicious but unconfirmed hijacking attempts."
+      - "High: Confirmed service session hijacking."
+  - confidence_levels:
+      - "High: Verified session hijacking with malicious activity."
+      - "Medium: Suspicious session anomalies."
+      - "Low: Routine administrative session changes."
+
+ioc_types:
+  - "Unexpected service restarts"
+  - "DLL injection into service processes"
+  - "Duplicated handles or impersonation tokens"
+
+queries/examples:
+  - name: "Detect DLL Injection in Service Processes"
+    query: >
+      process.name IN ("svchost.exe", "services.exe") AND
+      event.type == "dll_injection"
+
+  - name: "Detect Handle Duplication or Token Impersonation"
+    query: >
+      event.type == "handle_duplication" OR
+      event.type == "token_impersonation"
+
+automation_hooks:
+  - "Alert on suspicious service process injections."
+  - "Isolate affected services or hosts."
+  - "Force credential reset if hijacking confirmed."
+
+analyst_guidance:
+  - "Validate if service session activity is authorized."
+  - "Investigate for lateral movement or privilege escalation."
+  - "Implement service hardening and session monitoring."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1563/"
+  - "https://docs.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4688"
+
+review_cycle: "Monthly or after suspicious service session activity"

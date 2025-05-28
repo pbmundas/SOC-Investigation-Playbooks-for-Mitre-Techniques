@@ -1,0 +1,79 @@
+playbook_name: "T1610 - Application Denial of Service Detection"
+tactic: "Impact"
+technique_id: "T1610"
+technique_name: "Application Layer Denial of Service"
+description: >
+  Detect adversaries exploiting application vulnerabilities or sending crafted requests to exhaust application resources.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Application Layer Behavior"
+    description: >
+      Detect excessive requests or malformed input affecting application performance.
+    checklist:
+      - "Are there repeated HTTP POST/GET requests from same IPs?"
+      - "Are APIs overwhelmed with requests?"
+      - "Are logs showing slow responses or timeouts?"
+    data_sources:
+      - "Web server logs (IIS, Apache, NGINX)"
+      - "WAF logs"
+      - "Application performance monitoring"
+
+  - step_number: 2
+    title: "Identify Attack Vectors"
+    description: >
+      Investigate specific techniques such as slow POST attacks, malformed inputs, or login abuse.
+    checklist:
+      - "Is slowloris or similar low-and-slow attack pattern detected?"
+      - "Are session states or DB queries overwhelmed?"
+    data_sources:
+      - "WAF and APM logs"
+      - "SIEM behavioral analytics"
+
+  - step_number: 3
+    title: "Correlate with Service Degradation"
+    description: >
+      Determine real-world impact and disruption to application services.
+    checklist:
+      - "Is response time degraded?"
+      - "Is error rate elevated?"
+      - "Are users reporting app unavailability?"
+    data_sources:
+      - "APM tools"
+      - "Customer support logs"
+
+triage_labels:
+  - severity_levels:
+      - "Medium: Elevated app errors."
+      - "High: App unreachable or fully degraded."
+  - confidence_levels:
+      - "High: Verified app layer attack."
+      - "Medium: Suspicious input patterns."
+      - "Low: Likely misconfigurations."
+
+ioc_types:
+  - "High-volume identical HTTP requests"
+  - "Suspicious request payloads"
+  - "Unusual API call patterns"
+
+queries/examples:
+  - name: "Suspicious HTTP Request Flood"
+    query: >
+      uri_stem="/login" AND count(requests_from_same_ip) > threshold AND
+      http_status="500" OR "503"
+
+automation_hooks:
+  - "Throttle IPs in WAF"
+  - "Enable CAPTCHA or rate-limiting"
+  - "Block IPs via reverse proxy"
+
+analyst_guidance:
+  - "Coordinate with dev and app support teams."
+  - "Check for any newly exploited bugs."
+  - "Consider CAPTCHA/anti-bot enhancements."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1610/"
+  - "https://owasp.org/www-community/attacks/Slowloris"
+
+review_cycle: "Biannually or post-incident"

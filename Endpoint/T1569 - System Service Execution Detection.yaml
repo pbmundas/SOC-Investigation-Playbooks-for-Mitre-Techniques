@@ -1,0 +1,41 @@
+playbook_name: "System Service Execution Detection"
+tactic: "Execution"
+technique_id: "T1569"
+technique_name: "System Services"
+description: >
+  Detects adversaries using system services to execute payloads either by creating/modifying services or using tools like sc.exe or service managers.
+
+detection_sources:
+  - Sysmon (Event ID 1, 13)
+  - Windows Security Event ID 4697, 7045
+  - EDR service creation logs
+
+investigation_steps:
+  - step_number: 1
+    title: "Validate Service Creation"
+    checklist:
+      - "Was the service created by an unusual process (e.g., script interpreter)?"
+      - "Check if service points to suspicious binary"
+      - "Review service configuration: autorun, delayed start"
+
+  - step_number: 2
+    title: "Correlate with Known TTPs"
+    checklist:
+      - "Does the binary path match known tools or implants?"
+      - "Check if service is running under SYSTEM or elevated context"
+
+  - step_number: 3
+    title: "Response and Containment"
+    checklist:
+      - "Disable or remove the service"
+      - "Inspect system for persistence or lateral movement"
+      - "Scan for service use across other endpoints"
+
+triage_labels:
+  - severity: High
+  - confidence: High
+
+ioc_types:
+  - Service name
+  - Service binary path
+  - User context

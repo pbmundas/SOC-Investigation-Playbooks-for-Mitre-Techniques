@@ -1,0 +1,89 @@
+playbook_name: "T1564.003 - Hidden Process Detection: Investigation & Triage"
+tactic: "Defense Evasion"
+technique_id: "T1564.003"
+technique_name: "Hidden Process"
+description: >
+  Detect adversaries hiding running processes from process listings or monitoring tools to evade detection.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Process Enumeration Discrepancies"
+    description: >
+      Compare process lists from different system utilities and APIs to identify hidden or unlisted processes.
+    checklist:
+      - "Are there processes running that do not appear in standard enumeration?"
+      - "Are processes hidden via rootkits or hooking system calls?"
+      - "Are suspicious DLLs or drivers loaded that facilitate hiding?"
+    data_sources:
+      - "Process monitoring tools"
+      - "Kernel-level telemetry"
+      - "Endpoint detection and response (EDR)"
+
+  - step_number: 2
+    title: "Analyze Process Parent-Child Relationships"
+    description: >
+      Check for anomalies or gaps in the process tree indicating hidden processes.
+    checklist:
+      - "Are there orphaned or unexplained child processes?"
+      - "Is there mismatch between process creation and visible processes?"
+    data_sources:
+      - "Process tree analysis"
+      - "Event logs"
+
+  - step_number: 3
+    title: "Correlate Hidden Processes with Malicious Behavior"
+    description: >
+      Identify whether hidden processes correspond to malware execution, persistence, or lateral movement.
+    checklist:
+      - "Do hidden processes spawn network connections or file writes?"
+      - "Are they linked to known malicious signatures or behaviors?"
+    data_sources:
+      - "Network monitoring"
+      - "Malware detection logs"
+      - "Threat intelligence"
+
+  - step_number: 4
+    title: "Respond and Remediate"
+    description: >
+      Remove or contain hidden processes and apply detection enhancements.
+    checklist:
+      - "Terminate unauthorized hidden processes."
+      - "Deploy kernel integrity and rootkit detection tools."
+      - "Enhance process visibility and monitoring."
+    data_sources:
+      - "Endpoint management"
+      - "IR playbooks"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Known system or anti-malware hidden processes."
+      - "Medium: Suspicious process hiding requiring investigation."
+      - "High: Confirmed malicious hidden processes."
+  - confidence_levels:
+      - "High: Verified hidden malicious processes."
+      - "Medium: Anomalous hiding patterns."
+      - "Low: Known benign hidden processes."
+
+ioc_types:
+  - "Processes not appearing in standard enumeration"
+  - "Loaded rootkits or hooking drivers"
+  - "Unusual process tree anomalies"
+
+queries/examples:
+  - name: "Detect hidden processes via enumeration differences"
+    query: >
+      process.count.visible < process.count.kernel_level
+
+automation_hooks:
+  - "Alert on discrepancies between user-mode and kernel-mode process listings."
+  - "Trigger rootkit detection scans on suspicion."
+
+analyst_guidance:
+  - "Validate whether hidden processes are benign (e.g., security software)."
+  - "Correlate with malware behavior and threat intelligence."
+  - "Use kernel-level tools for deep process inspection."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1564/003/"
+
+review_cycle: "Quarterly or post incident involving process hiding"

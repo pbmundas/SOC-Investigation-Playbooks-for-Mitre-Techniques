@@ -1,0 +1,106 @@
+playbook_name: "T1574.001 - DLL Search Order Hijacking: Investigation & Triage"
+tactic: "Persistence"
+technique_id: "T1574.001"
+technique_name: "DLL Search Order Hijacking"
+description: >
+  Playbook to investigate suspicious hijacking of DLL search order allowing adversaries 
+  to load malicious DLLs instead of legitimate ones, enabling persistence or code execution.
+
+investigation_steps:
+  - step_number: 1
+    title: "Identify DLL Loads from Untrusted Paths"
+    description: >
+      Detect DLLs loaded from non-standard or writable directories, especially those higher in search order.
+    checklist:
+      - "Are DLLs loaded from user directories or writable paths?"
+      - "Is the DLL path different from the legitimate known path?"
+      - "Are the DLL files unsigned or recently created/modified?"
+    data_sources:
+      - "Process DLL load logs"
+      - "File Integrity Monitoring"
+      - "Windows Event Logs"
+      - "EDR telemetry"
+
+  - step_number: 2
+    title: "Analyze Affected Applications and Process Trees"
+    description: >
+      Examine the processes loading suspicious DLLs and their parent-child relationships.
+    checklist:
+      - "Is a trusted application loading DLLs from unusual locations?"
+      - "Are process command lines and execution chains suspicious?"
+      - "Are the affected applications vulnerable or unpatched?"
+    data_sources:
+      - "Process trees"
+      - "Command line audit logs"
+      - "Vulnerability management data"
+
+  - step_number: 3
+    title: "Check for Persistence and Further Actions"
+    description: >
+      Investigate whether the hijacked DLL is used to maintain persistence or further malicious activity.
+    checklist:
+      - "Is the DLL associated with scheduled tasks, services, or startup entries?"
+      - "Is there network communication or lateral movement after DLL load?"
+      - "Are there related alerts for data exfiltration or C2?"
+    data_sources:
+      - "Persistence mechanism logs"
+      - "Network traffic logs"
+      - "SIEM alerts"
+
+  - step_number: 4
+    title: "Validate User and System Context"
+    description: >
+      Determine if the DLL load is authorized or suspicious.
+    checklist:
+      - "Is the process run by expected users?"
+      - "Are endpoint protections disabled or bypassed?"
+      - "Are patches or mitigations applied to vulnerable apps?"
+    data_sources:
+      - "User login logs"
+      - "Patch management"
+      - "EDR and AV alerts"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Known software behavior or updates."
+      - "Medium: DLL load from unusual path with no immediate impact."
+      - "High: Confirmed malicious DLL hijack with payload execution."
+  - confidence_levels:
+      - "High: IOC matches known malware or threat patterns."
+      - "Medium: Suspicious DLL location or behavior."
+      - "Low: Legitimate but uncommon DLL load."
+
+ioc_types:
+  - "DLL file paths outside standard directories"
+  - "File hashes of suspicious DLLs"
+  - "Process names and parent relationships"
+  - "Startup or persistence entries linked to DLL"
+
+queries/examples:
+  - name: "DLL Loaded from Non-System Directories"
+    query: >
+      event.action:"dll_loaded" AND NOT file.path:("C:\\Windows\\System32\\*" OR "C:\\Windows\\SysWOW64\\*")
+  - name: "Suspicious DLL Parent Process"
+    query: >
+      process.name:("trustedApp.exe") AND event.action:"dll_loaded" AND file.path:"*\\AppData\\*"
+  - name: "Recently Modified DLLs in Writable Paths"
+    query: >
+      file.creation_time:>=now-7d AND file.extension:"dll" AND file.path:("*\\Users\\*" OR "*\\Temp\\*")
+
+automation_hooks:
+  - "Alert on DLL loads from writable or user directories"
+  - "Trigger file hash lookup and sandbox detonation"
+  - "Block execution if DLL is known malicious"
+
+analyst_guidance:
+  - "Verify legitimacy of DLL paths against baseline."
+  - "Check process and parent relationships for anomalies."
+  - "Coordinate with patch management to mitigate vulnerabilities."
+  - "Engage threat intel for known malicious DLLs."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1574/001/"
+  - "https://www.sans.org/white-papers/35443/"
+  - "https://www.elastic.co/blog/hunting-for-dll-hijacking-attacks"
+
+review_cycle: "Semi-annually or on new DLL hijack variants discovery"

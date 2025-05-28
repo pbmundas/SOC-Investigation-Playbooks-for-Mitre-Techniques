@@ -1,0 +1,132 @@
+playbook_name: "T1566.001 - Spearphishing via Attachment Detection"
+tactic: "Initial Access"
+technique_id: "T1566.001"
+technique_name: "Spearphishing via Attachment"
+description: >
+  This playbook guides SOC analysts through detecting and investigating spearphishing attempts
+  where malicious attachments are used as the attack vector. It includes steps for analysis
+  of email attachments, payload inspection, user activity correlation, and containment.
+
+detection_sources:
+  - Email Gateway Logs (e.g., Proofpoint, Microsoft Defender ATP, Mimecast)
+  - Email Security Sandbox Reports
+  - Endpoint Detection and Response (EDR)
+  - SIEM Alerts on suspicious attachment activity
+  - Threat Intelligence Platforms
+
+investigation_steps:
+  - step_number: 1
+    title: "Identify Suspicious Attachment"
+    description: >
+      Review email metadata and attachment characteristics.
+    checklist:
+      - "Verify sender's email address and domain reputation"
+      - "Analyze attachment filename, type, and size"
+      - "Check for common malicious attachment types (e.g., .exe, .js, .docm, .xlsm)"
+      - "Look for encoded or compressed attachments (e.g., .zip, .rar) containing executables or macros"
+    data_sources:
+      - "Email logs"
+      - "Attachment metadata"
+      - "Threat intel feeds"
+
+  - step_number: 2
+    title: "Submit Attachment for Analysis"
+    description: >
+      Send the attachment to sandbox environment or antivirus tools to check for malicious behavior.
+    checklist:
+      - "Upload attachment to sandbox or AV system"
+      - "Review sandbox report for indicators of compromise"
+      - "Identify behaviors like persistence, C2 attempts, or lateral movement"
+    data_sources:
+      - "Sandbox report"
+      - "Antivirus scan results"
+
+  - step_number: 3
+    title: "Correlate with Endpoint and Network Activity"
+    description: >
+      Investigate whether the attachment was opened or executed, and check for associated malicious activity.
+    checklist:
+      - "Check EDR logs for attachment execution or script launches"
+      - "Review process creation events for suspicious child processes"
+      - "Look for network connections initiated post attachment execution"
+      - "Correlate user activity with UBA/UEBA data for abnormal behavior"
+    data_sources:
+      - "EDR telemetry"
+      - "Network proxy and firewall logs"
+      - "UEBA reports"
+
+  - step_number: 4
+    title: "Containment Actions"
+    description: >
+      Take steps to mitigate and prevent further compromise.
+    checklist:
+      - "Block sender and attachment hashes in email gateway"
+      - "Quarantine or delete affected emails"
+      - "Isolate infected endpoints"
+      - "Reset credentials if compromise suspected"
+      - "Apply endpoint protection updates and patches"
+    data_sources:
+      - "Email gateway controls"
+      - "Endpoint management systems"
+      - "Identity management"
+
+  - step_number: 5
+    title: "User Notification and Awareness"
+    description: >
+      Inform users of the phishing attempt and provide guidance.
+    checklist:
+      - "Notify affected users about the phishing campaign"
+      - "Share tips on recognizing spearphishing emails"
+      - "Encourage reporting of suspicious emails"
+    data_sources:
+      - "Security awareness tools"
+      - "Internal communications platforms"
+
+triage_labels:
+  - severity:
+      - "Low: Suspicious attachment, no evidence of execution"
+      - "Medium: Attachment executed, no further impact"
+      - "High: Execution with confirmed malicious activity or data access"
+  - confidence:
+      - "High: Confirmed malicious indicators in attachment and endpoint"
+      - "Medium: Suspicious but inconclusive indicators"
+      - "Low: Possible false positive or user error"
+
+ioc_types:
+  - Email Address
+  - Sender Domain
+  - Attachment Filename
+  - File Hash
+  - IP Address
+  - URL
+
+example_queries:
+  - name: "Suspicious Attachment Emails"
+    query: >
+      email_attachment_filename: (*.exe OR *.js OR *.docm OR *.xlsm OR *.zip) AND
+      sender_domain: ("phishingsite.com" OR "malicious.com")
+
+  - name: "Attachment Execution Process Creation"
+    query: >
+      event_type=process_creation AND
+      (process_name="powershell.exe" OR process_name="cmd.exe" OR process_name="wscript.exe") AND
+      parent_process_name="outlook.exe"
+
+automation_hooks:
+  - "Auto quarantine emails with high-risk attachments"
+  - "Submit unknown attachments to sandbox automatically"
+  - "Generate tickets for analyst investigation"
+  - "Trigger endpoint isolation if malicious execution detected"
+
+analyst_guidance:
+  - "Focus on attachments with executable content or macros"
+  - "Correlate email and endpoint data to confirm exploitation"
+  - "Prioritize containment for confirmed malicious execution"
+  - "Engage users for additional context and remediation"
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1566/001/"
+  - "https://docs.microsoft.com/en-us/microsoft-365/security/office-365-security/office-365-atp"
+  - "https://www.sans.org/white-papers/401/"
+
+review_cycle: "Quarterly or after new phishing campaigns"

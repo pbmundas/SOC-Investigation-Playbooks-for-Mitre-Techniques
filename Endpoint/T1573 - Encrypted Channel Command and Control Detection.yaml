@@ -1,0 +1,84 @@
+playbook_name: "T1573 - Encrypted Channel Command and Control Detection"
+tactic: "Command and Control"
+technique_id: "T1573"
+technique_name: "Encrypted Channel"
+description: >
+  Detect adversaries using encrypted channels (e.g., SSL/TLS, SSH) for command and control communication.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Encrypted Traffic Metadata"
+    description: >
+      Analyze encrypted traffic patterns, including unusual connection frequencies, durations, and destinations.
+    checklist:
+      - "Are there connections to suspicious or unrecognized IPs over SSL/TLS or SSH?"
+      - "Is there unusually persistent or frequent encrypted traffic?"
+      - "Are there anomalies in SSL certificate properties (e.g., self-signed, expired)?"
+    data_sources:
+      - "Network flow logs"
+      - "TLS/SSL inspection logs"
+      - "Firewall logs"
+
+  - step_number: 2
+    title: "Inspect SSL/TLS Certificate Anomalies"
+    description: >
+      Identify certificates with unusual attributes, such as uncommon issuers or mismatched domains.
+    checklist:
+      - "Are there self-signed or invalid certificates?"
+      - "Is certificate usage consistent with known legitimate services?"
+    data_sources:
+      - "SSL inspection tools"
+      - "Certificate logs"
+
+  - step_number: 3
+    title: "Correlate Encrypted Traffic with Endpoint Process Activity"
+    description: >
+      Link encrypted connections with suspicious processes or unusual endpoint behavior.
+    checklist:
+      - "Are processes initiating encrypted connections known or trusted?"
+      - "Is there evidence of encrypted traffic related to malware or unauthorized apps?"
+    data_sources:
+      - "Endpoint logs"
+      - "Process monitoring"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Normal encrypted traffic."
+      - "Medium: Suspicious encrypted connections."
+      - "High: Confirmed encrypted channel C2."
+  - confidence_levels:
+      - "High: IOC match or malicious payload detected."
+      - "Medium: Behavioral anomalies."
+      - "Low: Possibly legitimate encrypted communication."
+
+ioc_types:
+  - "Suspicious IPs or domains using encrypted protocols"
+  - "Anomalous SSL certificates"
+  - "Unusual encrypted connection metadata"
+
+queries/examples:
+  - name: "Detect Connections with Self-Signed Certificates"
+    query: >
+      tls.certificate_issuer = "Self-Signed" AND
+      tls.connection_count > threshold
+
+  - name: "Detect Unusual Persistent SSL Connections"
+    query: >
+      tls.connection_duration > threshold_seconds AND
+      destination_ip NOT IN (known_legitimate_ips)
+
+automation_hooks:
+  - "Alert on suspicious encrypted channel use."
+  - "Block connections with invalid certificates."
+  - "Trigger endpoint process investigation."
+
+analyst_guidance:
+  - "Verify legitimacy of encrypted connections."
+  - "Investigate endpoint processes initiating encrypted traffic."
+  - "Review threat intel for malicious encrypted C2 indicators."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1573/"
+  - "https://www.sans.org/white-papers/39721/"
+
+review_cycle: "Monthly or after encrypted channel incidents"

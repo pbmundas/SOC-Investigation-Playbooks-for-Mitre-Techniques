@@ -1,0 +1,83 @@
+playbook_name: "T1570 - Tool Transfer Detection: Investigation & Triage"
+tactic: "Credential Access"
+technique_id: "T1570"
+technique_name: "Lateral Tool Transfer"
+description: >
+  Detects adversaries transferring tools or utilities between systems to facilitate further actions such as credential access or lateral movement.
+
+investigation_steps:
+  - step_number: 1
+    title: "Identify File Transfer Activity"
+    description: >
+      Monitor network and host file transfer activities, focusing on uncommon protocols or unusual file types.
+    checklist:
+      - "Are there file transfers involving known attacker tools or suspicious executables?"
+      - "Is there transfer of files to systems where the user does not normally operate?"
+    data_sources:
+      - "Network traffic logs"
+      - "File system audit logs"
+      - "Endpoint detection and response (EDR) logs"
+
+  - step_number: 2
+    title: "Detect Use of Common Transfer Methods"
+    description: >
+      Observe use of SMB, FTP, HTTP, PowerShell, or other scripting methods to move tools.
+    checklist:
+      - "Is there unusual use of SMB or administrative shares?"
+      - "Are there script executions for file downloads or uploads?"
+    data_sources:
+      - "Network flow logs"
+      - "PowerShell/command execution logs"
+
+  - step_number: 3
+    title: "Correlate Tool Transfer with Subsequent Actions"
+    description: >
+      Investigate activities after tool transfer such as execution, credential dumping, or lateral movement.
+    checklist:
+      - "Is the transferred tool executed soon after transfer?"
+      - "Are there suspicious authentication attempts after transfer?"
+    data_sources:
+      - "Process execution logs"
+      - "Authentication logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Legitimate file transfer activity."
+      - "Medium: Suspicious transfers needing validation."
+      - "High: Confirmed adversary tool transfer."
+  - confidence_levels:
+      - "High: Verified malicious tool transfer and execution."
+      - "Medium: Suspicious transfer without execution confirmation."
+      - "Low: Routine file transfers."
+
+ioc_types:
+  - "File transfers via SMB or FTP with unusual filenames"
+  - "Scripted downloads/uploads of tools"
+  - "Execution of newly transferred files"
+
+queries/examples:
+  - name: "Detect SMB File Transfers of Executables"
+    query: >
+      network.protocol == SMB AND
+      file.extension IN (".exe", ".dll", ".ps1", ".bat") AND
+      NOT file.name IN approved list
+
+  - name: "Detect PowerShell Download Commands"
+    query: >
+      powershell.command_line CONTAINS "Invoke-WebRequest" OR "wget"
+
+automation_hooks:
+  - "Alert on suspicious file transfer events."
+  - "Block execution of newly transferred suspicious files."
+  - "Notify SOC team for incident response."
+
+analyst_guidance:
+  - "Verify legitimacy of file transfers and user activity."
+  - "Monitor execution and behavioral indicators post-transfer."
+  - "Recommend network segmentation and file transfer controls."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1570/"
+  - "https://www.sans.org/white-papers/39801/"
+
+review_cycle: "Quarterly or after detection of suspicious tool transfer"

@@ -1,0 +1,89 @@
+playbook_name: "T1564.002 - Hidden User Detection: Investigation & Triage"
+tactic: "Defense Evasion"
+technique_id: "T1564.002"
+technique_name: "Hidden User"
+description: >
+  Detect adversaries creating or manipulating user accounts to hide them from standard enumeration and maintain stealth access.
+
+investigation_steps:
+  - step_number: 1
+    title: "Enumerate and Compare User Accounts"
+    description: >
+      Perform detailed user account enumeration using multiple methods to detect discrepancies or hidden accounts.
+    checklist:
+      - "Are there users missing from standard GUI or cmd enumeration?"
+      - "Are accounts hidden by flags, disabled status, or ACL manipulation?"
+      - "Is there a difference between local and domain user listings?"
+    data_sources:
+      - "Local and domain user enumeration tools"
+      - "Active Directory logs"
+      - "Audit and security logs"
+
+  - step_number: 2
+    title: "Inspect User Account Attributes and ACLs"
+    description: >
+      Examine user account properties and permissions that might conceal the account.
+    checklist:
+      - "Does the account have unusual attributes or permissions?"
+      - "Is the account marked as hidden or system?"
+      - "Are there anomalies in account creation/modification logs?"
+    data_sources:
+      - "AD attribute logs"
+      - "Security event logs"
+      - "Configuration management systems"
+
+  - step_number: 3
+    title: "Correlate Hidden Users with Suspicious Activities"
+    description: >
+      Link hidden accounts with suspicious logins, privilege escalations, or lateral movement.
+    checklist:
+      - "Is there suspicious activity from hidden accounts?"
+      - "Are hidden users part of persistence or privilege escalation?"
+    data_sources:
+      - "Authentication logs"
+      - "SIEM correlation alerts"
+
+  - step_number: 4
+    title: "Contain and Remediate"
+    description: >
+      Disable or remove unauthorized hidden users and improve monitoring.
+    checklist:
+      - "Disable or delete unauthorized hidden accounts."
+      - "Harden account enumeration and monitoring policies."
+    data_sources:
+      - "Identity and access management systems"
+      - "Incident response tools"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Legitimate hidden/system accounts."
+      - "Medium: Suspicious hidden user accounts."
+      - "High: Confirmed unauthorized hidden users."
+  - confidence_levels:
+      - "High: Strong evidence of malicious hidden user."
+      - "Medium: Possible anomaly needing further review."
+      - "Low: Known benign hidden accounts."
+
+ioc_types:
+  - "User accounts with hidden or system flags"
+  - "Disabled but active accounts"
+  - "Discrepancies in user enumeration results"
+
+queries/examples:
+  - name: "Detect hidden or disabled user accounts"
+    query: >
+      user.account.hidden:true OR user.account.disabled:true OR user.account.system:true
+
+automation_hooks:
+  - "Alert on new hidden or disabled accounts created."
+  - "Trigger investigation on enumeration discrepancies."
+
+analyst_guidance:
+  - "Verify user legitimacy via HR or system owners."
+  - "Check user account creation and modification logs."
+  - "Correlate account activity with suspicious behavior."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1564/002/"
+
+review_cycle: "Quarterly or after privilege escalation events"

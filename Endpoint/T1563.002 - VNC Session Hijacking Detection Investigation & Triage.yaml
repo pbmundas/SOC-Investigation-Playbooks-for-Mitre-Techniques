@@ -1,0 +1,81 @@
+playbook_name: "T1563.002 - VNC Session Hijacking Detection: Investigation & Triage"
+tactic: "Credential Access"
+technique_id: "T1563.002"
+technique_name: "VNC Session Hijacking"
+description: >
+  Detects adversaries hijacking active Virtual Network Computing (VNC) sessions to maintain unauthorized access or evade detection.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Active VNC Sessions"
+    description: >
+      Track VNC session connections, disconnections, and concurrent sessions to identify suspicious activities.
+    checklist:
+      - "Are there multiple connections from different users to the same VNC session?"
+      - "Are there unexplained session disconnects or reconnects?"
+    data_sources:
+      - "VNC server logs"
+      - "Network connection logs"
+  
+  - step_number: 2
+    title: "Detect Anomalous VNC Client Activity"
+    description: >
+      Identify unusual VNC client IP addresses or device fingerprints connecting to sessions.
+    checklist:
+      - "Are connections coming from unusual IP addresses or geolocations?"
+      - "Is there evidence of automated or scripted VNC access?"
+    data_sources:
+      - "VNC server logs"
+      - "Network flow data"
+
+  - step_number: 3
+    title: "Correlate with Post-Hijack Malicious Actions"
+    description: >
+      Investigate any suspicious commands, privilege escalations, or lateral movement after hijacking.
+    checklist:
+      - "Is there evidence of malicious commands or file transfers?"
+      - "Are there new processes spawned by VNC sessions?"
+    data_sources:
+      - "Process monitoring logs"
+      - "File access logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Normal VNC usage patterns."
+      - "Medium: Suspicious but unconfirmed hijacking."
+      - "High: Confirmed VNC session hijacking."
+  - confidence_levels:
+      - "High: Verified session hijacking with malicious activity."
+      - "Medium: Anomalous VNC session activity."
+      - "Low: Legitimate but unusual VNC usage."
+
+ioc_types:
+  - "Multiple concurrent VNC connections to same session"
+  - "VNC connections from anomalous IP addresses"
+  - "Unexpected VNC session disconnections/reconnections"
+
+queries/examples:
+  - name: "Detect Multiple VNC Connections"
+    query: >
+      vnc.session_id EXISTS AND
+      count(vnc.connection) > 1 WITHIN 5 minutes
+
+  - name: "Detect VNC Access from Unusual IPs"
+    query: >
+      vnc.connection_ip NOT IN known trusted IP list
+
+automation_hooks:
+  - "Alert on suspicious VNC session activities."
+  - "Force disconnect anomalous VNC sessions."
+  - "Notify security team for further analysis."
+
+analyst_guidance:
+  - "Validate the legitimacy of VNC sessions and IP addresses."
+  - "Investigate correlated post-session malicious activity."
+  - "Recommend multi-factor authentication on VNC access."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1563/002/"
+  - "https://docs.vnc.com/security/"
+
+review_cycle: "Monthly or post-detection of suspicious VNC session events"

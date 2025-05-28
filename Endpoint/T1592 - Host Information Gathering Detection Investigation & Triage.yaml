@@ -1,0 +1,81 @@
+playbook_name: "T1592 - Host Information Gathering Detection: Investigation & Triage"
+tactic: "Discovery"
+technique_id: "T1592"
+technique_name: "Gather Victim Host Information"
+description: >
+  Detects adversaries collecting detailed host information such as system configuration, installed software, or hardware details to tailor further attacks.
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect System and Hardware Information Queries"
+    description: >
+      Monitor commands and tools used to gather system info (e.g., systeminfo, hostname, uname, WMI queries).
+    checklist:
+      - "Are there executions of system info commands by suspicious users?"
+      - "Are info-gathering commands run outside of normal admin activity?"
+    data_sources:
+      - "Process creation logs"
+      - "Command line auditing"
+
+  - step_number: 2
+    title: "Detect Queries to Installed Software or Patch Levels"
+    description: >
+      Identify queries retrieving installed software lists or patch statuses (e.g., wmic product, registry queries).
+    checklist:
+      - "Are there unexpected accesses to software inventory or registry keys?"
+      - "Is there correlation with reconnaissance or lateral movement?"
+    data_sources:
+      - "Registry access logs"
+      - "Process and command logs"
+
+  - step_number: 3
+    title: "Correlate Host Info Gathering with Other Recon or Attack Activities"
+    description: >
+      Check if information gathering precedes privilege escalation, lateral movement, or exploitation.
+    checklist:
+      - "Is there suspicious process or network activity following host info gathering?"
+      - "Are there abnormal authentication events?"
+    data_sources:
+      - "Authentication logs"
+      - "Network logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Legitimate system audits."
+      - "Medium: Info gathering by non-admin users."
+      - "High: Host info gathering linked to suspicious activity."
+  - confidence_levels:
+      - "High: Confirmed unauthorized system info commands."
+      - "Medium: Suspicious but unverified info queries."
+      - "Low: Routine administrative activity."
+
+ioc_types:
+  - "Execution of system info commands (systeminfo, uname, hostname)"
+  - "WMI or registry queries for software/hardware info"
+  - "Unexpected access to system configuration files"
+
+queries/examples:
+  - name: "Detect System Information Commands"
+    query: >
+      process.name IN ("cmd.exe", "powershell.exe", "wmic.exe") AND
+      process.command_line MATCHES "(?i)(systeminfo|hostname|uname|Get-WmiObject)"
+
+  - name: "Detect Registry Queries for Software Info"
+    query: >
+      registry.key_path CONTAINS "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall"
+
+automation_hooks:
+  - "Alert on unauthorized system information commands."
+  - "Restrict access to system info and software inventory."
+  - "Monitor subsequent suspicious activities."
+
+analyst_guidance:
+  - "Validate if info gathering is legitimate."
+  - "Investigate following suspicious activity."
+  - "Recommend tightening access to host info queries."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1592/"
+  - "https://docs.microsoft.com/en-us/windows/security/threat-protection/auditing/basic-audit-system-events"
+
+review_cycle: "Quarterly or after detection of suspicious host info gathering"

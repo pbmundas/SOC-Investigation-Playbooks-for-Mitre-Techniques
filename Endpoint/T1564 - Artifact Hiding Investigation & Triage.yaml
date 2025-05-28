@@ -1,0 +1,102 @@
+playbook_name: "T1564 - Artifact Hiding: Investigation & Triage"
+tactic: "Defense Evasion"
+technique_id: "T1564"
+technique_name: "Artifact Hiding"
+description: >
+  Detect attempts by adversaries to hide artifacts such as files, directories, or user accounts to evade detection.
+
+investigation_steps:
+  - step_number: 1
+    title: "Identify Anomalies in Artifact Visibility"
+    description: >
+      Investigate for artifacts that are hidden via OS features or manipulation (e.g., hidden attributes, alternate data streams, or modified ACLs).
+    checklist:
+      - "Are there files or directories with hidden or system attributes?"
+      - "Are there artifacts hidden in alternate data streams?"
+      - "Are normal system visibility settings modified?"
+    data_sources:
+      - "File system monitoring"
+      - "Endpoint detection telemetry"
+      - "Integrity monitoring"
+
+  - step_number: 2
+    title: "Detect Hidden Users or Accounts"
+    description: >
+      Review user account listings for hidden or disabled users that may be used for persistence or stealth access.
+    checklist:
+      - "Are there user accounts with hidden or disabled flags?"
+      - "Are any accounts missing from standard enumeration tools but present in low-level queries?"
+      - "Are there anomalies in user creation/modification logs?"
+    data_sources:
+      - "Active Directory logs"
+      - "Local user account audits"
+      - "Authentication and authorization logs"
+
+  - step_number: 3
+    title: "Correlate with Suspicious Activity"
+    description: >
+      Correlate hidden artifacts or users with other suspicious behaviors like privilege escalation, lateral movement, or persistence.
+    checklist:
+      - "Are hidden files linked to malware or scripts?"
+      - "Are hidden users performing unauthorized actions?"
+      - "Is there evidence of access or usage of hidden artifacts?"
+    data_sources:
+      - "SIEM logs"
+      - "Threat intelligence feeds"
+      - "Endpoint telemetry"
+
+  - step_number: 4
+    title: "Respond and Mitigate"
+    description: >
+      Remove or reveal hidden artifacts, disable unauthorized accounts, and enhance monitoring and control.
+    checklist:
+      - "Remove or quarantine suspicious hidden files or directories."
+      - "Disable or delete unauthorized hidden users."
+      - "Harden file system and user visibility configurations."
+    data_sources:
+      - "Endpoint management"
+      - "Access control logs"
+      - "Incident response tools"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Legitimate hidden artifacts or users."
+      - "Medium: Suspicious hiding activities requiring investigation."
+      - "High: Confirmed malicious hiding to evade detection."
+  - confidence_levels:
+      - "High: Verified malicious hiding."
+      - "Medium: Suspicious but unconfirmed."
+      - "Low: Benign or system-related hiding."
+
+ioc_types:
+  - "Files/directories with hidden/system attributes"
+  - "User accounts with hidden or disabled flags"
+  - "Unusual alternate data streams"
+  - "Unexpected user enumeration results"
+
+queries/examples:
+  - name: "Detect hidden files/directories (Windows)"
+    query: >
+      (file.attributes:hidden OR file.attributes:system) AND NOT file.path:known_system_files
+
+  - name: "List hidden user accounts (Windows)"
+    query: >
+      user.account.hidden:true OR user.account.disabled:true
+
+automation_hooks:
+  - "Alert on detection of hidden files or directories in sensitive paths."
+  - "Alert on creation or modification of hidden or disabled user accounts."
+  - "Trigger analyst review upon detection."
+
+analyst_guidance:
+  - "Validate whether hidden artifacts are part of normal system operations."
+  - "Check user account status and creation/modification logs."
+  - "Correlate with other threat indicators or alerts."
+  - "Engage incident response if malicious hiding is confirmed."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1564/"
+  - "https://attack.mitre.org/techniques/T1564/001/"
+  - "https://attack.mitre.org/techniques/T1564/002/"
+
+review_cycle: "Quarterly or after significant incidents"

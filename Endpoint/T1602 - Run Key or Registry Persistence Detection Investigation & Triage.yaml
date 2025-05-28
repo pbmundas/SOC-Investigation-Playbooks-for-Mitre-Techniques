@@ -1,0 +1,83 @@
+playbook_name: "T1602 - Run Key or Registry Persistence Detection: Investigation & Triage"
+tactic: "Persistence"
+technique_id: "T1602"
+technique_name: "Data from Configuration Repository"
+description: >
+  Detect persistence through registry modification in Windows Run keys or similar locations.
+
+investigation_steps:
+  - step_number: 1
+    title: "Identify Registry Key Modification"
+    description: >
+      Look for suspicious modifications to autorun keys in the registry.
+    checklist:
+      - "Was a new Run/RunOnce key created or modified?"
+      - "Was the value pointing to an unusual or unknown executable?"
+    data_sources:
+      - "Windows Registry"
+      - "EDR registry event logs"
+
+  - step_number: 2
+    title: "Correlate with Process Execution"
+    description: >
+      Validate that the path in the registry was executed.
+    checklist:
+      - "Is the referenced binary executed upon login or startup?"
+      - "Is it a known legitimate application or potentially malicious?"
+    data_sources:
+      - "Process monitoring"
+      - "Startup execution logs"
+
+  - step_number: 3
+    title: "Validate or Contain"
+    description: >
+      Confirm persistence mechanism and respond.
+    checklist:
+      - "Should the executable be removed or quarantined?"
+      - "Should registry changes be reverted?"
+    data_sources:
+      - "IR tools"
+      - "EDR platform"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Benign or system-related autoruns."
+      - "Medium: Suspicious binary added to autorun."
+      - "High: Known malware in autorun registry."
+  - confidence_levels:
+      - "High: Hash matches known IOC."
+      - "Medium: Unknown binary with suspicious path."
+      - "Low: Registry key change with no execution."
+
+ioc_types:
+  - "Registry paths (Run/RunOnce)"
+  - "Suspicious file paths"
+  - "Hash of autorun binaries"
+
+queries/examples:
+  - name: "Registry Key Monitoring"
+    query: >
+      registry.path:("HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run" OR
+                    "HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run") AND
+      registry.action:"create" OR registry.action:"modify"
+
+  - name: "Autorun Execution Validation"
+    query: >
+      process.executable_path:FROM(registry.autorun.value) AND
+      NOT process.executable_path:IN(known_legit)
+
+automation_hooks:
+  - "Alert on new Run key values."
+  - "Flag unknown binaries set to auto-start."
+  - "Trigger registry rollback or remediation."
+
+analyst_guidance:
+  - "Inspect registry and binary details."
+  - "Correlate execution times with user activity."
+  - "Use sandbox or static analysis on unknown binaries."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1602/"
+  - "https://learn.microsoft.com/en-us/sysinternals/downloads/autoruns"
+
+review_cycle: "Quarterly or when new persistence methods emerge"

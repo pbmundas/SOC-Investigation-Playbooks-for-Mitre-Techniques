@@ -1,0 +1,112 @@
+playbook_name: "T1574 - Hijack Execution Flow: Investigation & Triage"
+tactic: "Persistence"
+technique_id: "T1574"
+technique_name: "Hijack Execution Flow"
+description: >
+  Playbook to investigate suspicious hijacking of execution flow via DLL hijacking, binary planting, 
+  or hijacking of search order used by adversaries to execute malicious code.
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect Abnormal DLL or Binary Loads"
+    description: >
+      Identify DLL or executable files loaded from unexpected locations or by suspicious processes.
+    checklist:
+      - "Are there DLLs loaded from writable or user directories?"
+      - "Is the load order manipulated or binary replaced?"
+      - "Are there unsigned or modified DLLs or executables?"
+    data_sources:
+      - "Process DLL load logs"
+      - "File Integrity Monitoring"
+      - "EDR hooks and monitoring"
+      - "Windows Event Logs"
+
+  - step_number: 2
+    title: "Analyze Process Parent-Child Relationships"
+    description: >
+      Examine execution chains for anomalous spawning of processes or binaries.
+    checklist:
+      - "Are processes launched from unexpected parents?"
+      - "Is there evidence of binary planting or execution flow hijack?"
+      - "Do process command lines or modules show suspicious indicators?"
+    data_sources:
+      - "Process trees"
+      - "Command line auditing"
+      - "Threat intelligence"
+
+  - step_number: 3
+    title: "Check for Persistence or Lateral Movement"
+    description: >
+      Assess whether hijacked execution flows are leveraged for persistence or further attack stages.
+    checklist:
+      - "Is hijacked code used to establish persistence?"
+      - "Are there connections to C2 or lateral movement after hijack?"
+      - "Are scheduled tasks or services involved?"
+    data_sources:
+      - "Persistence mechanism logs"
+      - "Network traffic analysis"
+      - "SIEM correlation"
+
+  - step_number: 4
+    title: "Validate User and System Context"
+    description: >
+      Confirm whether hijack events correspond to authorized activity.
+    checklist:
+      - "Is the activity initiated by trusted users or processes?"
+      - "Are there known vulnerabilities exploited?"
+      - "Is endpoint protection disabled or bypassed?"
+    data_sources:
+      - "User login/audit logs"
+      - "Patch management records"
+      - "EDR alerts"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Legitimate software updates or behavior."
+      - "Medium: Suspicious hijack attempts without confirmed impact."
+      - "High: Confirmed hijack with malicious payload execution."
+  - confidence_levels:
+      - "High: Matched IOC or confirmed malware behavior."
+      - "Medium: Indicators of suspicious execution flow."
+      - "Low: Expected system activity."
+
+ioc_types:
+  - "Suspicious DLL or binary file paths and hashes"
+  - "Process execution trees with abnormal parents"
+  - "Modified or replaced executables"
+  - "Scheduled tasks or services linked to hijack"
+  - "Network connections following hijack"
+
+queries/examples:
+  - name: "Detect DLL Loading from Unusual Locations"
+    query: >
+      event.action:"dll_loaded" AND NOT file.path:("C:\\Windows\\System32\\*") AND
+      event.timestamp:>=now-1d
+  - name: "Suspicious Process Parent-Child Chains"
+    query: >
+      process.parent.name:("explorer.exe" OR "svchost.exe") AND
+      process.name:("cmd.exe" OR "powershell.exe") AND
+      process.command_line:("*-EncodedCommand*" OR "*Invoke-Expression*")
+  - name: "Binary Planting or Replacement Detection"
+    query: >
+      file.creation_time:>=now-7d AND
+      file.path:("*\\AppData\\*" OR "*\\Temp\\*") AND
+      file.hash:exists
+
+automation_hooks:
+  - "Alert on DLL loads from writable directories"
+  - "Trigger automated file hash lookup and sandboxing"
+  - "Block execution of suspicious binaries via endpoint protection"
+
+analyst_guidance:
+  - "Review unusual DLL and binary loading activities."
+  - "Analyze process trees for hijacked execution patterns."
+  - "Check patch levels and exploit indicators."
+  - "Coordinate with threat intel to confirm malicious activity."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1574/"
+  - "https://www.sans.org/white-papers/35443/"
+  - "https://www.elastic.co/blog/hunting-for-dll-hijacking-attacks"
+
+review_cycle: "Semi-annually or when new hijack techniques are discovered"

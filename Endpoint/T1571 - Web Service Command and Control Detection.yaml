@@ -1,0 +1,87 @@
+playbook_name: "T1571 - Web Service Command and Control Detection"
+tactic: "Command and Control"
+technique_id: "T1571"
+technique_name: "Web Service"
+description: >
+  Detect adversaries using web services (e.g., Google Docs, Twitter, Dropbox) as a command and control channel.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Web Service Traffic Patterns"
+    description: >
+      Identify unusual or suspicious traffic to web service endpoints, including anomalous request frequency or uncommon API usage.
+    checklist:
+      - "Are there spikes in traffic volume or frequency to web services?"
+      - "Is there access to unusual or unauthorized web services?"
+      - "Are API calls containing suspicious or encoded payloads?"
+    data_sources:
+      - "Proxy logs"
+      - "Firewall logs"
+      - "Web gateway logs"
+      - "API monitoring tools"
+
+  - step_number: 2
+    title: "Analyze Web Service Payloads and URLs"
+    description: >
+      Inspect content for signs of encoded commands, data exfiltration, or abnormal request structures.
+    checklist:
+      - "Are payloads base64 or otherwise encoded?"
+      - "Are URLs unusually long or contain random strings?"
+      - "Is there evidence of automated or scripted web service interactions?"
+    data_sources:
+      - "Web proxy logs"
+      - "Network packet captures"
+
+  - step_number: 3
+    title: "Cross-reference Web Service Access with User and Endpoint Behavior"
+    description: >
+      Correlate web service usage with endpoint logs and user activity to detect suspicious patterns.
+    checklist:
+      - "Is web service access occurring outside normal hours?"
+      - "Are there multiple endpoints accessing the same suspicious web service?"
+      - "Are user accounts exhibiting unusual access patterns?"
+    data_sources:
+      - "Endpoint logs"
+      - "User authentication logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Normal web service usage."
+      - "Medium: Suspicious or anomalous web service access."
+      - "High: Confirmed web service-based C2 activity."
+  - confidence_levels:
+      - "High: Payload or IOC match."
+      - "Medium: Behavioral anomalies."
+      - "Low: Potential false positives."
+
+ioc_types:
+  - "Suspicious web service URLs or API endpoints"
+  - "Encoded payloads in HTTP requests"
+  - "Unusual web service access patterns"
+
+queries/examples:
+  - name: "Detect Unusual POST Requests to Web Services"
+    query: >
+      http.method = "POST" AND
+      http.host IN ("docs.google.com", "dropbox.com", "twitter.com") AND
+      http.request_body MATCHES "base64"
+
+  - name: "Detect High Frequency of Requests to Web Services"
+    query: >
+      count(http.request) BY http.host > threshold WITHIN 5m
+
+automation_hooks:
+  - "Alert on suspicious web service activity."
+  - "Block or throttle suspicious web service access."
+  - "Trigger endpoint investigations for involved hosts."
+
+analyst_guidance:
+  - "Review payload content for encoded commands."
+  - "Check for lateral movement or data exfiltration."
+  - "Coordinate with cloud or SaaS admins for deeper insight."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1571/"
+  - "https://www.fireeye.com/blog/threat-research/2016/07/c2_using_web_services.html"
+
+review_cycle: "Quarterly or after web service C2 detections"

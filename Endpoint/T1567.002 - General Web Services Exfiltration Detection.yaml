@@ -1,0 +1,83 @@
+playbook_name: "T1567.002 - General Web Services Exfiltration Detection"
+tactic: "Exfiltration"
+technique_id: "T1567.002"
+technique_name: "Exfiltration Over General Web Services"
+description: >
+  Detect data exfiltration through general web services such as social media, pastebins, or other online platforms.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Uploads to General Web Services"
+    description: >
+      Identify suspicious or large uploads to non-cloud-storage web services.
+    checklist:
+      - "Are uploads occurring to social media, pastebin, or file-sharing sites?"
+      - "Is upload timing or volume unusual?"
+      - "Are connections to suspicious or rare domains observed?"
+    data_sources:
+      - "Network logs"
+      - "Proxy logs"
+      - "Web filtering logs"
+
+  - step_number: 2
+    title: "Correlate with Endpoint File and Process Activity"
+    description: >
+      Look for files staged or prepared for upload and processes managing uploads.
+    checklist:
+      - "Are suspicious or unauthorized processes uploading data?"
+      - "Are there files recently accessed or compressed?"
+    data_sources:
+      - "Endpoint logs"
+      - "EDR telemetry"
+
+  - step_number: 3
+    title: "Review Account Activity on Web Services"
+    description: >
+      Check for unauthorized or abnormal use of web accounts.
+    checklist:
+      - "Are there new account creations or access from unusual IPs?"
+      - "Is there evidence of automation or scripted uploads?"
+    data_sources:
+      - "Web service audit logs"
+      - "SIEM alerts"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Normal business usage."
+      - "Medium: Suspicious upload patterns."
+      - "High: Confirmed data exfiltration."
+  - confidence_levels:
+      - "High: IOC or validated events."
+      - "Medium: Behavioral anomalies."
+      - "Low: Possible false positives."
+
+ioc_types:
+  - "Suspicious upload domains"
+  - "Unusual endpoint activity"
+  - "Web account anomalies"
+
+queries/examples:
+  - name: "Detect Uploads to Pastebin or Social Media"
+    query: >
+      network.destination_domain IN (pastebin.com, twitter.com, facebook.com) AND
+      network.upload_bytes > threshold
+
+  - name: "Detect Unusual Account Access Patterns"
+    query: >
+      web_service.login_events FROM unusual_ips OR unusual_times
+
+automation_hooks:
+  - "Alert on suspicious uploads."
+  - "Monitor endpoints and user accounts."
+  - "Engage security operations for investigation."
+
+analyst_guidance:
+  - "Verify legitimacy of web service use."
+  - "Investigate files and data involved."
+  - "Coordinate response and containment."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1567/002/"
+  - "https://www.mandiant.com/resources/detecting-data-exfiltration"
+
+review_cycle: "Quarterly or after incidents"

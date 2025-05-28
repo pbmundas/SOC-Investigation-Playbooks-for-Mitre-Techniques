@@ -1,0 +1,84 @@
+playbook_name: "T1567.001 - Cloud Storage Exfiltration Detection"
+tactic: "Exfiltration"
+technique_id: "T1567.001"
+technique_name: "Cloud Storage Exfiltration"
+description: >
+  Detect adversaries exfiltrating data using cloud storage services like AWS S3, Google Drive, Dropbox, etc.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Upload Activity to Cloud Storage Services"
+    description: >
+      Identify large or anomalous file uploads to known cloud storage domains or IPs.
+    checklist:
+      - "Are there unusual file sizes or upload frequencies?"
+      - "Is upload traffic occurring at odd hours or from unusual devices?"
+      - "Are the destinations known and legitimate cloud storage endpoints?"
+    data_sources:
+      - "Network traffic logs"
+      - "Proxy logs"
+      - "Cloud access and audit logs"
+
+  - step_number: 2
+    title: "Analyze Endpoint Activity"
+    description: >
+      Check for file staging, compression, or encryption prior to upload.
+    checklist:
+      - "Are files prepared or modified shortly before upload?"
+      - "Are suspicious processes handling files destined for cloud upload?"
+    data_sources:
+      - "Endpoint file and process logs"
+      - "EDR telemetry"
+
+  - step_number: 3
+    title: "Review Cloud Service Account Activity"
+    description: >
+      Detect abnormal authentication events or permission changes in cloud storage accounts.
+    checklist:
+      - "Are there logins from unusual IPs or devices?"
+      - "Are permission changes or API token creations observed?"
+    data_sources:
+      - "Cloud service audit logs"
+      - "IAM and authentication logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Expected cloud storage use."
+      - "Medium: Suspicious upload behavior."
+      - "High: Confirmed exfiltration via cloud storage."
+  - confidence_levels:
+      - "High: Verified upload of sensitive data."
+      - "Medium: Behavioral anomalies."
+      - "Low: Possible false positives."
+
+ioc_types:
+  - "Suspicious upload endpoints"
+  - "Unusual cloud account activity"
+  - "File staging processes"
+
+queries/examples:
+  - name: "Detect Large Uploads to Cloud Storage Domains"
+    query: >
+      network.destination_domain IN (known_cloud_storage_domains) AND
+      network.upload_bytes > threshold
+
+  - name: "Detect Suspicious API Token Creation"
+    query: >
+      cloud_event.type = "CreateApiToken" AND
+      cloud_event.user NOT IN known_admins
+
+automation_hooks:
+  - "Trigger alerts on anomalous uploads."
+  - "Isolate endpoints if data exfiltration confirmed."
+  - "Engage cloud security team for account investigation."
+
+analyst_guidance:
+  - "Confirm if cloud storage use aligns with business needs."
+  - "Investigate file contents if possible."
+  - "Coordinate incident response if malicious."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1567/001/"
+  - "https://www.sans.org/white-papers/detecting-cloud-data-exfiltration/"
+
+review_cycle: "Quarterly or post-incident"

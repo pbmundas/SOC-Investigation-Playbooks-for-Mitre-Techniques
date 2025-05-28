@@ -1,0 +1,88 @@
+playbook_name: "T1564.001 - Hidden Files and Directory Detection: Investigation & Triage"
+tactic: "Defense Evasion"
+technique_id: "T1564.001"
+technique_name: "Hidden Files and Directories"
+description: >
+  Detect attempts by adversaries to hide files or directories using OS features such as hidden or system attributes, alternate data streams, or other concealment methods.
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect Hidden Attributes on Files and Directories"
+    description: >
+      Identify files or folders marked with hidden or system attributes that are unusual or located in suspicious directories.
+    checklist:
+      - "Are files or directories set with hidden or system attributes?"
+      - "Are these artifacts in non-standard locations or user directories?"
+      - "Are alternate data streams present on files?"
+    data_sources:
+      - "File system monitoring"
+      - "Endpoint detection logs"
+      - "PowerShell or Sysinternals tools telemetry"
+
+  - step_number: 2
+    title: "Verify File and Directory Integrity"
+    description: >
+      Check for unauthorized changes, creation, or access of hidden files.
+    checklist:
+      - "Have new hidden files or directories appeared unexpectedly?"
+      - "Are there modifications to existing hidden files?"
+    data_sources:
+      - "File integrity monitoring"
+      - "SIEM file change alerts"
+
+  - step_number: 3
+    title: "Correlate Hidden Files with Malicious Behavior"
+    description: >
+      Associate hidden files with suspicious process execution, persistence mechanisms, or data exfiltration.
+    checklist:
+      - "Do hidden files correspond to known malware or scripts?"
+      - "Are they linked to suspicious processes or network connections?"
+    data_sources:
+      - "Endpoint telemetry"
+      - "Process creation logs"
+      - "Network monitoring"
+
+  - step_number: 4
+    title: "Respond and Remove Hidden Artifacts"
+    description: >
+      Quarantine or delete malicious hidden files and adjust monitoring.
+    checklist:
+      - "Remove unauthorized hidden files or directories."
+      - "Adjust file system monitoring to detect future hiding attempts."
+    data_sources:
+      - "Endpoint remediation tools"
+      - "IR ticketing system"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Legitimate system or application hidden files."
+      - "Medium: Suspicious hidden files requiring further analysis."
+      - "High: Confirmed malicious hidden files."
+  - confidence_levels:
+      - "High: Matches known malicious patterns."
+      - "Medium: Anomalous but uncertain."
+      - "Low: Known benign hidden artifacts."
+
+ioc_types:
+  - "Files/directories with hidden/system attributes"
+  - "Files with alternate data streams"
+  - "Unexpected hidden file creation/modification"
+
+queries/examples:
+  - name: "Detect hidden files or directories"
+    query: >
+      (file.attributes:hidden OR file.attributes:system) AND NOT file.path:known_system_files
+
+automation_hooks:
+  - "Alert on new hidden files in user or temp directories."
+  - "Trigger review on detection of alternate data streams."
+
+analyst_guidance:
+  - "Verify if hidden files are part of legitimate OS or app behavior."
+  - "Correlate with threat intel or malware hashes."
+  - "Check file creation and modification timelines."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1564/001/"
+
+review_cycle: "Quarterly or post incident"

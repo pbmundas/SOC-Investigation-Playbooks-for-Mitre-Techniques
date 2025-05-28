@@ -1,0 +1,82 @@
+playbook_name: "T1563.003 - SSH Session Hijacking Detection: Investigation & Triage"
+tactic: "Credential Access"
+technique_id: "T1563.003"
+technique_name: "SSH Session Hijacking"
+description: >
+  Detects adversaries hijacking active SSH sessions to gain unauthorized access or maintain persistence without needing credentials.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor SSH Session Activity"
+    description: >
+      Track SSH session establishment, disconnections, and concurrent connections to identify anomalies.
+    checklist:
+      - "Are there multiple SSH sessions open for the same user from different IPs?"
+      - "Are there abrupt SSH session disconnections and reconnections?"
+    data_sources:
+      - "SSH server logs"
+      - "Network logs"
+
+  - step_number: 2
+    title: "Identify Suspicious SSH Client Behavior"
+    description: >
+      Detect SSH connections from unusual IP addresses, geolocations, or rapid session switching.
+    checklist:
+      - "Are there connections from IPs outside normal user range?"
+      - "Is there evidence of automated or scripted SSH connections?"
+    data_sources:
+      - "SSH logs"
+      - "Network flow monitoring"
+
+  - step_number: 3
+    title: "Correlate Hijacking with Malicious Activity"
+    description: >
+      Look for malicious commands, privilege escalations, or lateral movement following session hijacking.
+    checklist:
+      - "Are there suspicious command executions post-connection?"
+      - "Is there evidence of lateral movement or data exfiltration?"
+    data_sources:
+      - "Process logs"
+      - "File access logs"
+      - "Network logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Typical SSH session patterns."
+      - "Medium: Suspicious session anomalies."
+      - "High: Confirmed SSH session hijacking."
+  - confidence_levels:
+      - "High: Verified session hijacking with malicious actions."
+      - "Medium: Anomalous SSH session behavior."
+      - "Low: Normal SSH session variations."
+
+ioc_types:
+  - "Concurrent SSH sessions from different IPs for same user"
+  - "Unusual SSH client IP addresses"
+  - "Rapid SSH session disconnect/reconnect"
+
+queries/examples:
+  - name: "Detect Concurrent SSH Sessions"
+    query: >
+      ssh.session_id EXISTS AND
+      count(ssh.connection) > 1 BY user WITHIN 5 minutes
+
+  - name: "Detect SSH Connections from Anomalous IPs"
+    query: >
+      ssh.connection_ip NOT IN known trusted IPs
+
+automation_hooks:
+  - "Alert on suspicious SSH session anomalies."
+  - "Force disconnect suspicious SSH sessions."
+  - "Enforce stricter SSH access controls."
+
+analyst_guidance:
+  - "Verify session legitimacy and client IPs."
+  - "Check for post-session malicious activity."
+  - "Recommend SSH key rotation and MFA."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1563/003/"
+  - "https://www.ssh.com/ssh/session-hijacking/"
+
+review_cycle: "Monthly or after detection of suspicious SSH sessions"

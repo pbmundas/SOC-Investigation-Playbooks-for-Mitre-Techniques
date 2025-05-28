@@ -1,0 +1,107 @@
+playbook_name: "T1636 - Email Collection Execution: Investigation & Triage"
+tactic: "Collection"
+technique_id: "T1636"
+technique_name: "Email Collection"
+description: >
+  Detect and investigate adversaries collecting emails via automated tools, scripts, or manual techniques to gather sensitive communications.
+
+investigation_steps:
+  - step_number: 1
+    title: "Identify Suspicious Email Client or Automation Executions"
+    description: >
+      Detect execution of tools or scripts that access or export email data.
+    checklist:
+      - "Are there processes launching email clients or scripting tools abnormally?"
+      - "Are known email harvesting tools or scripts detected?"
+      - "Is there access to mail database files or export of PST/OST files?"
+    data_sources:
+      - "Process execution logs"
+      - "File access monitoring"
+      - "EDR telemetry"
+
+  - step_number: 2
+    title: "Detect Unusual Email File Access or Exfiltration"
+    description: >
+      Monitor access or copying of mailbox files or exports.
+    checklist:
+      - "Are mailbox files (PST, OST) accessed outside business hours or by unusual users?"
+      - "Is there evidence of file transfers or uploads of mail data?"
+      - "Are there anomalous volumes of email data read or copied?"
+    data_sources:
+      - "File integrity and access logs"
+      - "Network data exfiltration monitoring"
+      - "SIEM alerts"
+
+  - step_number: 3
+    title: "Correlate with User and Network Anomalies"
+    description: >
+      Identify unusual user behavior or network connections coinciding with email collection.
+    checklist:
+      - "Are users accessing email systems atypically?"
+      - "Is there network traffic to suspicious destinations?"
+      - "Are there alerts for credential misuse?"
+    data_sources:
+      - "User activity logs"
+      - "Network monitoring"
+      - "Threat intelligence"
+
+  - step_number: 4
+    title: "Validate or Contain Incident"
+    description: >
+      Determine if activity is legitimate or malicious; take containment actions if needed.
+    checklist:
+      - "Is the activity part of authorized data export or backup?"
+      - "Is immediate remediation or user lockdown required?"
+    data_sources:
+      - "Incident response platform"
+      - "Asset and user management"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Authorized email export or maintenance."
+      - "Medium: Suspicious but unconfirmed email access."
+      - "High: Confirmed malicious email collection."
+  - confidence_levels:
+      - "High: Known tool or confirmed exfiltration."
+      - "Medium: Indicators of suspicious behavior."
+      - "Low: Possibly benign or unknown."
+
+ioc_types:
+  - "Processes related to email clients or harvesting tools"
+  - "Access to PST, OST, or mail database files"
+  - "Unusual file copy or network upload events"
+  - "User behavioral anomalies"
+
+queries/examples:
+  - name: "Process Execution of Email Export Tools"
+    query: >
+      process.name:("outlook.exe" OR "pstools.exe" OR "powershell.exe") AND
+      process.command_line:("*export*" OR "*pst*" OR "*mail*")
+  - name: "Unusual Access to Mailbox Files"
+    query: >
+      file.path:("*\\.pst" OR "*\\.ost") AND
+      event.action:("file_opened" OR "file_read") AND
+      event.timestamp:>=now-1d
+  - name: "High Volume File Transfers of Email Data"
+    query: >
+      network.destination.ip:NOT_INTERNAL AND
+      file.name:("*pst" OR "*ost") AND
+      network.bytes_sent:>1000000
+
+automation_hooks:
+  - "Alert on execution of known email harvesting tools."
+  - "Block suspicious file access or exfiltration."
+  - "Trigger user session review and potential lockdown."
+
+analyst_guidance:
+  - "Confirm user authorization for email exports."
+  - "Correlate with network exfiltration and other alerts."
+  - "Engage email system admins and IR team."
+  - "Update IOC and threat intel repositories."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1636/"
+  - "https://www.sans.org/white-papers/39541/"
+  - "https://www.fireeye.com/blog/threat-research/2020/01/email-collection-techniques.html"
+
+review_cycle: "Annually or when new email collection techniques are discovered"

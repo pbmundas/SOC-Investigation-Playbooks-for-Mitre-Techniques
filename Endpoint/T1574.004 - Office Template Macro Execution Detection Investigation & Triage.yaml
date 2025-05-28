@@ -1,0 +1,109 @@
+playbook_name: "T1574.004 - Office Template Macro Execution Detection: Investigation & Triage"
+tactic: "Persistence"
+technique_id: "T1574.004"
+technique_name: "Office Template Macros"
+description: >
+  Detect and investigate adversaries abusing Microsoft Office templates with embedded macros to achieve persistence or execute malicious code.
+
+investigation_steps:
+  - step_number: 1
+    title: "Identify Macro-enabled Office Documents"
+    description: >
+      Detect Office documents (e.g., .docm, .xlsm) with macros, especially those from untrusted sources.
+    checklist:
+      - "Are macro-enabled documents opened by users?"
+      - "Are macros digitally signed or unsigned?"
+      - "Is the document origin suspicious (e.g., email attachments, downloads)?"
+    data_sources:
+      - "Email gateway logs"
+      - "File metadata scanning"
+      - "Endpoint process creation logs"
+      - "Office application logs"
+
+  - step_number: 2
+    title: "Detect Macro Execution Events"
+    description: >
+      Monitor execution of macros or scripts launched by Office applications.
+    checklist:
+      - "Are there script or command executions triggered by Office apps?"
+      - "Are macros executing suspicious system commands or network connections?"
+      - "Are PowerShell or cmd processes spawned by Office processes?"
+    data_sources:
+      - "Process creation logs"
+      - "Command line audit"
+      - "EDR telemetry"
+
+  - step_number: 3
+    title: "Assess Persistence and Malicious Activity"
+    description: >
+      Check if macro execution leads to persistence mechanisms or further attacks.
+    checklist:
+      - "Are payloads dropped or executed post macro execution?"
+      - "Is there network communication related to C2 or data exfiltration?"
+      - "Are other artifacts such as scheduled tasks or registry changes observed?"
+    data_sources:
+      - "File system monitoring"
+      - "Network logs"
+      - "SIEM correlation"
+
+  - step_number: 4
+    title: "Validate User and Document Context"
+    description: >
+      Assess legitimacy of macro use based on user role and document trust level.
+    checklist:
+      - "Is the user authorized to open macro-enabled documents?"
+      - "Is the document signed by a trusted publisher?"
+      - "Are endpoint protections active and updated?"
+    data_sources:
+      - "User access logs"
+      - "Digital certificate databases"
+      - "EDR status"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Legitimate macro usage by trusted users."
+      - "Medium: Suspicious macro execution without clear impact."
+      - "High: Confirmed malicious macro execution with payload delivery."
+  - confidence_levels:
+      - "High: IOC matches known macro malware or attacker TTPs."
+      - "Medium: Unsigned or obfuscated macros with suspicious behavior."
+      - "Low: Benign macro usage or new but unverified macros."
+
+ioc_types:
+  - "Macro-enabled Office document hashes"
+  - "Process parent-child relationships (Office app to cmd/PowerShell)"
+  - "Command line arguments executed by macros"
+  - "Email sender addresses or file download sources"
+
+queries/examples:
+  - name: "Detect Macro-enabled Document Execution"
+    query: >
+      file.extension:("docm" OR "xlsm") AND event.action:"file_opened"
+  - name: "Office Processes Launching PowerShell or Cmd"
+    query: >
+      process.parent.name:("winword.exe" OR "excel.exe") AND
+      process.name:("powershell.exe" OR "cmd.exe") AND
+      process.command_line:("*-EncodedCommand*" OR "*Invoke-*")
+  - name: "Suspicious Macro Execution with Network Activity"
+    query: >
+      process.name:("winword.exe" OR "excel.exe") AND
+      network.connection:* AND
+      process.command_line:("*Invoke-WebRequest*" OR "*DownloadString*")
+
+automation_hooks:
+  - "Alert on unsigned macro execution in Office apps"
+  - "Block execution of macros from untrusted sources"
+  - "Quarantine suspicious Office documents"
+
+analyst_guidance:
+  - "Verify document origin and signature."
+  - "Check parent-child processes for suspicious spawning."
+  - "Correlate with network and file system activity."
+  - "Use threat intelligence for known macro malware hashes."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1574/004/"
+  - "https://www.fireeye.com/blog/threat-research/2017/12/macro-based-attacks.html"
+  - "https://www.microsoft.com/security/blog/2020/03/17/office-macros-and-malicious-code-execution/"
+
+review_cycle: "Quarterly or after detection of new macro threats"

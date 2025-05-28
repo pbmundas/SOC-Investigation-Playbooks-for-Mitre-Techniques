@@ -1,0 +1,106 @@
+playbook_name: "T1574.003 - Binary Planting: Investigation & Triage"
+tactic: "Persistence"
+technique_id: "T1574.003"
+technique_name: "Binary Planting"
+description: >
+  Playbook to investigate binary planting where adversaries place malicious executables or binaries
+  in locations searched by legitimate applications to achieve code execution or persistence.
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect Suspicious Binaries in Common Search Paths"
+    description: >
+      Identify executable files planted in directories commonly searched by legitimate applications.
+    checklist:
+      - "Are there binaries in writable or user directories?"
+      - "Are the binaries unsigned or recently modified?"
+      - "Do file hashes match known malware?"
+    data_sources:
+      - "File system monitoring"
+      - "File Integrity Monitoring"
+      - "EDR telemetry"
+
+  - step_number: 2
+    title: "Analyze Process and Execution Context"
+    description: >
+      Review processes executing planted binaries and their spawning chain.
+    checklist:
+      - "Are binaries launched by trusted applications unexpectedly?"
+      - "Is there anomalous parent-child process relationship?"
+      - "Are command lines or loaded modules suspicious?"
+    data_sources:
+      - "Process execution logs"
+      - "Process trees"
+      - "Command line auditing"
+
+  - step_number: 3
+    title: "Investigate Persistence or Follow-on Actions"
+    description: >
+      Determine if planted binaries are used to maintain persistence or advance attacks.
+    checklist:
+      - "Are binaries linked to startup, scheduled tasks, or services?"
+      - "Is there evidence of outbound communication or lateral movement?"
+      - "Are related files or registry keys suspicious?"
+    data_sources:
+      - "Persistence mechanism logs"
+      - "Network traffic logs"
+      - "SIEM correlation"
+
+  - step_number: 4
+    title: "Validate User and System Activity"
+    description: >
+      Assess if binary planting is due to authorized activities or malicious intent.
+    checklist:
+      - "Are executables run by authorized users?"
+      - "Are endpoint protections functioning?"
+      - "Are patches applied for known application vulnerabilities?"
+    data_sources:
+      - "User login logs"
+      - "Patch management"
+      - "EDR alerts"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Known software installation or updates."
+      - "Medium: Suspicious planted binaries with no immediate impact."
+      - "High: Confirmed malicious binary planting and execution."
+  - confidence_levels:
+      - "High: IOC matches malware or attacker behavior."
+      - "Medium: Anomalous binary placement or execution."
+      - "Low: Expected system or user activity."
+
+ioc_types:
+  - "Executable file paths in writable or unusual directories"
+  - "File hashes of suspicious binaries"
+  - "Process execution chains"
+  - "Persistence artifacts like scheduled tasks or services"
+
+queries/examples:
+  - name: "Detect Executables in User or Temp Directories"
+    query: >
+      file.extension:"exe" AND file.path:("*\\Users\\*" OR "*\\Temp\\*") AND
+      file.creation_time:>=now-7d
+  - name: "Suspicious Process Launch from Untrusted Locations"
+    query: >
+      process.name:("unknown.exe") AND process.parent.name:("trustedApp.exe")
+  - name: "Unsigned Executables Executed"
+    query: >
+      process.name:"*.exe" AND file.signed:false AND event.action:"process_start"
+
+automation_hooks:
+  - "Alert on executable creation in writable locations"
+  - "Trigger automated hash lookup and sandbox execution"
+  - "Block or quarantine suspicious executables"
+
+analyst_guidance:
+  - "Verify executables against known software baseline."
+  - "Analyze parent-child process relationships."
+  - "Engage patch management to fix application search order vulnerabilities."
+  - "Coordinate with threat intel for malware identification."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1574/003/"
+  - "https://www.fireeye.com/blog/threat-research/2018/06/using-binary-planting-technique.html"
+  - "https://www.sans.org/white-papers/37061/"
+
+review_cycle: "Semi-annually or when new binary planting methods are discovered"

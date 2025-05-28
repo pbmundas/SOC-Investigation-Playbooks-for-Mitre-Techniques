@@ -1,0 +1,86 @@
+playbook_name: "T1564.004 - Virtual Instance Detection: Investigation & Triage"
+tactic: "Defense Evasion"
+technique_id: "T1564.004"
+technique_name: "Virtual Instance"
+description: >
+  Detect attempts by adversaries to evade defenses or detection by running their malware or tools inside virtualized environments or sandbox instances.
+
+investigation_steps:
+  - step_number: 1
+    title: "Identify Virtualization Artifacts"
+    description: >
+      Detect indicators of virtual machines (VMs) or sandbox environments such as registry keys, drivers, or processes typically associated with virtualization.
+    checklist:
+      - "Are there VM-specific processes or services running?"
+      - "Are known VM device drivers or services loaded?"
+      - "Are system BIOS or hardware characteristics indicative of virtualization?"
+    data_sources:
+      - "Endpoint telemetry"
+      - "Process and driver inventories"
+      - "Hardware/BIOS scan logs"
+
+  - step_number: 2
+    title: "Monitor for Anti-VM Evasion Techniques"
+    description: >
+      Detect code or behavior attempting to detect or evade virtual environments.
+    checklist:
+      - "Are scripts or executables querying VM-specific artifacts?"
+      - "Is there evidence of execution path changes based on environment detection?"
+    data_sources:
+      - "Process monitoring"
+      - "Script and command line logging"
+
+  - step_number: 3
+    title: "Correlate with Malicious Activity"
+    description: >
+      Assess whether presence inside a virtual instance correlates with malware execution or evasion.
+    checklist:
+      - "Does activity stop or change when VM is detected?"
+      - "Are malicious payloads dropped or executed only outside VM?"
+    data_sources:
+      - "Endpoint behavior logs"
+      - "Threat intel"
+
+  - step_number: 4
+    title: "Respond and Harden Detection"
+    description: >
+      Adjust sandbox configurations or endpoint monitoring to detect evasive behavior.
+    checklist:
+      - "Improve detection for anti-VM techniques."
+      - "Notify IR team if evasion detected."
+    data_sources:
+      - "Sandbox logs"
+      - "Endpoint telemetry"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Legitimate use of virtual instances."
+      - "Medium: Suspicious VM evasion behavior."
+      - "High: Confirmed malicious anti-VM evasion."
+  - confidence_levels:
+      - "High: Clear indicators of evasion."
+      - "Medium: Potential evasion."
+      - "Low: Benign VM usage."
+
+ioc_types:
+  - "VM-related processes and drivers"
+  - "VM environment queries in command lines"
+  - "Anti-VM detection artifacts"
+
+queries/examples:
+  - name: "Detect processes querying VM artifacts"
+    query: >
+      process.command_line:*vmware* OR process.command_line:*vbox*
+
+automation_hooks:
+  - "Alert on scripts detecting VM artifacts."
+  - "Trigger sandbox configuration review."
+
+analyst_guidance:
+  - "Confirm environment is virtualized and assess intent."
+  - "Correlate with malware behaviors and sandbox evasion."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1564/004/"
+
+review_cycle: "Semi-annually or post incident"

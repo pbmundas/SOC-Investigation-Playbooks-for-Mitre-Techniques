@@ -1,0 +1,84 @@
+playbook_name: "T1563.001 - RDP Session Hijacking Detection: Investigation & Triage"
+tactic: "Credential Access"
+technique_id: "T1563.001"
+technique_name: "RDP Session Hijacking"
+description: >
+  Detects adversaries hijacking active Remote Desktop Protocol (RDP) sessions to maintain access or evade detection.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Active RDP Sessions"
+    description: >
+      Track session connection and disconnection events, looking for anomalies like multiple concurrent sessions or sudden session takeovers.
+    checklist:
+      - "Are there multiple logins from different accounts on the same session?"
+      - "Are there unexpected session disconnections or reconnections?"
+    data_sources:
+      - "Windows event logs (4624, 4778, 4779)"
+      - "RDP session logs"
+      - "Network connection logs"
+
+  - step_number: 2
+    title: "Detect Session Token Theft or Injection"
+    description: >
+      Identify use of stolen or duplicated session tokens that allow hijacking of active RDP sessions.
+    checklist:
+      - "Is there evidence of token manipulation or impersonation?"
+      - "Are there suspicious processes spawning in the context of RDP sessions?"
+    data_sources:
+      - "Process monitoring logs"
+      - "Endpoint detection logs"
+
+  - step_number: 3
+    title: "Correlate Hijacking with Malicious Actions"
+    description: >
+      Review activity post-hijacking for lateral movement, credential theft, or persistence.
+    checklist:
+      - "Are there unusual commands or data transfers in hijacked sessions?"
+      - "Is there evidence of privilege escalation?"
+    data_sources:
+      - "Process logs"
+      - "Network logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Routine RDP session activity."
+      - "Medium: Suspicious session anomalies."
+      - "High: Confirmed RDP session hijacking."
+  - confidence_levels:
+      - "High: Verified token theft or session hijacking."
+      - "Medium: Anomalous RDP session behavior."
+      - "Low: Normal session fluctuations."
+
+ioc_types:
+  - "Multiple concurrent RDP sessions for same user"
+  - "Token theft or impersonation events"
+  - "Unexpected RDP session disconnections/reconnections"
+
+queries/examples:
+  - name: "Detect Multiple Concurrent RDP Sessions"
+    query: >
+      event_id == 4778 AND
+      user.name == "<target_user>" AND
+      count(session_id) > 1
+
+  - name: "Detect RDP Session Token Impersonation"
+    query: >
+      event.type == "token_impersonation" AND
+      process.name == "mstsc.exe"
+
+automation_hooks:
+  - "Alert on suspicious RDP session anomalies."
+  - "Force logout of suspicious sessions."
+  - "Implement multi-factor authentication for RDP."
+
+analyst_guidance:
+  - "Confirm legitimacy of RDP sessions."
+  - "Investigate subsequent malicious activity."
+  - "Enforce RDP session timeouts and monitoring."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1563/001/"
+  - "https://docs.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4778"
+
+review_cycle: "Monthly or after suspicious RDP session events"

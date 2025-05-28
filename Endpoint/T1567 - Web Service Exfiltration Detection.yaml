@@ -1,0 +1,85 @@
+playbook_name: "T1567 - Web Service Exfiltration Detection"
+tactic: "Exfiltration"
+technique_id: "T1567"
+technique_name: "Exfiltration Over Web Service"
+description: >
+  Detect adversaries using legitimate web services (e.g., cloud storage, social media) to exfiltrate data.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Traffic to Web Services"
+    description: >
+      Identify traffic to common web services used for exfiltration (Dropbox, Google Drive, AWS S3, etc.).
+    checklist:
+      - "Are there large or frequent uploads to web services?"
+      - "Is traffic occurring outside normal business hours?"
+      - "Are there connections to uncommon or suspicious web services?"
+    data_sources:
+      - "Network logs"
+      - "Proxy logs"
+      - "Cloud access logs"
+
+  - step_number: 2
+    title: "Analyze Endpoint Activity"
+    description: >
+      Correlate network activity with file system and process logs.
+    checklist:
+      - "Are files staged for upload locally?"
+      - "Are there suspicious processes interacting with web services?"
+    data_sources:
+      - "Endpoint logs"
+      - "EDR telemetry"
+
+  - step_number: 3
+    title: "Review Web Service Account Activity"
+    description: >
+      Check for unusual usage patterns on the web service accounts.
+    checklist:
+      - "Are there login anomalies?"
+      - "Is there creation of new or unusual folders/buckets?"
+      - "Are there permission changes or API token usage?"
+    data_sources:
+      - "Cloud service logs"
+      - "SIEM alerts"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Normal business uploads."
+      - "Medium: Suspicious upload activity."
+      - "High: Confirmed exfiltration via web service."
+  - confidence_levels:
+      - "High: Confirmed via logs or IOC."
+      - "Medium: Behavioral anomalies."
+      - "Low: Possible false positives."
+
+ioc_types:
+  - "Unusual upload patterns"
+  - "Suspicious endpoints or processes"
+  - "Anomalies in cloud account usage"
+
+queries/examples:
+  - name: "Detect Large Uploads to Cloud Storage"
+    query: >
+      network.destination IN known_cloud_storage AND
+      network.upload_bytes > threshold
+
+  - name: "Detect New Folder or Bucket Creation"
+    query: >
+      cloud_service.event_type = "CreateFolder" OR "CreateBucket" AND
+      user NOT IN known_admins
+
+automation_hooks:
+  - "Alert on suspicious web service uploads."
+  - "Investigate endpoint and cloud account activity."
+  - "Coordinate with cloud security teams."
+
+analyst_guidance:
+  - "Validate if web service use is authorized."
+  - "Review data types and exfiltration scope."
+  - "Initiate incident response if malicious."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1567/"
+  - "https://www.microsoft.com/security/blog/2020/05/28/detecting-exfiltration-over-web-services/"
+
+review_cycle: "Quarterly or post-incident"

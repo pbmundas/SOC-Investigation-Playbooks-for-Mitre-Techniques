@@ -1,0 +1,107 @@
+playbook_name: "T1574.002 - DLL Side-loading: Investigation & Triage"
+tactic: "Persistence"
+technique_id: "T1574.002"
+technique_name: "DLL Side-loading"
+description: >
+  Playbook to investigate DLL side-loading where adversaries place a malicious DLL alongside a legitimate executable,
+  causing it to load the malicious DLL instead of the intended one for code execution.
+
+investigation_steps:
+  - step_number: 1
+    title: "Detect DLLs Present in Executable Directories"
+    description: >
+      Identify DLL files colocated with executables that are not part of standard software installations.
+    checklist:
+      - "Are there DLLs in application directories that differ from known files?"
+      - "Do the DLLs have suspicious creation or modification timestamps?"
+      - "Are DLL hashes flagged as malicious or unknown?"
+    data_sources:
+      - "File system monitoring"
+      - "File Integrity Monitoring"
+      - "EDR telemetry"
+
+  - step_number: 2
+    title: "Analyze Executable and DLL Relationships"
+    description: >
+      Review executable processes loading DLLs from their local directory instead of system directories.
+    checklist:
+      - "Is the executable loading DLLs from its own directory?"
+      - "Are the loaded DLLs signed and trusted?"
+      - "Are there unusual parent-child process chains?"
+    data_sources:
+      - "Process DLL load logs"
+      - "Process trees"
+      - "Binary signature metadata"
+
+  - step_number: 3
+    title: "Assess Persistence and Malicious Activity"
+    description: >
+      Check if DLL side-loading is used to establish persistence or for further malicious actions.
+    checklist:
+      - "Is the executable part of startup or scheduled tasks?"
+      - "Are there outbound network connections after DLL load?"
+      - "Is there evidence of lateral movement or data exfiltration?"
+    data_sources:
+      - "Persistence logs"
+      - "Network monitoring"
+      - "SIEM correlation"
+
+  - step_number: 4
+    title: "Confirm Legitimate vs Malicious Activity"
+    description: >
+      Validate the context to differentiate legitimate application behavior from malicious side-loading.
+    checklist:
+      - "Is the executable trusted and regularly updated?"
+      - "Are endpoint protections active?"
+      - "Are DLLs properly signed and validated?"
+    data_sources:
+      - "Patch and update management"
+      - "EDR and AV logs"
+      - "Threat intelligence"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Legitimate software with valid DLLs."
+      - "Medium: DLL side-loading suspicious but no confirmed impact."
+      - "High: Confirmed malicious DLL side-loading with execution."
+  - confidence_levels:
+      - "High: IOC or malware match."
+      - "Medium: Anomalous DLL location or behavior."
+      - "Low: Known software update or installation."
+
+ioc_types:
+  - "DLLs colocated with executables"
+  - "File hashes of suspicious DLLs"
+  - "Process execution and DLL load logs"
+  - "Startup entries or scheduled tasks involving executables"
+
+queries/examples:
+  - name: "DLL Side-loading Candidate Detection"
+    query: >
+      file.extension:"dll" AND file.path:"*\\Program Files*\\*"
+      AND file.creation_time:>=now-7d
+  - name: "Executable Loading DLL from Local Directory"
+    query: >
+      process.name:"trustedApp.exe" AND event.action:"dll_loaded"
+      AND file.path:("*\\Program Files\\trustedApp\\*")
+  - name: "Unsigned DLL Loaded by Executable"
+    query: >
+      process.name:"trustedApp.exe" AND file.signed:false AND event.action:"dll_loaded"
+
+automation_hooks:
+  - "Alert on new DLLs in executable directories"
+  - "Sandbox suspicious DLLs automatically"
+  - "Block execution of malicious DLLs"
+
+analyst_guidance:
+  - "Baseline known software DLL locations."
+  - "Review suspicious DLL presence in executable folders."
+  - "Check signature and hashes of DLL files."
+  - "Engage threat intel for malware DLL identification."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1574/002/"
+  - "https://labs.f-secure.com/blog/dll-sideloading-malicious-dlls/"
+  - "https://www.sans.org/white-papers/35743/"
+
+review_cycle: "Semi-annually or on detection of new DLL side-loading threats"

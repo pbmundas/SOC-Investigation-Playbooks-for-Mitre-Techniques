@@ -1,0 +1,112 @@
+playbook_name: "T1569.002 - Service Execution: Investigation & Triage"
+tactic: "Execution"
+technique_id: "T1569.002"
+technique_name: "Service Execution"
+description: >
+  Investigation-centric playbook for identifying, triaging, and responding to adversary use of
+  service-related mechanisms (like sc.exe or systemctl) to execute malicious binaries.
+
+investigation_steps:
+  - step_number: 1
+    title: "Initial Alert Review"
+    description: >
+      Determine whether service-related activity was initiated by a user or script and whether it’s legitimate.
+    checklist:
+      - "Was 'sc.exe', 'New-Service', or 'systemctl' executed?"
+      - "What is the name and path of the binary being registered?"
+      - "Who initiated the service creation (user account, session origin)?"
+      - "Is the binary in a suspicious location (e.g., temp, user folder)?"
+    data_sources:
+      - "Sysmon Event ID 7045"
+      - "Windows Security Logs"
+      - "Auditd Logs"
+      - "SIEM Alerts"
+
+  - step_number: 2
+    title: "Binary and Command Analysis"
+    description: >
+      Analyze the service configuration and binary attributes for signs of tampering or malicious behavior.
+    checklist:
+      - "Does the binary have unusual metadata (signed, created time, known hash)?"
+      - "Are arguments passed to the binary unusual or obfuscated?"
+      - "Was the same binary used elsewhere in the environment?"
+    data_sources:
+      - "File Metadata"
+      - "Binary Reputation via Threat Intelligence"
+      - "Sysmon FileCreate Events"
+      - "Process Command-Line Arguments"
+
+  - step_number: 3
+    title: "Execution and Lateral Movement Check"
+    description: >
+      Confirm whether the service was used to run a malicious process or move laterally.
+    checklist:
+      - "Was the binary executed post service creation?"
+      - "Did the host generate unusual network connections afterward?"
+      - "Were other systems targeted via SMB, RDP, or WMI from this host?"
+    data_sources:
+      - "EDR Process Tree"
+      - "Firewall or NetFlow Logs"
+      - "Sysmon ProcessCreate"
+      - "Remote Service Management Logs"
+
+  - step_number: 4
+    title: "Persistence or Privilege Escalation Validation"
+    description: >
+      Validate if the service was intended for persistence or privilege escalation.
+    checklist:
+      - "Was the service set to AutoStart or Manual?"
+      - "Is it listed in known persistence registry keys?"
+      - "Does the service run under SYSTEM or elevated account?"
+    data_sources:
+      - "Registry Keys"
+      - "Service Configuration"
+      - "Access Token Analysis"
+      - "Startup Logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Known internal tool or service with benign binary."
+      - "Medium: Custom service with suspicious or uncommon name or path."
+      - "High: Confirmed use of malicious binary or lateral movement post execution."
+  - confidence_levels:
+      - "High: Binary hash or behavior matches malware/known threat."
+      - "Medium: Unknown binary, odd path or service name."
+      - "Low: Legitimate tool with rare usage pattern."
+
+ioc_types:
+  - "Service name"
+  - "Binary path and hash"
+  - "Command-line arguments"
+  - "User account initiating change"
+  - "Remote IPs accessed post-execution"
+
+queries/examples:
+  - name: "Suspicious Service Creation"
+    query: >
+      event.code:7045 AND (service.binary_path:*\\temp\\* OR service.binary_path:*\\users\\*)
+  - name: "SC.exe Usage by Script"
+    query: >
+      process.name:sc.exe AND parent_process.name:(powershell.exe OR cmd.exe OR wscript.exe)
+  - name: "New Services with Unusual Names"
+    query: >
+      event.code:7045 AND NOT service.name:(known_safe_service_names)
+
+automation_hooks:
+  - "Auto-enrich binary with VT/hash reputation"
+  - "Tag alert with MITRE T1569.002 and mark as suspicious if location is unusual"
+  - "Auto-disable service and alert IR team if severity=High"
+  - "Run retrohunt for same binary on other endpoints"
+
+analyst_guidance:
+  - "Check user context and remote login history for the system."
+  - "Validate whether binary is signed and used elsewhere in your environment."
+  - "If executable is unknown, isolate the host and extract for sandboxing."
+  - "Investigate lateral movement post service creation to assess impact."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1569/002/"
+  - "https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/sc-create"
+  - "https://www.sans.org/blog/tracking-service-creation-via-sysmon-and-the-scm/"
+
+review_cycle: "Quarterly or after any spike in unknown service activity"

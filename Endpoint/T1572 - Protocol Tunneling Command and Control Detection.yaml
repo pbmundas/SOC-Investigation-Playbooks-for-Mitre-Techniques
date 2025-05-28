@@ -1,0 +1,84 @@
+playbook_name: "T1572 - Protocol Tunneling Command and Control Detection"
+tactic: "Command and Control"
+technique_id: "T1572"
+technique_name: "Protocol Tunneling"
+description: >
+  Detect adversaries using protocol tunneling to evade detection and communicate with C2 servers by encapsulating protocols within other protocols.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Network Traffic for Encapsulation Patterns"
+    description: >
+      Analyze network traffic for indications of tunneling such as unusual protocol encapsulation or traffic anomalies.
+    checklist:
+      - "Are there packets with protocol headers inside unexpected transport protocols?"
+      - "Is there a pattern of traffic that deviates from normal baselines?"
+      - "Are there tunnels over non-standard ports or protocols?"
+    data_sources:
+      - "Network traffic captures"
+      - "IDS/IPS logs"
+      - "Network flow data"
+
+  - step_number: 2
+    title: "Identify Known Tunneling Tools or Protocols"
+    description: >
+      Detect traffic associated with known tunneling tools (e.g., DNS tunneling tools, VPN-like software).
+    checklist:
+      - "Are there signatures matching known tunneling software?"
+      - "Is there evidence of encapsulated DNS, ICMP, or HTTP traffic?"
+    data_sources:
+      - "Network IDS/IPS signatures"
+      - "Threat intelligence"
+
+  - step_number: 3
+    title: "Correlate Tunneling Activity with Endpoint and User Behavior"
+    description: >
+      Check for suspicious endpoint processes or user activity concurrent with tunneling detection.
+    checklist:
+      - "Are endpoints running suspicious or unauthorized tunneling tools?"
+      - "Is tunneling activity linked to abnormal user logins or privilege escalation?"
+    data_sources:
+      - "Endpoint detection and response (EDR)"
+      - "User activity logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Normal protocol use."
+      - "Medium: Suspicious tunneling patterns."
+      - "High: Confirmed protocol tunneling C2."
+  - confidence_levels:
+      - "High: IOC or signature match."
+      - "Medium: Behavioral anomalies."
+      - "Low: Possible false positives."
+
+ioc_types:
+  - "Suspicious encapsulated protocols"
+  - "Known tunneling tool signatures"
+  - "Unusual port/protocol combinations"
+
+queries/examples:
+  - name: "Detect DNS Traffic with Encapsulated Payloads"
+    query: >
+      dns.query_name MATCHES "[a-z0-9]{15,}" OR
+      dns.query_type = "TXT" AND
+      high_query_frequency
+
+  - name: "Detect ICMP Traffic with Unusual Payload Size"
+    query: >
+      icmp.payload_size > normal_threshold
+
+automation_hooks:
+  - "Alert on detected tunneling activity."
+  - "Block suspicious tunnels."
+  - "Trigger endpoint and network forensic investigations."
+
+analyst_guidance:
+  - "Review network packet captures for encapsulation."
+  - "Validate endpoint processes involved in tunneling."
+  - "Cross-check with threat intelligence for tool signatures."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1572/"
+  - "https://www.sans.org/white-papers/36827/"
+
+review_cycle: "Monthly or post protocol tunneling incidents"

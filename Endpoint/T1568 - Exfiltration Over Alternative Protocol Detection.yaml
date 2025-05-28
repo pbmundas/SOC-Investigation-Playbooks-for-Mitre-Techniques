@@ -1,0 +1,84 @@
+playbook_name: "T1568 - Exfiltration Over Alternative Protocol Detection"
+tactic: "Exfiltration"
+technique_id: "T1568"
+technique_name: "Exfiltration Over Alternative Protocol"
+description: >
+  Detect adversaries exfiltrating data using non-standard or alternative network protocols.
+
+investigation_steps:
+  - step_number: 1
+    title: "Monitor Network Traffic for Unusual Protocol Usage"
+    description: >
+      Identify traffic using protocols uncommon in the environment or those not typically used for data transfer.
+    checklist:
+      - "Are there spikes in traffic on rarely used protocols or ports?"
+      - "Is data being sent over protocols such as ICMP, FTP, or DNS unusually?"
+      - "Are there outbound connections to suspicious destinations?"
+    data_sources:
+      - "Network flow logs"
+      - "Firewall logs"
+      - "IDS/IPS logs"
+
+  - step_number: 2
+    title: "Analyze Packet Payloads and Sizes"
+    description: >
+      Inspect payloads for signs of data exfiltration, such as encoded or compressed data.
+    checklist:
+      - "Are payloads unusually large or frequent for the protocol?"
+      - "Is there evidence of encoded or encrypted data in payloads?"
+    data_sources:
+      - "Network packet captures"
+      - "Network analysis tools"
+
+  - step_number: 3
+    title: "Correlate with Endpoint and User Activity"
+    description: >
+      Determine if the exfiltration coincides with suspicious endpoint or user behaviors.
+    checklist:
+      - "Are processes creating large volumes of data prior to exfiltration?"
+      - "Is user activity anomalous or outside business hours?"
+    data_sources:
+      - "Endpoint logs"
+      - "User activity logs"
+
+triage_labels:
+  - severity_levels:
+      - "Low: Legitimate use of alternative protocols."
+      - "Medium: Suspicious traffic patterns."
+      - "High: Confirmed data exfiltration."
+  - confidence_levels:
+      - "High: Payload or IOC match."
+      - "Medium: Behavioral anomalies."
+      - "Low: Possible false positives."
+
+ioc_types:
+  - "Unusual protocol usage"
+  - "Suspicious destination IPs or domains"
+  - "Encoded or encrypted payloads"
+
+queries/examples:
+  - name: "Detect Large ICMP Packets Outbound"
+    query: >
+      icmp.type = 8 AND
+      icmp.packet_size > threshold
+
+  - name: "Detect DNS Requests with Suspiciously Large Payloads"
+    query: >
+      dns.query_type = "TXT" AND
+      dns.response_size > threshold
+
+automation_hooks:
+  - "Alert on unusual protocol exfiltration attempts."
+  - "Block suspicious outbound traffic."
+  - "Trigger endpoint forensic analysis."
+
+analyst_guidance:
+  - "Confirm if alternative protocol use is authorized."
+  - "Investigate endpoint processes tied to exfiltration."
+  - "Coordinate with network and security teams for mitigation."
+
+reference_links:
+  - "https://attack.mitre.org/techniques/T1568/"
+  - "https://www.sans.org/white-papers/38594/"
+
+review_cycle: "Quarterly or after exfiltration incidents"
